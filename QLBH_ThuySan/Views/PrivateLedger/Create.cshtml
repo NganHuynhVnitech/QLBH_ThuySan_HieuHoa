@@ -1,0 +1,39 @@
+@model QLBH_ThuySan.Models.PrivateLedger
+
+@{
+    ViewData["Title"] = "Tạo Sổ Mới";
+}
+
+<h2>Tạo Sổ Mới</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="LedgerCode" class="form-label">Mã Sổ</label>
+                <input asp-for="LedgerCode" class="form-control" />
+                <span asp-validation-for="LedgerCode" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LedgerType" class="form-label">Loại Sổ</label>
+                <select asp-for="LedgerType" class="form-select">
+                    <option value="1">Đầu Tư</option>
+                    <option value="2">Công Nợ</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Mô Tả</label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Tạo" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

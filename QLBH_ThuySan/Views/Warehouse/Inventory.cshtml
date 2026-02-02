@@ -1,0 +1,49 @@
+@model IEnumerable<QLBH_ThuySan.Models.ProductWarehouse>
+
+@{
+    ViewData["Title"] = "Tồn Kho";
+    var warehouse = ViewBag.Warehouse as QLBH_ThuySan.Models.Warehouse;
+}
+
+<h2>Tồn Kho - @warehouse?.Name</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p>
+            <strong>Địa chỉ:</strong> @warehouse?.Location<br />
+            <strong>Loại:</strong> @(warehouse?.IsVirtual == true ? "Kho Tổng Ảo" : "Kho Vật Lý")
+        </p>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Mã Sản Phẩm</th>
+            <th>Tên Sản Phẩm</th>
+            <th>Số Lượng</th>
+            <th>Đơn Vị</th>
+            <th>Giá Vốn Bình Quân</th>
+            <th>Tổng Giá Trị</th>
+            <th>Cập Nhật</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product.ProductCode</td>
+                <td>@item.Product.ProductName</td>
+                <td>@item.Quantity.ToString("N2")</td>
+                <td>@item.Product.Unit</td>
+                <td>@item.WeightedAverageCost.ToString("N0") VNĐ</td>
+                <td>@((item.Quantity * item.WeightedAverageCost).ToString("N0")) VNĐ</td>
+                <td>@item.LastUpdated.ToString("dd/MM/yyyy HH:mm")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</div>

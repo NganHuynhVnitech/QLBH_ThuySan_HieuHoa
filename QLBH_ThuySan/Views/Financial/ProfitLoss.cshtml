@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Báo Cáo Tài Chính P&L";
+}
+
+<h2>Báo Cáo Lãi Lỗ (P&L)</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="GenerateProfitLoss" method="post">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Từ Ngày:</label>
+                    <input type="date" name="startDate" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Đến Ngày:</label>
+                    <input type="date" name="endDate" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block w-100">Tạo Báo Cáo</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h4>Hướng Dẫn:</h4>
+    <p>
+        Báo cáo P&L (Profit & Loss) tính toán như sau:<br />
+        <strong>Lãi Gộp</strong> = Doanh Thu - Giá Vốn Hàng Bán<br />
+        <strong>Lãi Ròng</strong> = Lãi Gộp + Thu Chiết Khấu - Chi Chiết Khấu - Chi Phí Vận Hành
+    </p>
+</div>

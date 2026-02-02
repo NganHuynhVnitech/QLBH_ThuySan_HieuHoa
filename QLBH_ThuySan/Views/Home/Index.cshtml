@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Trang Chủ";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-4">Hệ Thống Quản Lý Thủy Sản Hiệu Hoa</h1>
+    <p class="lead">Quản lý toàn diện hoạt động kinh doanh thủy sản</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam"></i> Quản Lý Kho
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    3 kho vật lý + 1 kho tổng ảo với tính năng tự động tính giá vốn bình quân gia quyền liên hoàn.
+                </p>
+                <a asp-controller="Warehouse" asp-action="Index" class="btn btn-primary">
+                    Xem Kho
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-journal-text"></i> Sổ Riêng
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Quản lý công nợ đầu tư, ghi nợ tích lũy và thanh toán cấn trừ dần.
+                </p>
+                <a asp-controller="PrivateLedger" asp-action="Index" class="btn btn-success">
+                    Xem Sổ Riêng
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-percent"></i> Discount Engine
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Tính chiết khấu động (Bậc thang/Cố định) cho Nhà cung cấp & Khách hàng.
+                </p>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-info" disabled>Đang Phát Triển</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up-arrow"></i> Báo Cáo Tài Chính
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Báo cáo P&L: Doanh thu - Giá vốn + Thu chiết khấu - Chi chiết khấu - Chi phí vận hành.
+                </p>
+                <a asp-controller="Financial" asp-action="ProfitLoss" class="btn btn-warning text-dark">
+                    Xem Báo Cáo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-light mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Công Nghệ Sử Dụng:</h5>
+        <ul class="mb-0">
+            <li><strong>ASP.NET Core MVC 10.0</strong> - Framework web hiện đại</li>
+            <li><strong>Entity Framework Core</strong> - ORM cho .NET</li>
+            <li><strong>SQL Server</strong> - Cơ sở dữ liệu quan hệ</li>
+            <li><strong>Stored Procedures</strong> - Tính toán giá vốn bình quân gia quyền</li>
+        </ul>
+    </div>
+</div>
+

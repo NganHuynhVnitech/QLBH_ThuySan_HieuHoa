@@ -1,0 +1,56 @@
+@model IEnumerable<QLBH_ThuySan.Models.PrivateLedger>
+
+@{
+    ViewData["Title"] = "Sổ Riêng - Quản Lý Công Nợ";
+}
+
+<h2>Sổ Riêng - Quản Lý Công Nợ</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Tạo Sổ Mới</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Mã Sổ</th>
+            <th>Loại</th>
+            <th>Mô Tả</th>
+            <th>Tổng Nợ</th>
+            <th>Đã Thanh Toán</th>
+            <th>Còn Lại</th>
+            <th>Ngày Tạo</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.LedgerCode</td>
+                <td>
+                    @if (item.LedgerType == QLBH_ThuySan.Models.LedgerType.Investment)
+                    {
+                        <span class="badge bg-info">Đầu Tư</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">Công Nợ</span>
+                    }
+                </td>
+                <td>@item.Description</td>
+                <td>@item.TotalDebt.ToString("N0") VNĐ</td>
+                <td>@item.TotalPaid.ToString("N0") VNĐ</td>
+                <td>
+                    <strong class="@(item.Balance > 0 ? "text-danger" : "text-success")">
+                        @item.Balance.ToString("N0") VNĐ
+                    </strong>
+                </td>
+                <td>@item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.LedgerId" class="btn btn-sm btn-info">Chi Tiết</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

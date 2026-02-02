@@ -1,0 +1,112 @@
+@model QLBH_ThuySan.Models.PrivateLedger
+
+@{
+    ViewData["Title"] = "Chi Tiết Sổ";
+    var entries = ViewBag.Entries as IEnumerable<QLBH_ThuySan.Models.LedgerEntry>;
+}
+
+<h2>Chi Tiết Sổ - @Model.LedgerCode</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Mô Tả:</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+
+            <dt class="col-sm-3">Loại:</dt>
+            <dd class="col-sm-9">
+                @if (Model.LedgerType == QLBH_ThuySan.Models.LedgerType.Investment)
+                {
+                    <span class="badge bg-info">Đầu Tư</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning">Công Nợ</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Tổng Nợ:</dt>
+            <dd class="col-sm-9"><strong>@Model.TotalDebt.ToString("N0") VNĐ</strong></dd>
+
+            <dt class="col-sm-3">Đã Thanh Toán:</dt>
+            <dd class="col-sm-9"><strong>@Model.TotalPaid.ToString("N0") VNĐ</strong></dd>
+
+            <dt class="col-sm-3">Còn Lại:</dt>
+            <dd class="col-sm-9">
+                <strong class="@(Model.Balance > 0 ? "text-danger" : "text-success") fs-4">
+                    @Model.Balance.ToString("N0") VNĐ
+                </strong>
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<h3>Các Giao Dịch</h3>
+<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+    Thêm Giao Dịch
+</button>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Mã Giao Dịch</th>
+            <th>Ngày</th>
+            <th>Ghi Nợ</th>
+            <th>Thanh Toán</th>
+            <th>Ghi Chú</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in entries ?? Enumerable.Empty<QLBH_ThuySan.Models.LedgerEntry>())
+        {
+            <tr>
+                <td>@entry.EntryCode</td>
+                <td>@entry.EntryDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="text-danger">@entry.DebtAmount.ToString("N0") VNĐ</td>
+                <td class="text-success">@entry.PaymentAmount.ToString("N0") VNĐ</td>
+                <td>@entry.Notes</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="addEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddEntry" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm Giao Dịch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="ledgerId" value="@Model.LedgerId" />
+                    <div class="mb-3">
+                        <label class="form-label">Mã Giao Dịch</label>
+                        <input type="text" class="form-control" name="entryCode" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Nợ (VNĐ)</label>
+                        <input type="number" step="0.01" class="form-control" name="debtAmount" value="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Thanh Toán (VNĐ)</label>
+                        <input type="number" step="0.01" class="form-control" name="paymentAmount" value="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</div>

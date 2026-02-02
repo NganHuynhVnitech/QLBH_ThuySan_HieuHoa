@@ -1,0 +1,35 @@
+@model IEnumerable<QLBH_ThuySan.Models.Warehouse>
+
+@{
+    ViewData["Title"] = "Quản lý Kho";
+}
+
+<h2>Quản lý Kho</h2>
+
+<div class="row mt-4">
+    @foreach (var warehouse in Model)
+    {
+        <div class="col-md-6 mb-3">
+            <div class="card @(warehouse.IsVirtual ? "border-primary" : "border-secondary")">
+                <div class="card-header @(warehouse.IsVirtual ? "bg-primary text-white" : "bg-secondary text-white")">
+                    <h5 class="mb-0">
+                        @warehouse.Name
+                        @if (warehouse.IsVirtual)
+                        {
+                            <span class="badge bg-light text-primary">Kho Ảo</span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Địa chỉ:</strong> @warehouse.Location<br />
+                        <strong>Ngày tạo:</strong> @warehouse.CreatedDate.ToString("dd/MM/yyyy")
+                    </p>
+                    <a asp-action="Inventory" asp-route-id="@warehouse.WarehouseId" class="btn btn-primary">
+                        Xem Tồn Kho
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
