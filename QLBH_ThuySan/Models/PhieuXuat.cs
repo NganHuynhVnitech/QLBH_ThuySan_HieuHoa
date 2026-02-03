@@ -1,0 +1,23 @@
+using System;
+using System.Collections.Generic;
+
+namespace QLBH_ThuySan.Models;
+
+public partial class PhieuXuat
+{
+    public string MaPhieu { get; set; } = null!;
+
+    public DateTime? NgayXuat { get; set; }
+
+    public string? IdDaiLyBan { get; set; }
+
+    public string? IdKhachHang { get; set; }
+
+    public decimal? TongTien { get; set; }
+
+    public virtual ICollection<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = new List<ChiTietPhieuXuat>();
+
+    public virtual DaiLy? IdDaiLyBanNavigation { get; set; }
+
+    public virtual KhachHang? IdKhachHangNavigation { get; set; }
+}

@@ -1,25 +1,24 @@
-@model IEnumerable<QLBH_ThuySan.Models.PrivateLedger>
+@model IEnumerable<QLBH_ThuySan.Models.KhachHang>
 
 @{
-    ViewData["Title"] = "Sổ Riêng - Quản Lý Công Nợ";
+    ViewData["Title"] = "Sổ Riêng Khách Hàng - Quản Lý Công Nợ";
 }
 
-<h2>Sổ Riêng - Quản Lý Công Nợ</h2>
+<h2>Sổ Riêng Khách Hàng - Quản Lý Công Nợ</h2>
 
 <p>
-    <a asp-action="Create" class="btn btn-primary">Tạo Sổ Mới</a>
+    <a asp-action="Create" class="btn btn-primary">Thêm Khách Hàng Mới</a>
 </p>
 
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Mã Sổ</th>
-            <th>Loại</th>
-            <th>Mô Tả</th>
-            <th>Tổng Nợ</th>
-            <th>Đã Thanh Toán</th>
-            <th>Còn Lại</th>
-            <th>Ngày Tạo</th>
+            <th>Mã Khách Hàng</th>
+            <th>Tên Khách Hàng</th>
+            <th>Số Điện Thoại</th>
+            <th>Địa Chỉ</th>
+            <th>Ao Nuôi</th>
+            <th>Dư Nợ Lũy Kế</th>
             <th></th>
         </tr>
     </thead>
@@ -27,28 +26,18 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@item.LedgerCode</td>
+                <td>@item.MaDoiTuong</td>
+                <td>@item.TenDoiTuong</td>
+                <td>@item.SoDienThoai</td>
+                <td>@item.DiaChi</td>
+                <td>@item.AoNuoi</td>
                 <td>
-                    @if (item.LedgerType == QLBH_ThuySan.Models.LedgerType.Investment)
-                    {
-                        <span class="badge bg-info">Đầu Tư</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning">Công Nợ</span>
-                    }
-                </td>
-                <td>@item.Description</td>
-                <td>@item.TotalDebt.ToString("N0") VNĐ</td>
-                <td>@item.TotalPaid.ToString("N0") VNĐ</td>
-                <td>
-                    <strong class="@(item.Balance > 0 ? "text-danger" : "text-success")">
-                        @item.Balance.ToString("N0") VNĐ
+                    <strong class="@((item.DuNoLuyKe ?? 0) > 0 ? "text-danger" : "text-success")">
+                        @((item.DuNoLuyKe ?? 0).ToString("N0")) VNĐ
                     </strong>
                 </td>
-                <td>@item.CreatedDate.ToString("dd/MM/yyyy")</td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@item.LedgerId" class="btn btn-sm btn-info">Chi Tiết</a>
+                    <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-info">Chi Tiết</a>
                 </td>
             </tr>
         }

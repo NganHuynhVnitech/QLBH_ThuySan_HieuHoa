@@ -4,6 +4,10 @@ using QLBH_ThuySan.Models;
 
 namespace QLBH_ThuySan.Controllers
 {
+    /// <summary>
+    /// Controller for managing Warehouses (Kho)
+    /// Maps to Kho and ChiTietTon tables in HieuHoaDB
+    /// </summary>
     public class WarehouseController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -13,31 +17,35 @@ namespace QLBH_ThuySan.Controllers
             _context = context;
         }
 
-        // GET: Warehouse
+        // GET: Warehouse - List all warehouses
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Warehouses.ToListAsync());
+            var warehouses = await _context.Khos
+                .Include(k => k.MaDaiLyPhuTrachNavigation)
+                .ToListAsync();
+            return View(warehouses);
         }
 
-        // GET: Warehouse/Inventory/5
-        public async Task<IActionResult> Inventory(int? id)
+        // GET: Warehouse/Inventory/KHO001 - View inventory for a specific warehouse
+        public async Task<IActionResult> Inventory(string? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var warehouse = await _context.Warehouses
-                .FirstOrDefaultAsync(m => m.WarehouseId == id);
+            var warehouse = await _context.Khos
+                .Include(k => k.MaDaiLyPhuTrachNavigation)
+                .FirstOrDefaultAsync(m => m.MaKho == id);
 
             if (warehouse == null)
             {
                 return NotFound();
             }
 
-            var inventory = await _context.ProductWarehouses
-                .Include(pw => pw.Product)
-                .Where(pw => pw.WarehouseId == id)
+            var inventory = await _context.ChiTietTons
+                .Include(ct => ct.MaHangNavigation)
+                .Where(ct => ct.MaKho == id)
                 .ToListAsync();
 
             ViewBag.Warehouse = warehouse;

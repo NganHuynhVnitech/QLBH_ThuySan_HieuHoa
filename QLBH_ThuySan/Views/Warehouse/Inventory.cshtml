@@ -1,17 +1,21 @@
-@model IEnumerable<QLBH_ThuySan.Models.ProductWarehouse>
+@model IEnumerable<QLBH_ThuySan.Models.ChiTietTon>
 
 @{
     ViewData["Title"] = "Tồn Kho";
-    var warehouse = ViewBag.Warehouse as QLBH_ThuySan.Models.Warehouse;
+    var warehouse = ViewBag.Warehouse as QLBH_ThuySan.Models.Kho;
 }
 
-<h2>Tồn Kho - @warehouse?.Name</h2>
+<h2>Tồn Kho - @warehouse?.TenKho</h2>
 
 <div class="card mb-3">
     <div class="card-body">
         <p>
-            <strong>Địa chỉ:</strong> @warehouse?.Location<br />
-            <strong>Loại:</strong> @(warehouse?.IsVirtual == true ? "Kho Tổng Ảo" : "Kho Vật Lý")
+            <strong>Mã Kho:</strong> @warehouse?.MaKho<br />
+            <strong>Loại:</strong> @(warehouse?.LoaiKho == "Ao" ? "Kho Tổng Ảo" : "Kho Vật Lý")
+            @if (warehouse?.MaDaiLyPhuTrachNavigation != null)
+            {
+                <br /><strong>Đại Lý Phụ Trách:</strong> @warehouse.MaDaiLyPhuTrachNavigation.TenDaiLy
+            }
         </p>
     </div>
 </div>
@@ -19,26 +23,22 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Mã Sản Phẩm</th>
-            <th>Tên Sản Phẩm</th>
-            <th>Số Lượng</th>
+            <th>Mã Hàng</th>
+            <th>Tên Hàng</th>
+            <th>Số Lượng Tồn</th>
             <th>Đơn Vị</th>
-            <th>Giá Vốn Bình Quân</th>
-            <th>Tổng Giá Trị</th>
-            <th>Cập Nhật</th>
+            <th>Giá Trị Tồn</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
             <tr>
-                <td>@item.Product.ProductCode</td>
-                <td>@item.Product.ProductName</td>
-                <td>@item.Quantity.ToString("N2")</td>
-                <td>@item.Product.Unit</td>
-                <td>@item.WeightedAverageCost.ToString("N0") VNĐ</td>
-                <td>@((item.Quantity * item.WeightedAverageCost).ToString("N0")) VNĐ</td>
-                <td>@item.LastUpdated.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@item.MaHang</td>
+                <td>@item.MaHangNavigation?.TenHang</td>
+                <td>@((item.SoLuongTon ?? 0).ToString("N2"))</td>
+                <td>@item.MaHangNavigation?.DonViTinh</td>
+                <td>@((item.GiaTriTon ?? 0).ToString("N0")) VNĐ</td>
             </tr>
         }
     </tbody>

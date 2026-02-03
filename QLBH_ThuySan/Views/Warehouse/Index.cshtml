@@ -1,4 +1,4 @@
-@model IEnumerable<QLBH_ThuySan.Models.Warehouse>
+@model IEnumerable<QLBH_ThuySan.Models.Kho>
 
 @{
     ViewData["Title"] = "Quản lý Kho";
@@ -10,11 +10,11 @@
     @foreach (var warehouse in Model)
     {
         <div class="col-md-6 mb-3">
-            <div class="card @(warehouse.IsVirtual ? "border-primary" : "border-secondary")">
-                <div class="card-header @(warehouse.IsVirtual ? "bg-primary text-white" : "bg-secondary text-white")">
+            <div class="card @(warehouse.LoaiKho == "Ao" ? "border-primary" : "border-secondary")">
+                <div class="card-header @(warehouse.LoaiKho == "Ao" ? "bg-primary text-white" : "bg-secondary text-white")">
                     <h5 class="mb-0">
-                        @warehouse.Name
-                        @if (warehouse.IsVirtual)
+                        @warehouse.TenKho
+                        @if (warehouse.LoaiKho == "Ao")
                         {
                             <span class="badge bg-light text-primary">Kho Ảo</span>
                         }
@@ -22,10 +22,14 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        <strong>Địa chỉ:</strong> @warehouse.Location<br />
-                        <strong>Ngày tạo:</strong> @warehouse.CreatedDate.ToString("dd/MM/yyyy")
+                        <strong>Mã Kho:</strong> @warehouse.MaKho<br />
+                        <strong>Loại Kho:</strong> @warehouse.LoaiKho<br />
+                        @if (warehouse.MaDaiLyPhuTrachNavigation != null)
+                        {
+                            <strong>Đại Lý Phụ Trách:</strong> @warehouse.MaDaiLyPhuTrachNavigation.TenDaiLy
+                        }
                     </p>
-                    <a asp-action="Inventory" asp-route-id="@warehouse.WarehouseId" class="btn btn-primary">
+                    <a asp-action="Inventory" asp-route-id="@warehouse.MaKho" class="btn btn-primary">
                         Xem Tồn Kho
                     </a>
                 </div>

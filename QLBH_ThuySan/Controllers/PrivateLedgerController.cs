@@ -4,6 +4,10 @@ using QLBH_ThuySan.Models;
 
 namespace QLBH_ThuySan.Controllers
 {
+    /// <summary>
+    /// Controller for managing Customer Private Ledger (Sổ Riêng Khách Hàng)
+    /// Maps to SoRiengKhachHang table in HieuHoaDB
+    /// </summary>
     public class PrivateLedgerController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -13,35 +17,36 @@ namespace QLBH_ThuySan.Controllers
             _context = context;
         }
 
-        // GET: PrivateLedger
+        // GET: PrivateLedger - List all customers with their ledger entries
         public async Task<IActionResult> Index()
         {
-            return View(await _context.PrivateLedgers.ToListAsync());
+            var customers = await _context.KhachHangs.ToListAsync();
+            return View(customers);
         }
 
-        // GET: PrivateLedger/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: PrivateLedger/Details/KH001 - View ledger entries for a specific customer
+        public async Task<IActionResult> Details(string? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var privateLedger = await _context.PrivateLedgers
-                .FirstOrDefaultAsync(m => m.LedgerId == id);
+            var customer = await _context.KhachHangs
+                .FirstOrDefaultAsync(m => m.MaDoiTuong == id);
 
-            if (privateLedger == null)
+            if (customer == null)
             {
                 return NotFound();
             }
 
-            var entries = await _context.LedgerEntries
-                .Where(e => e.LedgerId == id)
-                .OrderByDescending(e => e.EntryDate)
+            var entries = await _context.SoRiengKhachHangs
+                .Where(e => e.MaKhachHang == id)
+                .OrderByDescending(e => e.NgayGiaoDich)
                 .ToListAsync();
 
             ViewBag.Entries = entries;
-            return View(privateLedger);
+            return View(customer);
         }
 
         // GET: PrivateLedger/Create
@@ -50,48 +55,55 @@ namespace QLBH_ThuySan.Controllers
             return View();
         }
 
-        // POST: PrivateLedger/Create
+        // POST: PrivateLedger/Create - Create a new customer
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("LedgerCode,LedgerType,Description")] PrivateLedger privateLedger)
+        public async Task<IActionResult> Create([Bind("MaDoiTuong,TenDoiTuong,SoDienThoai,DiaChi,AoNuoi")] KhachHang khachHang)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(privateLedger);
+                khachHang.DuNoLuyKe = 0;
+                _context.Add(khachHang);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(privateLedger);
+            return View(khachHang);
         }
 
-        // POST: PrivateLedger/AddEntry
+        // POST: PrivateLedger/AddEntry - Add a ledger entry for a customer
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddEntry(int ledgerId, string entryCode, decimal debtAmount, decimal paymentAmount, string? notes)
+        public async Task<IActionResult> AddEntry(string maKhachHang, string loaiGiaoDich, decimal soTienPhatSinh, string? dienGiai)
         {
-            var ledgerEntry = new LedgerEntry
+            var ledgerEntry = new SoRiengKhachHang
             {
-                LedgerId = ledgerId,
-                EntryCode = entryCode,
-                EntryDate = DateTime.Now,
-                DebtAmount = debtAmount,
-                PaymentAmount = paymentAmount,
-                Notes = notes
+                MaKhachHang = maKhachHang,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = loaiGiaoDich,
+                SoTienPhatSinh = soTienPhatSinh,
+                DienGiai = dienGiai
             };
 
             _context.Add(ledgerEntry);
 
-            // Update ledger totals
-            var ledger = await _context.PrivateLedgers.FindAsync(ledgerId);
-            if (ledger != null)
+            // Update customer cumulative debt
+            var customer = await _context.KhachHangs.FindAsync(maKhachHang);
+            if (customer != null)
             {
-                ledger.TotalDebt += debtAmount;
-                ledger.TotalPaid += paymentAmount;
-                _context.Update(ledger);
+                // If loaiGiaoDich is "No" (debt), add to balance; if "Thu" (payment), subtract
+                if (loaiGiaoDich == "No")
+                {
+                    customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) + soTienPhatSinh;
+                }
+                else if (loaiGiaoDich == "Thu")
+                {
+                    customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - soTienPhatSinh;
+                }
+                _context.Update(customer);
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Details), new { id = ledgerId });
+            return RedirectToAction(nameof(Details), new { id = maKhachHang });
         }
     }
 }

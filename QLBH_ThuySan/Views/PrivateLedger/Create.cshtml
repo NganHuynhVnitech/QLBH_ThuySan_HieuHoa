@@ -1,30 +1,36 @@
-@model QLBH_ThuySan.Models.PrivateLedger
+@model QLBH_ThuySan.Models.KhachHang
 
 @{
-    ViewData["Title"] = "Tạo Sổ Mới";
+    ViewData["Title"] = "Thêm Khách Hàng Mới";
 }
 
-<h2>Tạo Sổ Mới</h2>
+<h2>Thêm Khách Hàng Mới</h2>
 
 <div class="row">
     <div class="col-md-6">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
-                <label asp-for="LedgerCode" class="form-label">Mã Sổ</label>
-                <input asp-for="LedgerCode" class="form-control" />
-                <span asp-validation-for="LedgerCode" class="text-danger"></span>
+                <label asp-for="MaDoiTuong" class="form-label">Mã Khách Hàng</label>
+                <input asp-for="MaDoiTuong" class="form-control" placeholder="VD: KH001" />
+                <span asp-validation-for="MaDoiTuong" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="LedgerType" class="form-label">Loại Sổ</label>
-                <select asp-for="LedgerType" class="form-select">
-                    <option value="1">Đầu Tư</option>
-                    <option value="2">Công Nợ</option>
-                </select>
+                <label asp-for="TenDoiTuong" class="form-label">Tên Khách Hàng</label>
+                <input asp-for="TenDoiTuong" class="form-control" />
+                <span asp-validation-for="TenDoiTuong" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Description" class="form-label">Mô Tả</label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <label asp-for="SoDienThoai" class="form-label">Số Điện Thoại</label>
+                <input asp-for="SoDienThoai" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="DiaChi" class="form-label">Địa Chỉ</label>
+                <textarea asp-for="DiaChi" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AoNuoi" class="form-label">Ao Nuôi</label>
+                <input asp-for="AoNuoi" class="form-control" />
             </div>
             <div class="form-group">
                 <input type="submit" value="Tạo" class="btn btn-primary" />

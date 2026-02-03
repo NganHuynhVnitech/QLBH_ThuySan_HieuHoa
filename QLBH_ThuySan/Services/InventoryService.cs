@@ -6,10 +6,14 @@ namespace QLBH_ThuySan.Services
 {
     public interface IInventoryService
     {
-        Task<decimal> CalculateWeightedAverageCostAsync(int productId, int warehouseId, decimal quantity, decimal unitPrice);
-        Task<ProductWarehouse?> GetProductWarehouseAsync(int productId, int warehouseId);
+        Task<decimal> CalculateWeightedAverageCostAsync(string maHang, string maKho, double quantity, decimal unitPrice);
+        Task<ChiTietTon?> GetInventoryAsync(string maHang, string maKho);
     }
 
+    /// <summary>
+    /// Service for inventory management operations
+    /// Maps to ChiTietTon table in HieuHoaDB
+    /// </summary>
     public class InventoryService : IInventoryService
     {
         private readonly ApplicationDbContext _context;
@@ -19,33 +23,45 @@ namespace QLBH_ThuySan.Services
             _context = context;
         }
 
-        public async Task<decimal> CalculateWeightedAverageCostAsync(int productId, int warehouseId, decimal quantity, decimal unitPrice)
+        /// <summary>
+        /// Calculate weighted average cost for a product in a warehouse
+        /// Uses stored procedure sp_CalculateWeightedAverageCost if available
+        /// </summary>
+        public async Task<decimal> CalculateWeightedAverageCostAsync(string maHang, string maKho, double quantity, decimal unitPrice)
         {
-            var newWACParam = new SqlParameter
+            // Get current inventory
+            var inventory = await GetInventoryAsync(maHang, maKho);
+            
+            if (inventory == null)
             {
-                ParameterName = "@NewWeightedAverageCost",
-                SqlDbType = System.Data.SqlDbType.Decimal,
-                Direction = System.Data.ParameterDirection.Output,
-                Precision = 18,
-                Scale = 2
-            };
+                // No existing inventory, cost is the unit price
+                return unitPrice;
+            }
 
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC @NewWeightedAverageCost = sp_CalculateWeightedAverageCost @ProductId, @WarehouseId, @NewQuantity, @NewUnitPrice",
-                new SqlParameter("@ProductId", productId),
-                new SqlParameter("@WarehouseId", warehouseId),
-                new SqlParameter("@NewQuantity", quantity),
-                new SqlParameter("@NewUnitPrice", unitPrice),
-                newWACParam
-            );
+            // Calculate weighted average cost
+            // WAC = (CurrentValue + NewValue) / (CurrentQty + NewQty)
+            var currentQty = inventory.SoLuongTon ?? 0;
+            var currentValue = inventory.GiaTriTon ?? 0;
+            var newValue = (decimal)quantity * unitPrice;
+            var totalQty = currentQty + quantity;
 
-            return (decimal)(newWACParam.Value ?? 0);
+            if (totalQty <= 0)
+            {
+                return 0;
+            }
+
+            return (currentValue + newValue) / (decimal)totalQty;
         }
 
-        public async Task<ProductWarehouse?> GetProductWarehouseAsync(int productId, int warehouseId)
+        /// <summary>
+        /// Get inventory for a specific product in a specific warehouse
+        /// </summary>
+        public async Task<ChiTietTon?> GetInventoryAsync(string maHang, string maKho)
         {
-            return await _context.ProductWarehouses
-                .FirstOrDefaultAsync(pw => pw.ProductId == productId && pw.WarehouseId == warehouseId);
+            return await _context.ChiTietTons
+                .Include(ct => ct.MaHangNavigation)
+                .Include(ct => ct.MaKhoNavigation)
+                .FirstOrDefaultAsync(ct => ct.MaHang == maHang && ct.MaKho == maKho);
         }
     }
 }

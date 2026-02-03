@@ -25,9 +25,9 @@
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>Giá Vốn Hàng Bán (COGS)</strong></td>
+                    <td><strong>Tổng Mua Hàng (Purchases)</strong></td>
                     <td class="text-end">
-                        <strong class="text-danger fs-5">(@Model.CostOfGoodsSold.ToString("N0") VNĐ)</strong>
+                        <strong class="text-danger fs-5">(@Model.TotalPurchases.ToString("N0") VNĐ)</strong>
                     </td>
                 </tr>
                 <tr class="table-secondary">
@@ -43,21 +43,15 @@
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
-                    <td><strong>Thu Chiết Khấu từ NCC</strong></td>
+                    <td><strong>Thu Từ Khách Hàng</strong></td>
                     <td class="text-end">
-                        <strong class="text-success">+@Model.DiscountReceived.ToString("N0") VNĐ</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Chi Chiết Khấu cho Khách</strong></td>
-                    <td class="text-end">
-                        <strong class="text-danger">-@Model.DiscountGiven.ToString("N0") VNĐ</strong>
+                        <strong class="text-success">+@Model.TotalReceipts.ToString("N0") VNĐ</strong>
                     </td>
                 </tr>
                 <tr>
                     <td><strong>Chi Phí Vận Hành</strong></td>
                     <td class="text-end">
-                        <strong class="text-danger">-@Model.OperatingExpenses.ToString("N0") VNĐ</strong>
+                        <strong class="text-danger">-@Model.TotalExpenses.ToString("N0") VNĐ</strong>
                     </td>
                 </tr>
                 <tr>
