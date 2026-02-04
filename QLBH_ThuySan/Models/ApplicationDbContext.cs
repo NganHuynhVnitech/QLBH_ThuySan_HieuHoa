@@ -476,22 +476,22 @@ namespace QLBH_ThuySan.Models
 
             modelBuilder.Entity<NguoiDung>(entity =>
             {
-                entity.HasKey(e => e.MaNguoiDung).HasName("PK_NguoiDung");
+                entity.HasKey(e => e.TenNguoiDung).HasName("PK_NguoiDung");
 
                 entity.ToTable("NguoiDung");
 
-                entity.Property(e => e.MaNguoiDung)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("maNguoiDung");
                 entity.Property(e => e.TenNguoiDung)
-                    .HasMaxLength(100)
-                    .HasColumnName("tenNguoiDung");
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("TenNguoiDung");
+                entity.Property(e => e.TenHienThi)
+                    .HasMaxLength(50)
+                    .HasColumnName("TenHienThi");
                 entity.Property(e => e.MatKhau)
-                    .HasMaxLength(100)
-                    .HasColumnName("matKhau");
+                    .HasMaxLength(50)
+                    .HasColumnName("MatKhau");
                 entity.Property(e => e.QuyenNguoiDung)
-                    .HasColumnName("quyenNguoiDung");
+                    .HasColumnName("QuyenNguoiDung");
             });
 
             OnModelCreatingPartial(modelBuilder);

@@ -10,22 +10,22 @@ namespace QLBH_ThuySan.Models
     public class NguoiDung
     {
         [Key]
-        [Column("maNguoiDung")]
-        [StringLength(20)]
-        public string MaNguoiDung { get; set; } = null!;
+        [Column("TenNguoiDung")]
+        [StringLength(50)]
+        public string TenNguoiDung { get; set; } = null!;
 
-        [Column("tenNguoiDung")]
-        [StringLength(100)]
-        public string? TenNguoiDung { get; set; }
+        [Column("TenHienThi")]
+        [StringLength(50)]
+        public string? TenHienThi { get; set; }
 
-        [Column("matKhau")]
-        [StringLength(100)]
+        [Column("MatKhau")]
+        [StringLength(50)]
         public string? MatKhau { get; set; }
 
         /// <summary>
         /// Permission level: 1=Admin, 2=Manager, 3=Saler
         /// </summary>
-        [Column("quyenNguoiDung")]
+        [Column("QuyenNguoiDung")]
         public int? QuyenNguoiDung { get; set; }
     }
 }

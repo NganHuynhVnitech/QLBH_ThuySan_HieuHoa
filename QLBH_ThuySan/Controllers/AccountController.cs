@@ -61,8 +61,8 @@ namespace QLBH_ThuySan.Controllers
             // Create claims for the authenticated user
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.TenNguoiDung ?? ""),
-                new Claim(ClaimTypes.NameIdentifier, user.MaNguoiDung),
+                new Claim(ClaimTypes.Name, user.TenHienThi ?? user.TenNguoiDung), // Use display name if available
+                new Claim(ClaimTypes.NameIdentifier, user.TenNguoiDung),
                 new Claim("QuyenNguoiDung", user.QuyenNguoiDung?.ToString() ?? "3"),
                 new Claim(ClaimTypes.Role, GetRoleName(user.QuyenNguoiDung))
             };
