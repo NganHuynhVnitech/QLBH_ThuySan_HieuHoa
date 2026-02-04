@@ -6,15 +6,15 @@ using QLBH_ThuySan.Models;
 namespace QLBH_ThuySan.Controllers
 {
     /// <summary>
-    /// Controller for managing Customer Private Ledger (Sổ Riêng Khách Hàng)
+    /// Controller for managing Customer Debt (Công Nợ Khách Hàng)
     /// Maps to SoRiengKhachHang table in HieuHoaDB
     /// </summary>
     [Authorize]
-    public class PrivateLedgerController : Controller
+    public class CustomerDebtController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public PrivateLedgerController(ApplicationDbContext context)
+        public CustomerDebtController(ApplicationDbContext context)
         {
             _context = context;
         }

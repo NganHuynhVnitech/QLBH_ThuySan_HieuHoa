@@ -27,18 +27,36 @@
     </div>
 
     <div class="col-md-6 mb-4">
-        <div class="card border-success">
-            <div class="card-header bg-success text-white">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-journal-text"></i> Sổ Riêng
+                    <i class="bi bi-journal-text"></i> Công Nợ Khách Hàng
                 </h5>
             </div>
             <div class="card-body">
                 <p class="card-text">
-                    Quản lý công nợ đầu tư, ghi nợ tích lũy và thanh toán cấn trừ dần.
+                    Theo dõi dư nợ, ghi nợ tích lũy và thanh toán của khách hàng.
                 </p>
-                <a asp-controller="PrivateLedger" asp-action="Index" class="btn btn-success">
-                    Xem Sổ Riêng
+                <a asp-controller="CustomerDebt" asp-action="Index" class="btn btn-info text-white">
+                    Xem Công Nợ KH
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-journal-arrow-down"></i> Công Nợ Đầu Vào
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Theo dõi công nợ nhập hàng và thời hạn thanh toán với Nhà cung cấp.
+                </p>
+                <a asp-controller="SupplierDebt" asp-action="Index" class="btn btn-warning text-dark">
+                    Xem Công Nợ NCC
                 </a>
             </div>
         </div>

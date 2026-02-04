@@ -1,0 +1,73 @@
+@model QLBH_ThuySan.Models.NhaCungCap
+
+@{
+    ViewData["Title"] = "Chi Tiết Công Nợ NCC";
+    var imports = ViewBag.Imports as IEnumerable<QLBH_ThuySan.Models.PhieuNhap>;
+    decimal totalImport = ViewBag.TotalImportValue ?? 0;
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Công Nợ Khách Hàng - @Model.TenDoiTuong</h2>
+        <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
+    </div>
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+             <h5 class="mb-0">Tổng Hợp</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                     <p><strong>Mã NCC:</strong> @Model.MaDoiTuong</p>
+                     <p><strong>Điện Thoại:</strong> @Model.SoDienThoai</p>
+                </div>
+                <div class="col-md-6 text-end">
+                     <h5>Tổng Giá Trị Nhập Hàng</h5>
+                     <h2 class="text-danger fw-bold">@string.Format("{0:N0}", totalImport) VNĐ</h2>
+                     <small class="text-muted text-warning">Lưu ý: Chưa trừ các khoản chi trả</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Lịch Sử Phiếu Nhập</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+             <thead class="table-dark">
+                <tr>
+                    <th>Mã Phiếu</th>
+                    <th>Ngày Nhập</th>
+                    <th>Hạn Thanh Toán</th>
+                    <th class="text-end">Tiền Hàng</th>
+                    <th>Chi Tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var item in imports ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuNhap>())
+                {
+                    <tr>
+                        <td>@item.MaPhieu</td>
+                        <td>@item.NgayNhap?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                             @if(item.HanThanhToan < DateTime.Now)
+                            {
+                                <span class="text-danger fw-bold">@item.HanThanhToan?.ToString("dd/MM/yyyy") (Quá hạn)</span>
+                            }
+                            else
+                            {
+                                <span>@item.HanThanhToan?.ToString("dd/MM/yyyy")</span>
+                            }
+                        </td>
+                        <td class="text-end fw-bold">@string.Format("{0:N0}", item.TongTien)</td>
+                        <td class="text-center">
+                            <a asp-controller="Import" asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-info text-white">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
