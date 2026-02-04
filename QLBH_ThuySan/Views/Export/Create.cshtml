@@ -1,0 +1,158 @@
+@model QLBH_ThuySan.Models.PhieuXuat
+
+@{
+    ViewData["Title"] = "Tạo Phiếu Xuất";
+    // Passing products to JS
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Tạo Phiếu Xuất Kho</h1>
+        </div>
+    </div>
+
+    <form asp-action="Create" id="createForm">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông Tin Chung</h5>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="MaPhieu" class="form-label">Mã Phiếu</label>
+                        <input asp-for="MaPhieu" class="form-control" placeholder="VD: PX001" required />
+                        <span asp-validation-for="MaPhieu" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="NgayXuat" class="form-label">Ngày Xuất</label>
+                        <input asp-for="NgayXuat" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        <span asp-validation-for="NgayXuat" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="IdKhachHang" class="form-label">Khách Hàng</label>
+                        <select asp-for="IdKhachHang" class="form-select" asp-items="ViewBag.IdKhachHang" required>
+                            <option value="">-- Chọn Khách Hàng --</option>
+                        </select>
+                        <span asp-validation-for="IdKhachHang" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="IdDaiLyBan" class="form-label">Đại Lý Bán</label>
+                        <select asp-for="IdDaiLyBan" class="form-select" asp-items="ViewBag.IdDaiLyBan" required>
+                            <option value="">-- Chọn Đại Lý --</option>
+                        </select>
+                        <span asp-validation-for="IdDaiLyBan" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Chi Tiết Hàng Hóa</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered" id="detailsTable">
+                    <thead>
+                        <tr>
+                            <th>Hàng Hóa</th>
+                            <th style="width: 15rem;">Số Lượng</th>
+                            <th style="width: 15rem;">Giá Bán</th>
+                            <th style="width: 15rem;">Thành Tiền</th>
+                            <th style="width: 5rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailsBody">
+                        <!-- Dynamic Rows Here -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5">
+                                <button type="button" class="btn btn-outline-success" onclick="addRow()">
+                                    <i class="bi bi-plus-circle"></i> Thêm Hàng
+                                </button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+            <a asp-action="Index" class="btn btn-secondary me-md-2">Hủy Bỏ</a>
+            <button type="submit" class="btn btn-primary btn-lg">Lưu Phiếu Xuất</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Use JSON serialization to pass strictly typed data
+        var products = @Html.Raw(Json.Serialize(ViewBag.HangHoaList));
+
+        function addRow() {
+            var tbody = document.getElementById('detailsBody');
+            var rowCount = tbody.rows.length;
+            var row = tbody.insertRow(rowCount);
+            
+            var cell1 = row.insertCell(0);
+            var selectHtml = '<select name="MaHang" class="form-select" required onchange="updatePrice(this)">';
+            selectHtml += '<option value="">-- Chọn Hàng --</option>';
+            products.forEach(function(p) {
+                selectHtml += `<option value="${p.maHang}" data-price="${p.giaBanHienTai}">${p.tenHang} (${p.donViTinh})</option>`;
+            });
+            selectHtml += '</select>';
+            cell1.innerHTML = selectHtml;
+
+            var cell2 = row.insertCell(1);
+            cell2.innerHTML = '<input type="number" name="SoLuong" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+
+            var cell3 = row.insertCell(2);
+            cell3.innerHTML = '<input type="number" name="GiaBan" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+
+            var cell4 = row.insertCell(3);
+            cell4.innerHTML = '<input type="text" class="form-control total-row" disabled readonly value="0" />';
+
+            var cell5 = row.insertCell(4);
+            cell5.innerHTML = '<button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-trash"></i></button>';
+        }
+
+        function removeRow(btn) {
+            var row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        function updatePrice(select) {
+            var price = select.options[select.selectedIndex].getAttribute('data-price');
+            var row = select.parentNode.parentNode;
+            var priceInput = row.cells[2].getElementsByTagName('input')[0];
+            if(price) {
+                priceInput.value = price;
+            } else {
+                priceInput.value = 0;
+            }
+            calcRow(priceInput);
+        }
+
+        function calcRow(input) {
+            var row = input.parentNode.parentNode;
+            var qty = parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0;
+            var price = parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0;
+            var total = qty * price;
+            // Format currency simple
+            row.cells[3].getElementsByTagName('input')[0].value = total.toLocaleString('vi-VN');
+        }
+        
+        // Add one empty row by default
+        window.onload = function() {
+            addRow();
+        };
+    </script>
+}

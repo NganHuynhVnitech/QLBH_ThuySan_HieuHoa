@@ -1,0 +1,146 @@
+@model QLBH_ThuySan.Models.PhieuNhap
+
+@{
+    ViewData["Title"] = "Tạo Phiếu Nhập";
+    var hangHoaList = ViewData["HangHoaList"] as IEnumerable<dynamic>; // Cast to dynamic or ViewModel usually
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Tạo Phiếu Nhập Kho</h1>
+        </div>
+    </div>
+
+    <form asp-action="Create" id="createForm">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông Tin Chung</h5>
+            </div>
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="MaPhieu" class="form-label">Mã Phiếu</label>
+                        <input asp-for="MaPhieu" class="form-control" placeholder="VD: PN001" required />
+                        <span asp-validation-for="MaPhieu" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="NgayNhap" class="form-label">Ngày Nhập</label>
+                        <input asp-for="NgayNhap" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        <span asp-validation-for="NgayNhap" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="IdNhaCungCap" class="form-label">Nhà Cung Cấp</label>
+                        <select asp-for="IdNhaCungCap" class="form-select" asp-items="ViewBag.IdNhaCungCap" required>
+                            <option value="">-- Chọn NCC --</option>
+                        </select>
+                        <span asp-validation-for="IdNhaCungCap" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="IdDaiLyNhap" class="form-label">Đại Lý Nhập</label>
+                        <select asp-for="IdDaiLyNhap" class="form-select" asp-items="ViewBag.IdDaiLyNhap" required>
+                            <option value="">-- Chọn Đại Lý --</option>
+                        </select>
+                        <span asp-validation-for="IdDaiLyNhap" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Chi Tiết Hàng Hóa</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered" id="detailsTable">
+                    <thead>
+                        <tr>
+                            <th>Hàng Hóa</th>
+                            <th style="width: 15rem;">Số Luượng</th>
+                            <th style="width: 15rem;">Đơn Giá Nhập</th>
+                            <th style="width: 15rem;">Thành Tiền</th>
+                            <th style="width: 5rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailsBody">
+                        <!-- Dynamic Rows Here -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5">
+                                <button type="button" class="btn btn-outline-success" onclick="addRow()">
+                                    <i class="bi bi-plus-circle"></i> Thêm Hàng
+                                </button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+            <a asp-action="Index" class="btn btn-secondary me-md-2">Hủy Bỏ</a>
+            <button type="submit" class="btn btn-primary btn-lg">Lưu Phiếu Nhập</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Use JSON serialization to pass strictly typed data
+        var products = @Html.Raw(Json.Serialize(ViewBag.HangHoaList));
+
+        function addRow() {
+            var tbody = document.getElementById('detailsBody');
+            var rowCount = tbody.rows.length;
+            var row = tbody.insertRow(rowCount);
+            
+            var cell1 = row.insertCell(0);
+            var selectHtml = '<select name="MaHang" class="form-select" required onchange="updateUnit(this)">';
+            selectHtml += '<option value="">-- Chọn Hàng --</option>';
+            products.forEach(function(p) {
+                selectHtml += `<option value="${p.maHang}" data-unit="${p.donViTinh}">${p.tenHang} (${p.donViTinh})</option>`;
+            });
+            selectHtml += '</select>';
+            cell1.innerHTML = selectHtml;
+
+            var cell2 = row.insertCell(1);
+            cell2.innerHTML = '<input type="number" name="SoLuong" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+
+            var cell3 = row.insertCell(2);
+            cell3.innerHTML = '<input type="number" name="DonGiaNhap" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+
+            var cell4 = row.insertCell(3);
+            cell4.innerHTML = '<input type="text" class="form-control total-row" disabled readonly value="0" />';
+
+            var cell5 = row.insertCell(4);
+            cell5.innerHTML = '<button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-trash"></i></button>';
+        }
+
+        function removeRow(btn) {
+            var row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        function calcRow(input) {
+            var row = input.parentNode.parentNode;
+            var qty = parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0;
+            var price = parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0;
+            var total = qty * price;
+            // Format currency simple
+            row.cells[3].getElementsByTagName('input')[0].value = total.toLocaleString('vi-VN');
+        }
+        
+        // Add one empty row by default
+        window.onload = function() {
+            addRow();
+        };
+    </script>
+}

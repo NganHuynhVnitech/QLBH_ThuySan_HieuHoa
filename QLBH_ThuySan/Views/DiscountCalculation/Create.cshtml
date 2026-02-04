@@ -1,0 +1,64 @@
+@model QLBH_ThuySan.Models.PhieuTinhChietKhau
+
+@{
+    ViewData["Title"] = "Chạy Tính Toán Chiết Khấu";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Chạy Tính Toán Chiết Khấu</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="MaPhieuTinh" class="form-label">Mã Đợt Tính</label>
+                            <input asp-for="MaPhieuTinh" class="form-control" placeholder="VD: DOT1_T02_2026" required />
+                            <span asp-validation-for="MaPhieuTinh" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="LoaiDoiTuong" class="form-label">Kỳ Tính Cho</label>
+                            <select asp-for="LoaiDoiTuong" class="form-select" required>
+                                <option value="KHACH">Khách Hàng (Trả Sau / Sản Lượng)</option>
+                                <option value="NCC">Nhà Cung Cấp (Đạt Doanh Số)</option>
+                            </select>
+                            <span asp-validation-for="LoaiDoiTuong" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="TuNgay" class="form-label">Từ Ngày</label>
+                                <input asp-for="TuNgay" class="form-control" type="date" required />
+                                <span asp-validation-for="TuNgay" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="DenNgay" class="form-label">Đến Ngày</label>
+                                <input asp-for="DenNgay" class="form-control" type="date" required />
+                                <span asp-validation-for="DenNgay" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Hệ thống sẽ tự động tổng hợp SL Nhập/Xuất trong khoảng thời gian này và áp dụng các Quy luật chiết khấu để tính toán.
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Chạy Tính Toán</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

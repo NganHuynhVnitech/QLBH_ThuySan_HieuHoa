@@ -1,0 +1,74 @@
+@model QLBH_ThuySan.Models.HangHoa
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Hàng Hóa";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Chỉnh Sửa Hàng Hóa</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaHang" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mã Hàng</label>
+                                <input value="@Model.MaHang" class="form-control" disabled readonly />
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenHang" class="form-label">Tên Hàng Hóa</label>
+                                <input asp-for="TenHang" class="form-control" required />
+                                <span asp-validation-for="TenHang" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DonViTinh" class="form-label">Đơn Vị Tính</label>
+                                <input asp-for="DonViTinh" class="form-control" />
+                                <span asp-validation-for="DonViTinh" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="QuyCach" class="form-label">Quy Cách</label>
+                                <input asp-for="QuyCach" class="form-control" />
+                                <span asp-validation-for="QuyCach" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="GiaVonHienTai" class="form-label">Giá Vốn Hiện Tại</label>
+                                <input asp-for="GiaVonHienTai" class="form-control" type="number" step="0.01" />
+                                <small class="text-muted">Giá vốn được cập nhật tự động khi nhập kho.</small>
+                                <span asp-validation-for="GiaVonHienTai" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="GiaBanHienTai" class="form-label">Giá Bán Niêm Yết</label>
+                                <input asp-for="GiaBanHienTai" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="GiaBanHienTai" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

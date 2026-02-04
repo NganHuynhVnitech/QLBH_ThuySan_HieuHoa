@@ -1,0 +1,84 @@
+@model QLBH_ThuySan.Models.PhieuNhap
+
+@{
+    ViewData["Title"] = "Chi Tiết Phiếu Nhập";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Chi Tiết Phiếu Nhập: <span class="text-primary">@Model.MaPhieu</span></h1>
+        </div>
+        <div class="col-md-4 text-end align-self-center">
+            <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
+             <button onclick="window.print()" class="btn btn-outline-dark"><i class="bi bi-printer"></i> In Phiếu</button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Thông Tin Chung</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Ngày Nhập:</strong> @Model.NgayNhap?.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Đại Lý Nhập:</strong> @(Model.IdDaiLyNhapNavigation?.TenDaiLy ?? Model.IdDaiLyNhap)</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Nhà Cung Cấp:</strong> @(Model.IdNhaCungCapNavigation?.TenDoiTuong ?? Model.IdNhaCungCap)</p>
+                    <p><strong>Địa Chỉ NCC:</strong> @(Model.IdNhaCungCapNavigation?.DiaChi ?? "-")</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Hạn Thanh Toán:</strong> @Model.HanThanhToan?.ToString("dd/MM/yyyy")</p>
+                    <p><strong>Tổng Tiền:</strong> <span class="text-success fw-bold fs-5">@string.Format("{0:N0}", Model.TongTien) VNĐ</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Danh Sách Hàng Hóa</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã Hàng</th>
+                        <th>Tên Hàng</th>
+                        <th>ĐVT</th>
+                        <th class="text-end">Số Lượng</th>
+                        <th class="text-end">Đơn Giá</th>
+                        <th class="text-end">Thành Tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int i = 1; }
+                    @foreach (var item in Model.ChiTietPhieuNhaps)
+                    {
+                        <tr>
+                            <td>@i</td>
+                            <td>@item.MaHang</td>
+                            <td>@item.MaHangNavigation?.TenHang</td>
+                            <td>@item.MaHangNavigation?.DonViTinh</td>
+                            <td class="text-end">@item.SoLuong</td>
+                            <td class="text-end">@string.Format("{0:N0}", item.DonGiaNhap)</td>
+                            <td class="text-end fw-bold">
+                                @string.Format("{0:N0}", (item.SoLuong * (double)(item.DonGiaNhap ?? 0)))
+                            </td>
+                        </tr>
+                        i++;
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary">
+                        <td colspan="6" class="text-end fw-bold">TỔNG CỘNG:</td>
+                        <td class="text-end fw-bold fs-5">@string.Format("{0:N0}", Model.TongTien)</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

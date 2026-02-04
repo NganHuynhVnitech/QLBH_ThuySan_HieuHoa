@@ -1,0 +1,85 @@
+@model IEnumerable<QLBH_ThuySan.Models.KhachHang>
+
+@{
+    ViewData["Title"] = "Quản Lý Khách Hàng";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Quản Lý Khách Hàng</h1>
+        <p class="text-muted">Danh sách khách hàng và thông tin liên hệ</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm Mới
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã KH</th>
+                        <th>Tên Khách Hàng</th>
+                        <th>Điện Thoại</th>
+                        <th>Địa Chỉ</th>
+                        <th>Ao Nuôi</th>
+                        <th class="text-end">Dư Nợ</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td><span class="badge bg-secondary">@item.MaDoiTuong</span></td>
+                            <td class="fw-bold">@item.TenDoiTuong</td>
+                            <td>@item.SoDienThoai</td>
+                            <td>@item.DiaChi</td>
+                            <td>@item.AoNuoi</td>
+                            <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.DuNoLuyKe)</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                        Sửa
+                                    </a>
+                                    <a asp-controller="PrivateLedger" asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-success" title="Xem Sổ Nợ">
+                                        Sổ Nợ
+                                    </a>
+                                    <!-- Button trigger modal -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
+                                        Xóa
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal-@item.MaDoiTuong" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Bạn có chắc chắn muốn xóa khách hàng <strong>@item.TenDoiTuong</strong>?<br/>
+                                                <small class="text-danger">Lưu ý: Không thể xóa khách hàng nếu đang có công nợ hoặc phiếu xuất.</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaDoiTuong">
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -48,16 +48,34 @@
         <div class="card border-info">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-percent"></i> Discount Engine
+                    <i class="bi bi-people"></i> Quản Lý Khách Hàng
                 </h5>
             </div>
             <div class="card-body">
                 <p class="card-text">
-                    Tính chiết khấu động (Bậc thang/Cố định) cho Nhà cung cấp & Khách hàng.
+                    Quản lý danh sách khách hàng, thông tin liên hệ và ao nuôi.
                 </p>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-info" disabled>Đang Phát Triển</button>
-                </div>
+                <a asp-controller="Customer" asp-action="Index" class="btn btn-info text-white">
+                    Xem Khách Hàng
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card border-secondary">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-truck"></i> Quản Lý Nhà Cung Cấp
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Quản lý danh sách nhà cung cấp, đối tác nhập hàng và công nợ.
+                </p>
+                <a asp-controller="Supplier" asp-action="Index" class="btn btn-secondary">
+                    Xem Nhà Cung Cấp
+                </a>
             </div>
         </div>
     </div>

@@ -17,7 +17,7 @@ namespace QLBH_ThuySan.Models
         public virtual DbSet<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; }
         public virtual DbSet<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; }
         public virtual DbSet<ChiTietTon> ChiTietTons { get; set; }
-        public virtual DbSet<DaiLy> DaiLies { get; set; }
+        public virtual DbSet<DaiLy> DaiLys { get; set; }
         public virtual DbSet<HangHoa> HangHoas { get; set; }
         public virtual DbSet<KhachHang> KhachHangs { get; set; }
         public virtual DbSet<Kho> Khos { get; set; }

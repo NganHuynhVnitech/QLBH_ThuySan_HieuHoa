@@ -1,0 +1,64 @@
+@model QLBH_ThuySan.Models.CauHinhChietKhau
+
+@{
+    ViewData["Title"] = "Sửa Cấu Hình Chiết Khấu";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Chỉnh Sửa Quy Luật</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="TenCauHinh" class="form-label">Tên Cấu Hình</label>
+                            <input asp-for="TenCauHinh" class="form-control" required />
+                            <span asp-validation-for="TenCauHinh" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LoaiQuyLuat" class="form-label">Loại Quy Luật</label>
+                                <select asp-for="LoaiQuyLuat" class="form-select" required>
+                                    <option value="CO_DINH">Cố Định (Fixed Rate)</option>
+                                    <option value="THEO_BAC">Theo Bậc Thang (Tiered)</option>
+                                </select>
+                                <span asp-validation-for="LoaiQuyLuat" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DoiTuongApDung" class="form-label">Đối Tượng Áp Dụng</label>
+                                <select asp-for="DoiTuongApDung" class="form-select" required>
+                                    <option value="KHACH">Khách Hàng</option>
+                                    <option value="NCC">Nhà Cung Cấp</option>
+                                </select>
+                                <span asp-validation-for="DoiTuongApDung" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ChiTietLuat" class="form-label">Chi Tiết Luật (Mô tả/JSON)</label>
+                            <textarea asp-for="ChiTietLuat" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="ChiTietLuat" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

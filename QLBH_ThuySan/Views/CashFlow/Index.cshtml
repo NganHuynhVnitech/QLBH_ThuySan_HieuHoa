@@ -1,0 +1,113 @@
+@model IEnumerable<QLBH_ThuySan.Models.PhieuThuChi>
+
+@{
+    ViewData["Title"] = "Quản Lý Thu Chi";
+    
+    decimal TongThu = Model.Where(x => x.LoaiPhieu == "THU").Sum(x => x.SoTien ?? 0);
+    decimal TongChi = Model.Where(x => x.LoaiPhieu == "CHI").Sum(x => x.SoTien ?? 0);
+    decimal ChenhLech = TongThu - TongChi;
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Quản Lý Thu Chi</h1>
+        <p class="text-muted">Ghi nhận các khoản thu chi hoạt động</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm Phiếu
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Tổng Thu</h5>
+                <h3 class="fw-bold">@string.Format("{0:N0}", TongThu) VNĐ</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">Tổng Chi</h5>
+                <h3 class="fw-bold">@string.Format("{0:N0}", TongChi) VNĐ</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card @(ChenhLech >= 0 ? "bg-info" : "bg-warning") text-white">
+            <div class="card-body">
+                <h5 class="card-title">Chênh Lệch</h5>
+                <h3 class="fw-bold">@string.Format("{0:N0}", ChenhLech) VNĐ</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã Phiếu</th>
+                        <th>Ngày Lập</th>
+                        <th>Loại Phiếu</th>
+                        <th class="text-end">Số Tiền</th>
+                        <th>Lý Do</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td><span class="badge bg-secondary">@item.MaPhieu</span></td>
+                            <td>@item.NgayLap?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (item.LoaiPhieu == "THU") {
+                                    <span class="badge bg-success">THU</span>
+                                } else {
+                                    <span class="badge bg-danger">CHI</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold @(item.LoaiPhieu == "THU" ? "text-success" : "text-danger")">
+                                @string.Format("{0:N0}", item.SoTien)
+                            </td>
+                            <td>@item.LyDo</td>
+                            <td>
+                                <!-- Button trigger modal -->
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
+                                    Xóa
+                                </button>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal-@item.MaPhieu" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Bạn có chắc chắn muốn xóa phiếu <strong>@item.MaPhieu</strong>?<br/>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaPhieu">
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

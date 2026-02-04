@@ -1,0 +1,58 @@
+@model IEnumerable<QLBH_ThuySan.Models.PhieuTinhChietKhau>
+
+@{
+    ViewData["Title"] = "Tính Chiết Khấu";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Tính Chiết Khấu</h1>
+        <p class="text-muted">Danh sách các đợt chạy tính toán chiết khấu</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-calculator"></i> Tính Toán Mới
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã Phiếu</th>
+                        <th>Ngày Tạo</th>
+                        <th>Loại Đối Tượng</th>
+                        <th>Kỳ Tính Toán</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td><span class="badge bg-secondary">@item.MaPhieuTinh</span></td>
+                            <td>@item.NgayTao?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (item.LoaiDoiTuong == "NCC") {
+                                    <span class="badge bg-secondary">Nhà Cung Cấp</span>
+                                } else {
+                                    <span class="badge bg-success">Khách Hàng</span>
+                                }
+                            </td>
+                            <td>
+                                @item.TuNgay?.ToString("dd/MM/yyyy") - @item.DenNgay?.ToString("dd/MM/yyyy")
+                            </td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.MaPhieuTinh" class="btn btn-sm btn-outline-info">
+                                    Xem Kết Quả
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

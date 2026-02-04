@@ -1,17 +1,17 @@
-@model IEnumerable<QLBH_ThuySan.Models.Kho>
+@model IEnumerable<QLBH_ThuySan.Models.CauHinhChietKhau>
 
 @{
-    ViewData["Title"] = "Quản Lý Kho Hàng";
+    ViewData["Title"] = "Cấu Hình Chiết Khấu";
 }
 
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1>Quản Lý Kho Hàng</h1>
-        <p class="text-muted">Danh sách kho vật lý, kho tổng và kho đại lý</p>
+        <h1>Cấu Hình Chiết Khấu</h1>
+        <p class="text-muted">Quản lý các quy luật tính chiết khấu cho Khách hàng & Nhà cung cấp</p>
     </div>
     <div class="col-md-4 text-end align-self-center">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Thêm Mới
+            <i class="bi bi-plus-lg"></i> Thêm Quy Luật
         </a>
     </div>
 </div>
@@ -22,52 +22,43 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Kho</th>
-                        <th>Tên Kho</th>
-                        <th>Loại Kho</th>
-                        <th>Đại Lý Phụ Trách</th>
+                        <th>Tên Cấu Hình</th>
+                        <th>Loại Quy Luật</th>
+                        <th>Đối Tượng Áp Dụng</th>
                         <th>Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model) {
                         <tr>
-                            <td><span class="badge bg-secondary">@item.MaKho</span></td>
-                            <td class="fw-bold">@item.TenKho</td>
+                            <td class="fw-bold">@item.TenCauHinh</td>
                             <td>
-                                @if (item.LoaiKho == "VAT_LY") {
-                                    <span class="badge bg-success">Vật Lý</span>
-                                } else if (item.LoaiKho == "TONG_AO") {
-                                    <span class="badge bg-warning text-dark">Tổng Ảo</span>
+                                @if (item.LoaiQuyLuat == "THEO_BAC") {
+                                    <span class="badge bg-primary">Theo Bậc Thang</span>
                                 } else {
-                                    <span class="badge bg-secondary">@item.LoaiKho</span>
+                                    <span class="badge bg-info text-dark">Cố Định</span>
                                 }
                             </td>
                             <td>
-                                @if (item.MaDaiLyPhuTrachNavigation != null) {
-                                    <a asp-controller="Agency" asp-action="Edit" asp-route-id="@item.MaDaiLyPhuTrachNavigation.MaDaiLy" class="text-decoration-none">
-                                        @item.MaDaiLyPhuTrachNavigation.TenDaiLy
-                                    </a>
+                                @if (item.DoiTuongApDung == "NCC") {
+                                    <span class="badge bg-secondary">Nhà Cung Cấp</span>
                                 } else {
-                                    <span class="text-muted">-</span>
+                                    <span class="badge bg-success">Khách Hàng</span>
                                 }
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a asp-action="Inventory" asp-route-id="@item.MaKho" class="btn btn-sm btn-outline-info" title="Xem Tồn Kho">
-                                        Tồn Kho
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@item.MaKho" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Sửa">
                                         Sửa
                                     </a>
                                     <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaKho" title="Xóa">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id" title="Xóa">
                                         Xóa
                                     </button>
                                 </div>
 
                                 <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal-@item.MaKho" tabindex="-1" aria-hidden="true">
+                                <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -75,12 +66,11 @@
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa kho <strong>@item.TenKho</strong>?<br/>
-                                                <small class="text-danger">Lưu ý: Không thể xóa nếu kho đang có tồn kho hoặc giao dịch.</small>
+                                                Bạn có chắc chắn muốn xóa cấu hình <strong>@item.TenCauHinh</strong>?
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <form asp-action="Delete" asp-route-id="@item.MaKho">
+                                                <form asp-action="Delete" asp-route-id="@item.Id">
                                                     <button type="submit" class="btn btn-danger">Xóa</button>
                                                 </form>
                                             </div>

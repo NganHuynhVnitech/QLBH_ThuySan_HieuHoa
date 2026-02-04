@@ -1,0 +1,82 @@
+@model IEnumerable<QLBH_ThuySan.Models.HangHoa>
+
+@{
+    ViewData["Title"] = "Quản Lý Hàng Hóa";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Quản Lý Hàng Hóa</h1>
+        <p class="text-muted">Danh sách sản phẩm và hàng hóa kinh doanh</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm Mới
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã Hàng</th>
+                        <th>Tên Hàng Hóa</th>
+                        <th>ĐVT</th>
+                        <th>Quy Cách</th>
+                        <th class="text-end">Giá Vốn</th>
+                        <th class="text-end">Giá Bán</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td><span class="badge bg-secondary">@item.MaHang</span></td>
+                            <td class="fw-bold">@item.TenHang</td>
+                            <td>@item.DonViTinh</td>
+                            <td>@item.QuyCach</td>
+                            <td class="text-end">@string.Format("{0:N0}", item.GiaVonHienTai)</td>
+                            <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.GiaBanHienTai)</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaHang" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                        Sửa
+                                    </a>
+                                    <!-- Button trigger modal -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaHang" title="Xóa">
+                                        Xóa
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal-@item.MaHang" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Bạn có chắc chắn muốn xóa sản phẩm <strong>@item.TenHang</strong>?<br/>
+                                                <small class="text-danger">Lưu ý: Không thể xóa nếu đã có phát sinh nhập/xuất.</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaHang">
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
