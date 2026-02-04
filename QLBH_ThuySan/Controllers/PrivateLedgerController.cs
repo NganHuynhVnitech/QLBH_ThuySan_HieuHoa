@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
@@ -8,6 +9,7 @@ namespace QLBH_ThuySan.Controllers
     /// Controller for managing Customer Private Ledger (Sổ Riêng Khách Hàng)
     /// Maps to SoRiengKhachHang table in HieuHoaDB
     /// </summary>
+    [Authorize]
     public class PrivateLedgerController : Controller
     {
         private readonly ApplicationDbContext _context;

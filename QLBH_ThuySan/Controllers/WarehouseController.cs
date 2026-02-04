@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
@@ -8,6 +9,7 @@ namespace QLBH_ThuySan.Controllers
     /// Controller for managing Warehouses (Kho)
     /// Maps to Kho and ChiTietTon tables in HieuHoaDB
     /// </summary>
+    [Authorize]
     public class WarehouseController : Controller
     {
         private readonly ApplicationDbContext _context;

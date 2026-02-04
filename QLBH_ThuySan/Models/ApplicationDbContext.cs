@@ -27,6 +27,7 @@ namespace QLBH_ThuySan.Models
         public virtual DbSet<PhieuTinhChietKhau> PhieuTinhChietKhaus { get; set; }
         public virtual DbSet<PhieuXuat> PhieuXuats { get; set; }
         public virtual DbSet<SoRiengKhachHang> SoRiengKhachHangs { get; set; }
+        public virtual DbSet<NguoiDung> NguoiDungs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -471,6 +472,26 @@ namespace QLBH_ThuySan.Models
                 entity.HasOne(d => d.MaKhachHangNavigation).WithMany(p => p.SoRiengKhachHangs)
                     .HasForeignKey(d => d.MaKhachHang)
                     .HasConstraintName("FK__SoRiengKh__maKha__57A801BA");
+            });
+
+            modelBuilder.Entity<NguoiDung>(entity =>
+            {
+                entity.HasKey(e => e.MaNguoiDung).HasName("PK_NguoiDung");
+
+                entity.ToTable("NguoiDung");
+
+                entity.Property(e => e.MaNguoiDung)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maNguoiDung");
+                entity.Property(e => e.TenNguoiDung)
+                    .HasMaxLength(100)
+                    .HasColumnName("tenNguoiDung");
+                entity.Property(e => e.MatKhau)
+                    .HasMaxLength(100)
+                    .HasColumnName("matKhau");
+                entity.Property(e => e.QuyenNguoiDung)
+                    .HasColumnName("quyenNguoiDung");
             });
 
             OnModelCreatingPartial(modelBuilder);

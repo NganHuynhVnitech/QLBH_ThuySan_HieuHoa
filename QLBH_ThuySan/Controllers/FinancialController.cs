@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
+    [Authorize]
     public class FinancialController : Controller
     {
         private readonly IFinancialService _financialService;
