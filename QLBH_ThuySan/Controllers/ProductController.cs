@@ -128,6 +128,32 @@ namespace QLBH_ThuySan.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string term)
+        {
+            if (string.IsNullOrEmpty(term))
+            {
+                return Json(new List<object>());
+            }
+
+            var products = await _context.HangHoas
+                .Where(p => p.TenHang.Contains(term) || p.MaHang.Contains(term))
+                .Take(20)
+                .Select(p => new
+                {
+                    p.MaHang,
+                    p.TenHang,
+                    p.DonViTinh,
+                    p.GiaBanHienTai,
+                    p.GiaVonHienTai,
+                    // Use a placeholder if no image
+                    HinhAnh = "/images/product_placeholder.png" 
+                })
+                .ToListAsync();
+
+            return Json(products);
+        }
+
         private bool HangHoaExists(string id)
         {
             return _context.HangHoas.Any(e => e.MaHang == id);

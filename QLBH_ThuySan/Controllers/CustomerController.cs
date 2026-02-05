@@ -137,6 +137,61 @@ namespace QLBH_ThuySan.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string term)
+        {
+            if (string.IsNullOrEmpty(term))
+            {
+                return Json(new List<object>());
+            }
+
+            var customers = await _context.KhachHangs
+                .Where(c => c.TenDoiTuong.Contains(term) || c.MaDoiTuong.Contains(term) || c.SoDienThoai.Contains(term))
+                .Take(20)
+                .Select(c => new
+                {
+                    c.MaDoiTuong,
+                    c.TenDoiTuong,
+                    c.SoDienThoai,
+                    c.DiaChi
+                })
+                .ToListAsync();
+
+            return Json(customers);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> QuickCreate([FromBody] KhachHang khachHang)
+        {
+            if (khachHang == null) return BadRequest("Invalid Data");
+
+            // Basic validation
+            if (string.IsNullOrEmpty(khachHang.TenDoiTuong)) return BadRequest("Tên khách hàng là bắt buộc");
+            
+            // Generate ID if missing (Simple logic: KH + Random or Timestamp for MVP)
+            if (string.IsNullOrEmpty(khachHang.MaDoiTuong))
+            {
+                khachHang.MaDoiTuong = "KH" + DateTime.Now.ToString("yyMMddHHmmss");
+            }
+
+            if (_context.KhachHangs.Any(e => e.MaDoiTuong == khachHang.MaDoiTuong))
+            {
+                return BadRequest("Mã khách hàng đã tồn tại");
+            }
+
+            khachHang.DuNoLuyKe = 0;
+            try
+            {
+                _context.Add(khachHang);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, data = khachHang });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi lưu: " + ex.Message);
+            }
+        }
+
         private bool KhachHangExists(string id)
         {
             return _context.KhachHangs.Any(e => e.MaDoiTuong == id);

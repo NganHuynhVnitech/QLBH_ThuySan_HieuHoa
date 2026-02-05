@@ -129,6 +129,58 @@ namespace QLBH_ThuySan.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string term)
+        {
+            if (string.IsNullOrEmpty(term))
+            {
+                return Json(new List<object>());
+            }
+
+            var suppliers = await _context.NhaCungCaps
+                .Where(s => s.TenDoiTuong.Contains(term) || s.MaDoiTuong.Contains(term) || s.SoDienThoai.Contains(term))
+                .Take(20)
+                .Select(s => new
+                {
+                    s.MaDoiTuong,
+                    s.TenDoiTuong,
+                    s.SoDienThoai,
+                    s.DiaChi
+                })
+                .ToListAsync();
+
+            return Json(suppliers);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> QuickCreate([FromBody] NhaCungCap nhaCungCap)
+        {
+            if (nhaCungCap == null) return BadRequest("Invalid Data");
+
+            if (string.IsNullOrEmpty(nhaCungCap.TenDoiTuong)) return BadRequest("Tên nhà cung cấp là bắt buộc");
+            
+            if (string.IsNullOrEmpty(nhaCungCap.MaDoiTuong))
+            {
+                nhaCungCap.MaDoiTuong = "NCC" + DateTime.Now.ToString("yyMMddHHmmss");
+            }
+
+            if (_context.NhaCungCaps.Any(e => e.MaDoiTuong == nhaCungCap.MaDoiTuong))
+            {
+                return BadRequest("Mã nhà cung cấp đã tồn tại");
+            }
+
+            try
+            {
+                _context.Add(nhaCungCap);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, data = nhaCungCap });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi lưu: " + ex.Message);
+            }
+        }
+
         private bool NhaCungCapExists(string id)
         {
             return _context.NhaCungCaps.Any(e => e.MaDoiTuong == id);

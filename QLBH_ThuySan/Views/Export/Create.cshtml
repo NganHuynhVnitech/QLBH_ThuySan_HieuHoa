@@ -1,158 +1,443 @@
 @model QLBH_ThuySan.Models.PhieuXuat
 
 @{
-    ViewData["Title"] = "Tạo Phiếu Xuất";
-    // Passing products to JS
+    ViewData["Title"] = "Bán Hàng (POS)";
+    Layout = "_Layout"; // Keep standard layout but might want to hide navbar? KiotViet usually hides it or makes it minimal.
+                        // For now we keep it but restrict container-fluid.
 }
 
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1>Tạo Phiếu Xuất Kho</h1>
-        </div>
-    </div>
+<style>
+    /* POS Specific Styles */
+    .pos-container {
+        height: calc(100vh - 120px); /* Adjust based on navbar height */
+        overflow: hidden;
+    }
+    .product-list-col {
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        background-color: #f8f9fa;
+        padding: 15px;
+    }
+    .invoice-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 15px;
+    }
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .product-card {
+        cursor: pointer;
+        transition: transform 0.1s;
+        border: 1px solid #e0e0e0;
+    }
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-color: #007bff;
+    }
+    .product-card .card-body {
+        padding: 10px;
+        text-align: center;
+    }
+    .product-card .price-tag {
+        color: #d9534f;
+        font-weight: bold;
+    }
+    .invoice-items-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        margin: 10px 0;
+    }
+    .invoice-footer {
+        border-top: 2px solid #eee;
+        padding-top: 10px;
+    }
+    .search-bar-container {
+        position: relative;
+    }
+    .customer-autocomplete-results {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #ddd;
+        display: none;
+    }
+    .result-item {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .result-item:hover {
+        background-color: #f0f0f0;
+    }
+</style>
 
-    <form asp-action="Create" id="createForm">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Thông Tin Chung</h5>
+<div class="container-fluid pos-container">
+    <div class="row h-100">
+        <!-- Left Column: Product List -->
+        <div class="col-md-7 col-lg-8 product-list-col">
+            <div class="row mb-3">
+                <div class="col-12">
+                     <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <label asp-for="MaPhieu" class="form-label">Mã Phiếu</label>
-                        <input asp-for="MaPhieu" class="form-control" placeholder="VD: PX001" required />
-                        <span asp-validation-for="MaPhieu" class="text-danger"></span>
-                    </div>
-                    
-                    <div class="col-md-3 mb-3">
-                        <label asp-for="NgayXuat" class="form-label">Ngày Xuất</label>
-                        <input asp-for="NgayXuat" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
-                        <span asp-validation-for="NgayXuat" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label asp-for="IdKhachHang" class="form-label">Khách Hàng</label>
-                        <select asp-for="IdKhachHang" class="form-select" asp-items="ViewBag.IdKhachHang" required>
-                            <option value="">-- Chọn Khách Hàng --</option>
-                        </select>
-                        <span asp-validation-for="IdKhachHang" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label asp-for="IdDaiLyBan" class="form-label">Đại Lý Bán</label>
-                        <select asp-for="IdDaiLyBan" class="form-select" asp-items="ViewBag.IdDaiLyBan" required>
-                            <option value="">-- Chọn Đại Lý --</option>
-                        </select>
-                        <span asp-validation-for="IdDaiLyBan" class="text-danger"></span>
-                    </div>
+            
+            <!-- Product Grid -->
+            <div id="productGrid" class="product-grid">
+                <!-- Products will be loaded here via JS -->
+            </div>
+            <div id="loadingProducts" class="text-center mt-4 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Chi Tiết Hàng Hóa</h5>
+        <!-- Right Column: Order Invoice -->
+        <div class="col-md-5 col-lg-4 invoice-col shadow-sm">
+            <!-- Customer Section -->
+            <div class="mb-3 position-relative">
+                <label class="form-label fw-bold">Khách Hàng</label>
+                <div class="input-group">
+                    <input type="text" id="customerSearch" class="form-control" placeholder="Tìm khách hàng..." autocomplete="off">
+                    <input type="hidden" id="selectedCustomerId" name="IdKhachHang" required>
+                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </button>
+                </div>
+                <div id="customerResults" class="list-group customer-autocomplete-results shadow"></div>
             </div>
-            <div class="card-body">
-                <table class="table table-bordered" id="detailsTable">
-                    <thead>
+
+            <!-- TABs: Invoice vs Info -->
+            <ul class="nav nav-tabs mb-2">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Hóa Đơn 1</a>
+                </li>
+            </ul>
+
+            <!-- Order Items Table -->
+            <div class="invoice-items-container">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light sticky-top">
                         <tr>
-                            <th>Hàng Hóa</th>
-                            <th style="width: 15rem;">Số Lượng</th>
-                            <th style="width: 15rem;">Giá Bán</th>
-                            <th style="width: 15rem;">Thành Tiền</th>
-                            <th style="width: 5rem;"></th>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 40%">Hàng hóa</th>
+                            <th style="width: 20%" class="text-center">SL</th>
+                            <th style="width: 25%" class="text-end">Thành tiền</th>
+                            <th style="width: 10%"></th>
                         </tr>
                     </thead>
-                    <tbody id="detailsBody">
-                        <!-- Dynamic Rows Here -->
+                    <tbody id="invoiceItems">
+                        <!-- Items added here -->
                     </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="5">
-                                <button type="button" class="btn btn-outline-success" onclick="addRow()">
-                                    <i class="bi bi-plus-circle"></i> Thêm Hàng
-                                </button>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
-        </div>
 
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
-            <a asp-action="Index" class="btn btn-secondary me-md-2">Hủy Bỏ</a>
-            <button type="submit" class="btn btn-primary btn-lg">Lưu Phiếu Xuất</button>
+            <!-- Footer: Totals -->
+            <div class="invoice-footer">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng số lượng:</span>
+                    <strong id="totalQty">0</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="fs-5 fw-bold">Tổng tiền hàng:</span>
+                    <span class="fs-4 fw-bold text-primary" id="totalAmount">0</span>
+                </div>
+                
+                <form id="checkoutForm" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MaPhieu" id="orderCode" value="@("PX" + DateTime.Now.ToString("yyMMddHHmm"))" /> <!-- Auto gen for MVP -->
+                    <input type="hidden" name="NgayXuat" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    <!-- Details will be injected as hidden inputs before submit -->
+                    <div id="hiddenInputs"></div>
+                    
+                    <input type="hidden" name="IdDaiLyBan" id="storeId" value="" />
+                     <!-- We need to select store/agency. In POS usually fixed or logged in user's agency. 
+                          I'll add a hidden selector or modal if strictly needed. 
+                          For now, I'll default to the first Sales Agency available or ask user at start.
+                          Simpler: Add a small selector at top of invoice. -->
+                    <div class="mb-2">
+                        <select name="IdDaiLyBan" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyBan" required>
+                             <!-- Loaded from Controller -->
+                        </select>
+                    </div>
+
+                    <button type="button" onclick="submitOrder()" class="btn btn-success w-100 btn-lg py-3 fw-bold">
+                        <i class="bi bi-cash-coin"></i> THANH TOÁN (F8)
+                    </button>
+                    <!-- Customer ID Input is up there, but form needs it inside or linked. I'll clone it or append it. -->
+                </form>
+            </div>
         </div>
-    </form>
+    </div>
+</div>
+
+<!-- Modal: New Customer -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Khách Hàng Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickNewCustomerForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên Khách Hàng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenDoiTuong" required placeholder="Nhập tên khách hàng">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Điện Thoại</label>
+                        <input type="text" class="form-control" name="SoDienThoai" placeholder="Số điện thoại">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <input type="text" class="form-control" name="DiaChi">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bỏ qua</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewCustomer()">Lưu</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
     <script>
-        // Use JSON serialization to pass strictly typed data
-        var products = @Html.Raw(Json.Serialize(ViewBag.HangHoaList));
+        var cart = []; // Array of { id, name, unit, price, qty, total }
 
-        function addRow() {
-            var tbody = document.getElementById('detailsBody');
-            var rowCount = tbody.rows.length;
-            var row = tbody.insertRow(rowCount);
+        $(document).ready(function() {
+            loadProducts('');
             
-            var cell1 = row.insertCell(0);
-            var selectHtml = '<select name="MaHang" class="form-select" required onchange="updatePrice(this)">';
-            selectHtml += '<option value="">-- Chọn Hàng --</option>';
-            products.forEach(function(p) {
-                selectHtml += `<option value="${p.maHang}" data-price="${p.giaBanHienTai}">${p.tenHang} (${p.donViTinh})</option>`;
+            // Search Products with debounce
+            let debounceTimer;
+            $('#productSearch').on('input', function() {
+                clearTimeout(debounceTimer);
+                var term = $(this).val();
+                debounceTimer = setTimeout(function() {
+                    loadProducts(term);
+                }, 300);
             });
-            selectHtml += '</select>';
-            cell1.innerHTML = selectHtml;
 
-            var cell2 = row.insertCell(1);
-            cell2.innerHTML = '<input type="number" name="SoLuong" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+            // Search Customer with debounce
+            $('#customerSearch').on('input', function() {
+                var term = $(this).val();
+                if(term.length < 2) {
+                    $('#customerResults').hide();
+                    return;
+                }
+                
+                $.get('/Customer/SearchJson?term=' + term, function(data) {
+                    $('#customerResults').empty().show();
+                    if(data.length === 0) {
+                        $('#customerResults').append('<div class="result-item text-muted">Không tìm thấy khách hàng</div>');
+                    } else {
+                        data.forEach(function(c) {
+                            $('#customerResults').append(`
+                                <div class="result-item" onclick="selectCustomer('${c.maDoiTuong}', '${c.tenDoiTuong}')">
+                                    <strong>${c.tenDoiTuong}</strong> <br/>
+                                    <small class="text-muted">${c.soDienThoai || ''}</small>
+                                </div>
+                            `);
+                        });
+                    }
+                });
+            });
 
-            var cell3 = row.insertCell(2);
-            cell3.innerHTML = '<input type="number" name="GiaBan" class="form-control" step="0.01" required oninput="calcRow(this)" placeholder="0" />';
+            // Close dropdown when clicking outside
+            $(document).click(function(e) {
+                if(!$(e.target).closest('#customerSearch, #customerResults').length) {
+                    $('#customerResults').hide();
+                }
+            });
+        });
 
-            var cell4 = row.insertCell(3);
-            cell4.innerHTML = '<input type="text" class="form-control total-row" disabled readonly value="0" />';
+        function loadProducts(term) {
+            $('#loadingProducts').removeClass('d-none');
+            $('#productGrid').empty();
+            
+            $.get('/Product/SearchJson?term=' + term, function(data) {
+                $('#loadingProducts').addClass('d-none');
+                if(data.length === 0) {
+                     $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
+                     return;
+                }
 
-            var cell5 = row.insertCell(4);
-            cell5.innerHTML = '<button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-trash"></i></button>';
+                data.forEach(function(p) {
+                    // Assuming Image placeholder if backend sends it, or default
+                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP'; 
+                    var price = p.giaBanHienTai ? p.giaBanHienTai.toLocaleString() : '0';
+                    
+                    var cardHtml = `
+                        <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
+                            <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
+                            <div class="card-body">
+                                <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
+                                <p class="card-text small text-muted">${p.maHang}</p>
+                                <p class="price-tag mb-0">${price}</p>
+                            </div>
+                        </div>
+                    `;
+                    $('#productGrid').append(cardHtml);
+                });
+            });
         }
 
-        function removeRow(btn) {
-            var row = btn.parentNode.parentNode;
-            row.parentNode.removeChild(row);
-        }
-
-        function updatePrice(select) {
-            var price = select.options[select.selectedIndex].getAttribute('data-price');
-            var row = select.parentNode.parentNode;
-            var priceInput = row.cells[2].getElementsByTagName('input')[0];
-            if(price) {
-                priceInput.value = price;
+        function addToCart(product) {
+            var existing = cart.find(x => x.id === product.maHang);
+            if(existing) {
+                existing.qty += 1;
+                existing.total = existing.qty * existing.price;
             } else {
-                priceInput.value = 0;
+                cart.push({
+                    id: product.maHang,
+                    name: product.tenHang,
+                    unit: product.donViTinh || '',
+                    price: product.giaBanHienTai || 0,
+                    qty: 1,
+                    total: product.giaBanHienTai || 0
+                });
             }
-            calcRow(priceInput);
+            renderCart();
         }
 
-        function calcRow(input) {
-            var row = input.parentNode.parentNode;
-            var qty = parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0;
-            var price = parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0;
-            var total = qty * price;
-            // Format currency simple
-            row.cells[3].getElementsByTagName('input')[0].value = total.toLocaleString('vi-VN');
+        function renderCart() {
+            var tbody = $('#invoiceItems');
+            tbody.empty();
+            var totalQty = 0;
+            var totalAmt = 0;
+
+            cart.forEach(function(item, index) {
+                totalQty += item.qty;
+                totalAmt += item.total;
+                
+                var tr = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            <div class="fw-bold">${item.name}</div>
+                            <small class="text-muted">${item.id}</small>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-center" 
+                                value="${item.qty}" min="1" onchange="updateQty('${item.id}', this.value)">
+                        </td>
+                        <td class="text-end fw-bold">
+                            ${item.total.toLocaleString()}
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(tr);
+            });
+
+            $('#totalQty').text(totalQty);
+            $('#totalAmount').text(totalAmt.toLocaleString());
         }
-        
-        // Add one empty row by default
-        window.onload = function() {
-            addRow();
-        };
+
+        function updateQty(id, newQty) {
+            var item = cart.find(x => x.id === id);
+            if(item) {
+                item.qty = parseFloat(newQty);
+                if(item.qty <= 0) item.qty = 1;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(x => x.id !== id);
+            renderCart();
+        }
+
+        function selectCustomer(id, name) {
+            $('#selectedCustomerId').val(id);
+            $('#customerSearch').val(name);
+            $('#customerResults').hide();
+        }
+
+        function saveNewCustomer() {
+            var formData = {};
+            $('#quickNewCustomerForm').serializeArray().forEach(item => {
+                formData[item.name] = item.value;
+            });
+
+            $.ajax({
+                url: '/Customer/QuickCreate',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(res) {
+                    if(res.success) {
+                        selectCustomer(res.data.maDoiTuong, res.data.tenDoiTuong);
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
+                        modal.hide();
+                        // Clear form
+                        $('#quickNewCustomerForm')[0].reset();
+                    }
+                },
+                error: function(err) {
+                    alert('Lỗi: ' + (err.responseText || 'Không thể tạo khách hàng'));
+                }
+            });
+        }
+
+        function submitOrder() {
+            if(cart.length === 0) {
+                alert('Giỏ hàng trống!');
+                return;
+            }
+            if(!$('#selectedCustomerId').val()) {
+                alert('Vui lòng chọn khách hàng!');
+                return;
+            }
+
+            var form = $('#checkoutForm');
+            var hiddenDiv = $('#hiddenInputs');
+            hiddenDiv.empty();
+            
+            // Append Customer and details
+            $('<input>').attr({type: 'hidden', name: 'IdKhachHang', value: $('#selectedCustomerId').val()}).appendTo(hiddenDiv);
+
+            cart.forEach((item, i) => {
+                $('<input>').attr({type: 'hidden', name: 'MaHang[]', value: item.id}).appendTo(hiddenDiv);
+                $('<input>').attr({type: 'hidden', name: 'SoLuong[]', value: item.qty}).appendTo(hiddenDiv);
+                $('<input>').attr({type: 'hidden', name: 'GiaBan[]', value: item.price}).appendTo(hiddenDiv);
+            });
+
+            form.submit();
+        }
+
+        // F3 focus search
+        $(document).keydown(function(e) {
+            if(e.which === 114) { // F3
+                e.preventDefault();
+                $('#productSearch').focus();
+            }
+            if(e.which === 119) { // F8
+                e.preventDefault();
+                submitOrder();
+            }
+        });
     </script>
 }
