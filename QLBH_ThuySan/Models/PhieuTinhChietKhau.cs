@@ -15,5 +15,13 @@ public partial class PhieuTinhChietKhau
 
     public DateTime? NgayTao { get; set; }
 
-    public virtual ICollection<BangKeChietKhau> BangKeChietKhaus { get; set; } = new List<BangKeChietKhau>();
+    public string? MaDoiTuong { get; set; }
+
+    public decimal? TongTien { get; set; }
+
+    public string? TrangThai { get; set; }
+
+    public DateTime? NgayThanhToan { get; set; }
+
+    public virtual ICollection<ChiTietPhieuTinh> ChiTietPhieuTinhs { get; set; } = new List<ChiTietPhieuTinh>();
 }

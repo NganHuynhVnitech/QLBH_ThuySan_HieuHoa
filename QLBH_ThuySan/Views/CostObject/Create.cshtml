@@ -1,0 +1,42 @@
+
+@model QLBH_ThuySan.Models.DoiTuongChiPhi
+
+@{
+    ViewData["Title"] = "Thêm Đối Tượng Chi Phí";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thêm Mới Đối Tượng Chi Phí</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="MaDoiTuong" class="form-label">Mã Đối Tượng</label>
+                        <input asp-for="MaDoiTuong" class="form-control" placeholder="VD: DTCP005" required />
+                        <span asp-validation-for="MaDoiTuong" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="TenDoiTuong" class="form-label">Tên Đối Tượng</label>
+                        <input asp-for="TenDoiTuong" class="form-control" placeholder="VD: Tiền Mặt Bằng" required />
+                        <span asp-validation-for="TenDoiTuong" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

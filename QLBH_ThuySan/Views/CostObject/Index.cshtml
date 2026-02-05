@@ -1,15 +1,15 @@
-@model IEnumerable<QLBH_ThuySan.Models.NhaCungCap>
+
+@model IEnumerable<QLBH_ThuySan.Models.DoiTuongChiPhi>
 
 @{
-    ViewData["Title"] = "Quản Lý Nhà Cung Cấp";
+    ViewData["Title"] = "Quản Lý Đối Tượng Chi Phí";
 }
 
-<div class="row mb-4">
+<div class="row mb-3">
     <div class="col-md-8">
-        <h1>Quản Lý Nhà Cung Cấp</h1>
-        <p class="text-muted">Danh sách đối tác cung cấp hàng hóa</p>
+        <h1>Quản Lý Đối Tượng Chi Phí</h1>
     </div>
-    <div class="col-md-4 text-end align-self-center">
+    <div class="col-md-4 text-end">
         <a asp-action="Create" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Thêm Mới
         </a>
@@ -22,37 +22,25 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã NCC</th>
-                        <th>Tên Nhà Cung Cấp</th>
-                        <th>Điện Thoại</th>
-                        <th>Địa Chỉ</th>
-                        <th>Mã Số Thuế</th>
-                        <th>Nợ (Ngày)</th>
-                        <th>Tổng Dư Nợ</th>
-                        <th>Thao Tác</th>
+                        <th>Mã Đối Tượng</th>
+                        <th>Tên Đối Tượng</th>
+                        <th class="text-end">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model) {
+                    @foreach (var item in Model)
+                    {
                         <tr>
                             <td><span class="badge bg-secondary">@item.MaDoiTuong</span></td>
                             <td class="fw-bold">@item.TenDoiTuong</td>
-                            <td>@item.SoDienThoai</td>
-                            <td>@item.DiaChi</td>
-                            <td>@item.MaSoThue</td>
-                            <td>@item.SoNgayDuocNo</td>
-                            <td class="text-danger fw-bold">@string.Format("{0:N0}", item.DuNoLuyKe ?? 0) đ</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary" title="Sửa">
-                                        Sửa
-                                    </a>
-                                    <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
-                                        Xóa
-                                    </button>
-                                </div>
-
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-warning" title="Sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteModal-@item.MaDoiTuong" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
@@ -61,8 +49,8 @@
                                                 <h5 class="modal-title">Xác nhận xóa</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa nhà cung cấp <strong>@item.TenDoiTuong</strong>?
+                                            <div class="modal-body text-start">
+                                                Bạn có chắc chắn muốn xóa đối tượng <strong>@item.TenDoiTuong</strong> (@item.MaDoiTuong)?
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>

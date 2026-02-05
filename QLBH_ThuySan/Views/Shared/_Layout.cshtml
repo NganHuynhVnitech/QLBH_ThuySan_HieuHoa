@@ -37,6 +37,8 @@
                                 <li><a class="dropdown-item" asp-controller="Agency" asp-action="Index">Đại Lý</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" asp-controller="Warehouse" asp-action="Index">Kho Hàng</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="CostObject" asp-action="Index">Đối Tượng Chi Phí</a></li>
                             </ul>
                         </li>
 
@@ -58,11 +60,12 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Chiết Khấu</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="DiscountConfig" asp-action="Index">Cấu Hình Quy Luật</a></li>
-                                <li><a class="dropdown-item" asp-controller="DiscountCalculation" asp-action="Index">Chạy Tính Toán</a></li>
+                                <li><a class="dropdown-item" asp-controller="DiscountCalculation" asp-action="Index">Quản lý Chiết Khấu</a></li>
                             </ul>
                         </li>
 
+
+                        
                         <!-- Báo Cáo -->
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Financial" asp-action="ProfitLoss">Báo Cáo P&L</a>

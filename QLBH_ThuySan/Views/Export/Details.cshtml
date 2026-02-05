@@ -30,6 +30,7 @@
                     <p><strong>Địa Chỉ:</strong> @(Model.IdKhachHangNavigation?.DiaChi ?? "-")</p>
                 </div>
                 <div class="col-md-4">
+                    <p><strong>Ngày Thanh Toán:</strong> @Model.NgayThanhToan?.ToString("dd/MM/yyyy")</p>
                     <p><strong>Tổng Tiền:</strong> <span class="text-success fw-bold fs-5">@string.Format("{0:N0}", Model.TongTien) VNĐ</span></p>
                 </div>
             </div>

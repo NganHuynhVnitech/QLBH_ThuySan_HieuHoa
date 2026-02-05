@@ -22,4 +22,6 @@ public partial class HangHoa
     public virtual ICollection<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = new List<ChiTietPhieuXuat>();
 
     public virtual ICollection<ChiTietTon> ChiTietTons { get; set; } = new List<ChiTietTon>();
+
+    public virtual ICollection<DonViTinh> DonViTinhs { get; set; } = new List<DonViTinh>();
 }

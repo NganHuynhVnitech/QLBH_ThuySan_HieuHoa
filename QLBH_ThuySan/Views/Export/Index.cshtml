@@ -26,6 +26,7 @@
                         <th>Ngày Xuất</th>
                         <th>Khách Hàng</th>
                         <th>Đại Lý Bán</th>
+                        <th>Ngày Thanh Toán</th>
                         <th class="text-end">Tổng Tiền</th>
                         <th>Thao Tác</th>
                     </tr>
@@ -41,6 +42,7 @@
                             <td>
                                 @(item.IdDaiLyBanNavigation?.TenDaiLy ?? item.IdDaiLyBan)
                             </td>
+                            <td>@item.NgayThanhToan?.ToString("dd/MM/yyyy")</td>
                             <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.TongTien)</td>
                             <td>
                                 <div class="btn-group" role="group">

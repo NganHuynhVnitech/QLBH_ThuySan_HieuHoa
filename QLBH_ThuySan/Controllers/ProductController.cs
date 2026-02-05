@@ -30,6 +30,7 @@ namespace QLBH_ThuySan.Controllers
             }
 
             var hangHoa = await _context.HangHoas
+                .Include(h => h.DonViTinhs)
                 .FirstOrDefaultAsync(m => m.MaHang == id);
             if (hangHoa == null)
             {
@@ -48,7 +49,7 @@ namespace QLBH_ThuySan.Controllers
         // POST: Product/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MaHang,TenHang,DonViTinh,QuyCach,GiaVonHienTai,GiaBanHienTai")] HangHoa hangHoa)
+        public async Task<IActionResult> Create([Bind("MaHang,TenHang,DonViTinh,QuyCach,GiaVonHienTai,GiaBanHienTai")] HangHoa hangHoa, List<DonViTinh> units)
         {
             if (ModelState.IsValid)
             {
@@ -59,7 +60,22 @@ namespace QLBH_ThuySan.Controllers
                 }
 
                 _context.Add(hangHoa);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); // Save header first
+
+                // Save Units
+                if (units != null && units.Count > 0)
+                {
+                    foreach (var u in units)
+                    {
+                        if (!string.IsNullOrEmpty(u.TenDonVi))
+                        {
+                            u.MaHang = hangHoa.MaHang;
+                            _context.Add(u);
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             return View(hangHoa);
@@ -73,7 +89,9 @@ namespace QLBH_ThuySan.Controllers
                 return NotFound();
             }
 
-            var hangHoa = await _context.HangHoas.FindAsync(id);
+            var hangHoa = await _context.HangHoas
+                .Include(h => h.DonViTinhs)
+                .FirstOrDefaultAsync(h => h.MaHang == id);
             if (hangHoa == null)
             {
                 return NotFound();
@@ -84,7 +102,7 @@ namespace QLBH_ThuySan.Controllers
         // POST: Product/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("MaHang,TenHang,DonViTinh,QuyCach,GiaVonHienTai,GiaBanHienTai")] HangHoa hangHoa)
+        public async Task<IActionResult> Edit(string id, [Bind("MaHang,TenHang,DonViTinh,QuyCach,GiaVonHienTai,GiaBanHienTai")] HangHoa hangHoa, List<DonViTinh> units)
         {
             if (id != hangHoa.MaHang)
             {
@@ -96,6 +114,27 @@ namespace QLBH_ThuySan.Controllers
                 try
                 {
                     _context.Update(hangHoa);
+                    
+                    // Sync Units: Remove old, Add new (Simple approach)
+                    // Or smarter: Update existing, Add new, Delete missing.
+                    // For simplicity: Load existing, compare.
+                    
+                    var existingUnits = _context.DonViTinhs.Where(u => u.MaHang == id).ToList();
+                    _context.DonViTinhs.RemoveRange(existingUnits);
+                    
+                    if (units != null)
+                    {
+                        foreach (var u in units)
+                        {
+                            if (!string.IsNullOrEmpty(u.TenDonVi))
+                            {
+                                u.Id = 0; // Reset ID to force insert
+                                u.MaHang = id;
+                                _context.Add(u);
+                            }
+                        }
+                    }
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)

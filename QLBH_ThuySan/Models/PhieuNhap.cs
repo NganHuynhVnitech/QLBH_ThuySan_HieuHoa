@@ -17,6 +17,8 @@ public partial class PhieuNhap
 
     public decimal? TongTien { get; set; }
 
+    public DateTime? NgayThanhToan { get; set; }
+
     public virtual ICollection<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; } = new List<ChiTietPhieuNhap>();
 
     public virtual DaiLy? IdDaiLyNhapNavigation { get; set; }

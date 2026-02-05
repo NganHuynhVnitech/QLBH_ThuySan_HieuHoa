@@ -17,5 +17,7 @@ public partial class NhaCungCap
 
     public int? SoNgayDuocNo { get; set; }
 
+    public decimal? DuNoLuyKe { get; set; }
+
     public virtual ICollection<PhieuNhap> PhieuNhaps { get; set; } = new List<PhieuNhap>();
 }

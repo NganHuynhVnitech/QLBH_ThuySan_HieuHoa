@@ -27,7 +27,6 @@ IF OBJECT_ID('DonViTinh', 'U') IS NOT NULL DROP TABLE DonViTinh;
 IF OBJECT_ID('DaiLy', 'U') IS NOT NULL DROP TABLE DaiLy;
 IF OBJECT_ID('KhachHang', 'U') IS NOT NULL DROP TABLE KhachHang;
 IF OBJECT_ID('NhaCungCap', 'U') IS NOT NULL DROP TABLE NhaCungCap;
-IF OBJECT_ID('DoiTuongChiPhi', 'U') IS NOT NULL DROP TABLE DoiTuongChiPhi;
 
 -- =============================================
 -- 2. CREATE TABLES (MASTER DATA) [1, 3]
@@ -82,12 +81,6 @@ CREATE TABLE DaiLy (
     loaiDaiLy VARCHAR(20) CHECK (loaiDaiLy IN ('NHAP_A', 'NHAP_B', 'BAN_C'))
 );
 
--- Class: DoiTuongChiPhi (Ex: Tien Dien, Nuoc, Luong)
-CREATE TABLE DoiTuongChiPhi (
-    maDoiTuong VARCHAR(20) PRIMARY KEY,
-    tenDoiTuong NVARCHAR(100) NOT NULL
-);
-
 -- =============================================
 -- 3. WAREHOUSE STRUCTURE [4, 5]
 -- =============================================
@@ -124,7 +117,6 @@ CREATE TABLE PhieuNhap (
     idNhaCungCap VARCHAR(20),
     hanThanhToan DATETIME, -- TÃ­nh toÃ¡n: ngayNhap + soNgayDuocNo
     tongTien DECIMAL(18, 2) DEFAULT 0,
-    ngayThanhToan DATETIME NULL, -- [NEW] Payment Date
     FOREIGN KEY (idDaiLyNhap) REFERENCES DaiLy(maDaiLy),
     FOREIGN KEY (idNhaCungCap) REFERENCES NhaCungCap(maDoiTuong)
 );
@@ -148,7 +140,6 @@ CREATE TABLE PhieuXuat (
     idDaiLyBan VARCHAR(20),
     idKhachHang VARCHAR(20),
     tongTien DECIMAL(18, 2) DEFAULT 0,
-    ngayThanhToan DATETIME NULL, -- [NEW] Payment Date
     FOREIGN KEY (idDaiLyBan) REFERENCES DaiLy(maDaiLy),
     FOREIGN KEY (idKhachHang) REFERENCES KhachHang(maDoiTuong)
 );
@@ -831,152 +822,161 @@ CREATE PROCEDURE sp_SoRiengKhachHang_SelectByKhachHang @maKhachHang VARCHAR(20) 
 GO
 
 -- =============================================
--- 7. SEED DATA (DỮ LIỆU MẪU)
+-- 7. SEED DATA (Dá»® LIá»†U MáºªU)
 -- =============================================
 
+-- 1. ThÃªm HÃ ng HÃ³a
+INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES
+('SP001', N'TÃ´m Tháº» ChÃ¢n Tráº¯ng', N'Kg', N'Size 30-40 con/kg', 120000, 150000),
+('SP002', N'CÃ¡ Tra Giá»‘ng', N'Con', N'Size 2cm', 500, 800),
+('SP003', N'Thá»©c Ä‚n TÃ´m A1', N'Bao', N'25kg/Bao', 350000, 420000);
+
+-- 2. ThÃªm ÄÆ¡n Vá»‹ TÃ­nh Quy Äá»•i
+INSERT INTO DonViTinh (maHang, tenDonVi, tyLeQuyDoi, giaBan, maHangDonVi) VALUES
+('SP003', N'Táº¥n', 40, 16500000, 'SP003-TAN'); -- 1 Táº¥n = 40 Bao
+
+-- 3. ThÃªm NhÃ  Cung Cáº¥p
+INSERT INTO NhaCungCap (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, duNoLuyKe) VALUES
+('NCC001', N'CÃ´ng Ty Thá»§y Sáº£n CP', '0901234567', N'KCN BiÃªn HÃ²a, Äá»“ng Nai', '3600123456', 30, 0),
+('NCC002', N'Tráº¡i Giá»‘ng NÄƒm Can', '0912345678', N'NÄƒm CÄƒn, CÃ  Mau', '', 15, 5000000);
+
+-- 4. ThÃªm KhÃ¡ch HÃ ng
+INSERT INTO KhachHang (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, duNoLuyKe) VALUES
+('KH001', N'Nguyá»…n VÄƒn A', '0987654321', N'XÃ£ VÄ©nh Háº­u, Báº¡c LiÃªu', N'Ao Sá»‘ 1', 0),
+('KH002', N'Tráº§n Thá»‹ B', '0976543210', N'XÃ£ Lai HÃ²a, VÄ©nh ChÃ¢u', N'Ao TÃ´m CÃ´ng Nghá»‡', 5000000);
+
+-- 5. ThÃªm Äáº¡i LÃ½
+INSERT INTO DaiLy (maDaiLy, tenDaiLy, loaiDaiLy) VALUES
+('DL001', N'Cá»­a HÃ ng Hiá»‡u Hoa (ChÃ­nh)', 'BAN_C'),
+('DL002', N'Äáº¡i LÃ½ Cáº¥p 1 Nháº­p Kháº©u', 'NHAP_A');
+
+-- 6. ThÃªm Kho
+INSERT INTO Kho (maKho, tenKho, loaiKho, maDaiLyPhuTrach) VALUES
+('KHO_CHINH', N'Kho Táº¡i Cá»­a HÃ ng', 'VAT_LY', 'DL001'),
+('KHO_TONG_AO', N'Kho Tá»•ng áº¢o (TÃ­nh GiÃ¡ Vá»‘n)', 'TONG_AO', NULL);
+
+-- 7. ThÃªm Chi Tiáº¿t Tá»“n Kho (Initial Stock)
+INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES
+('KHO_CHINH', 'SP001', 100, 0), -- 100 Kg TÃ´m
+('KHO_CHINH', 'SP003', 50, 0), -- 50 Bao Thá»©c Ä‚n
+('KHO_TONG_AO', 'SP001', 100, 120000), -- GiÃ¡ vá»‘n 120k
+('KHO_TONG_AO', 'SP003', 50, 350000); -- GiÃ¡ vá»‘n 350k
+
+-- ====================================================================================
+-- PH?N C: SEED DATA (D? LI?U M?U)
+-- ====================================================================================
+
 -- 1. Master Data: Hàng Hóa
-IF NOT EXISTS (SELECT 1 FROM HangHoa WHERE maHang = 'HH001')
-INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES ('HH001', N'Tôm Sú Oxi', 'Kg', N'Thùng xốp', 180000, 220000);
+INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES
+('HH001', N'Tôm Sú Oxi', 'Kg', 'Thùng x?p', 180000, 220000),
+('HH002', N'Tôm Th? Chân Tr?ng', 'Kg', 'Thùng x?p', 120000, 150000),
+('HH003', N'Cua Cà Mau (Y1)', 'Kg', 'S?t', 350000, 450000),
+('HH004', N'M?c ?ng A', 'Kg', 'Khay', 250000, 320000),
+('HH005', N'Cá H?i Nauy File', 'Kg', 'Hút chân không', 450000, 580000);
 
-IF NOT EXISTS (SELECT 1 FROM HangHoa WHERE maHang = 'HH002')
-INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES ('HH002', N'Tôm Thẻ Chân Trắng', 'Kg', N'Thùng xốp', 120000, 150000);
+-- 2. Master Data: Ðon V? Tính
+INSERT INTO DonViTinh (maHang, tenDonVi, tyLeQuyDoi, giaBan, maHangDonVi) VALUES
+('HH001', N'Thùng (20kg)', 20, 4400000, 'HH001-THUNG'),
+('HH002', N'T? (100kg)', 100, 14500000, 'HH002-TA');
 
-IF NOT EXISTS (SELECT 1 FROM HangHoa WHERE maHang = 'HH003')
-INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES ('HH003', N'Cua Cà Mau (Y1)', 'Kg', N'Sọt', 350000, 450000);
-
-IF NOT EXISTS (SELECT 1 FROM HangHoa WHERE maHang = 'HH004')
-INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES ('HH004', N'Mực Ống A', 'Kg', N'Khay', 250000, 320000);
-
-IF NOT EXISTS (SELECT 1 FROM HangHoa WHERE maHang = 'HH005')
-INSERT INTO HangHoa (maHang, tenHang, donViTinh, quyCach, giaVonHienTai, giaBanHienTai) VALUES ('HH005', N'Cá Hồi Nauy File', 'Kg', N'Hút chân không', 450000, 580000);
-
-
--- 2. Master Data: Đơn Vị Tính
-IF NOT EXISTS (SELECT 1 FROM DonViTinh WHERE maHang = 'HH001' AND tenDonVi = N'Thùng (20kg)')
-INSERT INTO DonViTinh (maHang, tenDonVi, tyLeQuyDoi, giaBan, maHangDonVi) VALUES ('HH001', N'Thùng (20kg)', 20, 4400000, 'HH001-THUNG');
-
-IF NOT EXISTS (SELECT 1 FROM DonViTinh WHERE maHang = 'HH002' AND tenDonVi = N'Tạ (100kg)')
-INSERT INTO DonViTinh (maHang, tenDonVi, tyLeQuyDoi, giaBan, maHangDonVi) VALUES ('HH002', N'Tạ (100kg)', 100, 14500000, 'HH002-TA');
-
-
--- 3. Master Data: Nhà Cung Cấp
-IF NOT EXISTS (SELECT 1 FROM NhaCungCap WHERE maDoiTuong = 'NCC001')
-INSERT INTO NhaCungCap (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, duNoLuyKe) VALUES ('NCC001', N'Trại Tôm Minh Phú', '0901234567', N'Cà Mau', '3500123456', 30, 0);
-
-IF NOT EXISTS (SELECT 1 FROM NhaCungCap WHERE maDoiTuong = 'NCC002')
-INSERT INTO NhaCungCap (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, duNoLuyKe) VALUES ('NCC002', N'Vựa Hải Sản Biển Đông', '0909888777', N'Vũng Tàu', '3600987654', 15, 0);
-
-IF NOT EXISTS (SELECT 1 FROM NhaCungCap WHERE maDoiTuong = 'NCC003')
-INSERT INTO NhaCungCap (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, duNoLuyKe) VALUES ('NCC003', N'Công Ty XNK Thủy Sản An Giang', '0912333444', N'An Giang', '3700112233', 45, 0);
-
+-- 3. Master Data: Nhà Cung C?p
+INSERT INTO NhaCungCap (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, duNoLuyKe) VALUES
+('NCC001', N'Tr?i Tôm Minh Phú', '0901234567', N'Cà Mau', '3500123456', 30, 0),
+('NCC002', N'V?a H?i S?n Bi?n Ðông', '0909888777', N'Vung Tàu', '3600987654', 15, 0),
+('NCC003', N'Công Ty XNK Th?y S?n An Giang', '0912333444', N'An Giang', '3700112233', 45, 0);
 
 -- 4. Master Data: Khách Hàng
-IF NOT EXISTS (SELECT 1 FROM KhachHang WHERE maDoiTuong = 'KH001')
-INSERT INTO KhachHang (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, duNoLuyKe) VALUES ('KH001', N'Nhà Hàng Biển Nhớ', '0933111222', N'Q1, TP.HCM', N'Không', 0);
+INSERT INTO KhachHang (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, duNoLuyKe) VALUES
+('KH001', N'Nhà Hàng Bi?n Nh?', '0933111222', N'Q1, TP.HCM', N'Không', 0),
+('KH002', N'Quán Nh?u Làng Chài', '0933444555', N'Q3, TP.HCM', N'Không', 0),
+('KH003', N'Anh Ba (Ð?i Lý C?p 1)', '0933666777', N'Bình Duong', N'Ao s? 3', 0);
 
-IF NOT EXISTS (SELECT 1 FROM KhachHang WHERE maDoiTuong = 'KH002')
-INSERT INTO KhachHang (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, duNoLuyKe) VALUES ('KH002', N'Quán Nhậu Làng Chài', '0933444555', N'Q3, TP.HCM', N'Không', 0);
+-- 5. Master Data: Ð?i Lý & Kho
+INSERT INTO DaiLy (maDaiLy, tenDaiLy, loaiDaiLy) VALUES
+('DL001', N'Ð?i Lý Nh?p 1', 'NHAP_A'),
+('DL002', N'Ð?i Lý Bán 1', 'BAN_C');
 
-IF NOT EXISTS (SELECT 1 FROM KhachHang WHERE maDoiTuong = 'KH003')
-INSERT INTO KhachHang (maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, duNoLuyKe) VALUES ('KH003', N'Anh Ba (Đại Lý Cấp 1)', '0933666777', N'Bình Dương', N'Ao số 3', 0);
+INSERT INTO Kho (maKho, tenKho, loaiKho, maDaiLyPhuTrach) VALUES
+('K001', N'Kho L?nh Chính', 'VAT_LY', 'DL001'),
+('KHO_TONG_AO', N'H? Th?ng Kho ?o', 'TONG_AO', NULL);
 
+-- 6. Transaction Data: T?n Kho Ð?u K?
+INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES
+('K001', 'HH001', 500, 180000), -- 500kg Tôm Sú
+('K001', 'HH002', 1000, 120000), -- 1000kg Tôm Th?
+('KHO_TONG_AO', 'HH001', 500, 180000), -- Sync
+('KHO_TONG_AO', 'HH002', 1000, 120000); -- Sync
 
--- 5. Master Data: Đại Lý & Kho
-IF NOT EXISTS (SELECT 1 FROM DaiLy WHERE maDaiLy = 'DL001')
-INSERT INTO DaiLy (maDaiLy, tenDaiLy, loaiDaiLy) VALUES ('DL001', N'Đại Lý Nhập 1', 'NHAP_A');
+-- 7. Transaction Data: Phi?u Nh?p (T?o công n? NCC)
+-- PN001: Nh?p t? NCC001
+INSERT INTO PhieuNhap (maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, hanThanhToan, tongTien) VALUES
+('PN001', DATEADD(DAY, -10, GETDATE()), 'DL001', 'NCC001', DATEADD(DAY, 20, GETDATE()), 0);
 
-IF NOT EXISTS (SELECT 1 FROM DaiLy WHERE maDaiLy = 'DL002')
-INSERT INTO DaiLy (maDaiLy, tenDaiLy, loaiDaiLy) VALUES ('DL002', N'Đại Lý Bán 1', 'BAN_C');
+INSERT INTO ChiTietPhieuNhap (maPhieu, maHang, soLuong, donGiaNhap) VALUES
+('PN001', 'HH001', 1000, 180000), -- 180tr
+('PN001', 'HH003', 200, 350000);  -- 70tr
 
-IF NOT EXISTS (SELECT 1 FROM Kho WHERE maKho = 'K001')
-INSERT INTO Kho (maKho, tenKho, loaiKho, maDaiLyPhuTrach) VALUES ('K001', N'Kho Lạnh Chính', 'VAT_LY', 'DL001');
+-- Update Header Total PN001
+UPDATE PhieuNhap SET tongTien = (1000*180000 + 200*350000) WHERE maPhieu = 'PN001';
+-- Update NCC Debt
+UPDATE NhaCungCap SET duNoLuyKe = duNoLuyKe + (1000*180000 + 200*350000) WHERE maDoiTuong = 'NCC001';
 
-IF NOT EXISTS (SELECT 1 FROM Kho WHERE maKho = 'KHO_TONG_AO')
-INSERT INTO Kho (maKho, tenKho, loaiKho, maDaiLyPhuTrach) VALUES ('KHO_TONG_AO', N'Hệ Thống Kho Ảo', 'TONG_AO', NULL);
+-- PN002: Nh?p t? NCC002
+INSERT INTO PhieuNhap (maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, hanThanhToan, tongTien) VALUES
+('PN002', DATEADD(DAY, -5, GETDATE()), 'DL001', 'NCC002', DATEADD(DAY, 10, GETDATE()), 0);
 
+INSERT INTO ChiTietPhieuNhap (maPhieu, maHang, soLuong, donGiaNhap) VALUES
+('PN002', 'HH002', 500, 115000), -- 57.5tr
+('PN002', 'HH004', 100, 250000); -- 25tr
 
--- 5b. Master Data: Đối Tượng Chi Phí
-IF NOT EXISTS (SELECT 1 FROM DoiTuongChiPhi WHERE maDoiTuong = 'DTCP001')
-INSERT INTO DoiTuongChiPhi (maDoiTuong, tenDoiTuong) VALUES ('DTCP001', N'Tiền Điện');
-
-IF NOT EXISTS (SELECT 1 FROM DoiTuongChiPhi WHERE maDoiTuong = 'DTCP002')
-INSERT INTO DoiTuongChiPhi (maDoiTuong, tenDoiTuong) VALUES ('DTCP002', N'Tiền Nước');
-
-IF NOT EXISTS (SELECT 1 FROM DoiTuongChiPhi WHERE maDoiTuong = 'DTCP003')
-INSERT INTO DoiTuongChiPhi (maDoiTuong, tenDoiTuong) VALUES ('DTCP003', N'Tiền Lương Nhân Viên');
-
-IF NOT EXISTS (SELECT 1 FROM DoiTuongChiPhi WHERE maDoiTuong = 'DTCP004')
-INSERT INTO DoiTuongChiPhi (maDoiTuong, tenDoiTuong) VALUES ('DTCP004', N'Chi Phí Vận Chuyển');
-
-
--- 6. Transaction Data: Tồn Kho Đầu Kỳ (Upsert logic using MERGE is robust, but IF NOT EXISTS is simpler for seed)
-IF NOT EXISTS (SELECT 1 FROM ChiTietTon WHERE maKho='K001' AND maHang='HH001')
-INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES ('K001', 'HH001', 500, 180000);
-
-IF NOT EXISTS (SELECT 1 FROM ChiTietTon WHERE maKho='K001' AND maHang='HH002')
-INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES ('K001', 'HH002', 1000, 120000);
-
-IF NOT EXISTS (SELECT 1 FROM ChiTietTon WHERE maKho='KHO_TONG_AO' AND maHang='HH001')
-INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES ('KHO_TONG_AO', 'HH001', 500, 180000);
-
-IF NOT EXISTS (SELECT 1 FROM ChiTietTon WHERE maKho='KHO_TONG_AO' AND maHang='HH002')
-INSERT INTO ChiTietTon (maKho, maHang, soLuongTon, giaTriTon) VALUES ('KHO_TONG_AO', 'HH002', 1000, 120000);
+UPDATE PhieuNhap SET tongTien = (500*115000 + 100*250000) WHERE maPhieu = 'PN002';
+UPDATE NhaCungCap SET duNoLuyKe = duNoLuyKe + (500*115000 + 100*250000) WHERE maDoiTuong = 'NCC002';
 
 
--- 7. Transaction Data: Phiếu Nhập
-IF NOT EXISTS (SELECT 1 FROM PhieuNhap WHERE maPhieu = 'PN001')
-BEGIN
-    INSERT INTO PhieuNhap (maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, hanThanhToan, tongTien) VALUES ('PN001', DATEADD(DAY, -10, GETDATE()), 'DL001', 'NCC001', DATEADD(DAY, 20, GETDATE()), 0);
-    INSERT INTO ChiTietPhieuNhap (maPhieu, maHang, soLuong, donGiaNhap) VALUES ('PN001', 'HH001', 1000, 180000), ('PN001', 'HH003', 200, 350000);
-    
-    -- Sync Logic (Simplified for Seed)
-    UPDATE PhieuNhap SET tongTien = (1000*180000 + 200*350000) WHERE maPhieu = 'PN001';
-    UPDATE NhaCungCap SET duNoLuyKe = duNoLuyKe + (1000*180000 + 200*350000) WHERE maDoiTuong = 'NCC001';
-END
+-- 8. Transaction Data: Phi?u Xu?t (T?o doanh thu & công n? Khách)
+-- PX001: Bán cho KH001
+INSERT INTO PhieuXuat (maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien) VALUES
+('PX001', DATEADD(DAY, -3, GETDATE()), 'DL002', 'KH001', 0);
 
-IF NOT EXISTS (SELECT 1 FROM PhieuNhap WHERE maPhieu = 'PN002')
-BEGIN
-    INSERT INTO PhieuNhap (maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, hanThanhToan, tongTien) VALUES ('PN002', DATEADD(DAY, -5, GETDATE()), 'DL001', 'NCC002', DATEADD(DAY, 10, GETDATE()), 0);
-    INSERT INTO ChiTietPhieuNhap (maPhieu, maHang, soLuong, donGiaNhap) VALUES ('PN002', 'HH002', 500, 115000), ('PN002', 'HH004', 100, 250000);
+INSERT INTO ChiTietPhieuXuat (maPhieu, maHang, soLuong, giaBan, giaVonTaiThoiDiem) VALUES
+('PX001', 'HH001', 100, 220000, 180000), -- 22tr
+('PX001', 'HH003', 20, 450000, 350000);   -- 9tr
 
-    UPDATE PhieuNhap SET tongTien = (500*115000 + 100*250000) WHERE maPhieu = 'PN002';
-    UPDATE NhaCungCap SET duNoLuyKe = duNoLuyKe + (500*115000 + 100*250000) WHERE maDoiTuong = 'NCC002';
-END
+UPDATE PhieuXuat SET tongTien = (31000000) WHERE maPhieu = 'PX001';
+-- Ghi s? n?
+INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES
+('KH001', DATEADD(DAY, -3, GETDATE()), 'MUA_HANG', 31000000, N'Mua hàng PX001');
+UPDATE KhachHang SET duNoLuyKe = 31000000 WHERE maDoiTuong = 'KH001';
 
+-- PX002: Bán cho KH003 (Ð?i lý c?p 1 - Mua nhi?u)
+INSERT INTO PhieuXuat (maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien) VALUES
+('PX002', DATEADD(DAY, -1, GETDATE()), 'DL002', 'KH003', 0);
 
--- 8. Transaction Data: Phiếu Xuất
-IF NOT EXISTS (SELECT 1 FROM PhieuXuat WHERE maPhieu = 'PX001')
-BEGIN
-    INSERT INTO PhieuXuat (maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien) VALUES ('PX001', DATEADD(DAY, -3, GETDATE()), 'DL002', 'KH001', 0);
-    INSERT INTO ChiTietPhieuXuat (maPhieu, maHang, soLuong, giaBan, giaVonTaiThoiDiem) VALUES ('PX001', 'HH001', 100, 220000, 180000), ('PX001', 'HH003', 20, 450000, 350000);
+INSERT INTO ChiTietPhieuXuat (maPhieu, maHang, soLuong, giaBan, giaVonTaiThoiDiem) VALUES
+('PX002', 'HH002', 2000, 145000, 120000), -- 290tr (Giá s?)
+('PX002', 'HH001', 500, 210000, 180000);  -- 105tr
 
-    UPDATE PhieuXuat SET tongTien = (31000000) WHERE maPhieu = 'PX001';
-    INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES ('KH001', DATEADD(DAY, -3, GETDATE()), 'MUA_HANG', 31000000, N'Mua hàng PX001');
-    UPDATE KhachHang SET duNoLuyKe = duNoLuyKe + 31000000 WHERE maDoiTuong = 'KH001';
-END
+UPDATE PhieuXuat SET tongTien = (395000000) WHERE maPhieu = 'PX002';
+INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES
+('KH003', DATEADD(DAY, -1, GETDATE()), 'MUA_HANG', 395000000, N'Mua hàng PX002');
+UPDATE KhachHang SET duNoLuyKe = 395000000 WHERE maDoiTuong = 'KH003';
 
-IF NOT EXISTS (SELECT 1 FROM PhieuXuat WHERE maPhieu = 'PX002')
-BEGIN
-    INSERT INTO PhieuXuat (maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien) VALUES ('PX002', DATEADD(DAY, -1, GETDATE()), 'DL002', 'KH003', 0);
-    INSERT INTO ChiTietPhieuXuat (maPhieu, maHang, soLuong, giaBan, giaVonTaiThoiDiem) VALUES ('PX002', 'HH002', 2000, 145000, 120000), ('PX002', 'HH001', 500, 210000, 180000);
+-- 9. Transaction Data: Phi?u Thu Chi
+INSERT INTO PhieuThuChi (maPhieu, loaiPhieu, ngayLap, soTien, lyDo) VALUES
+('PT001', 'THU', DATEADD(DAY, -1, GETDATE()), 50000000, N'KH003 Thanh toán d?t 1'),
+('PC001', 'CHI', DATEADD(DAY, 0, GETDATE()), 2000000, N'Chi phí di?n nu?c tháng 1'),
+('PC002', 'CHI', DATEADD(DAY, 0, GETDATE()), 5000000, N'Chi phí v?n hành kho');
 
-    UPDATE PhieuXuat SET tongTien = (395000000) WHERE maPhieu = 'PX002';
-    INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES ('KH003', DATEADD(DAY, -1, GETDATE()), 'MUA_HANG', 395000000, N'Mua hàng PX002');
-    UPDATE KhachHang SET duNoLuyKe = duNoLuyKe + 395000000 WHERE maDoiTuong = 'KH003';
-END
+-- Update l?i du n? KH003 sau khi thu
+INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES
+('KH003', DATEADD(DAY, -1, GETDATE()), 'THANH_TOAN', -50000000, N'Thanh toán PT001');
+UPDATE KhachHang SET duNoLuyKe = duNoLuyKe - 50000000 WHERE maDoiTuong = 'KH003';
 
+-- 10. Sync Stock Final (Simplified)
+UPDATE ChiTietTon SET soLuongTon = soLuongTon + 1000 - 100 - 500 WHERE maKho='K001' AND maHang='HH001'; -- +1000 Imp - 600 Exp
+UPDATE ChiTietTon SET soLuongTon = soLuongTon + 500 - 2000 WHERE maKho='K001' AND maHang='HH002'; 
+UPDATE ChiTietTon SET soLuongTon = 200 - 20 WHERE maKho='K001' AND maHang='HH003';
+UPDATE ChiTietTon SET soLuongTon = 100 WHERE maKho='K001' AND maHang='HH004';
 
--- 9. Transaction Data: Phiếu Thu Chi
-IF NOT EXISTS (SELECT 1 FROM PhieuThuChi WHERE maPhieu = 'PT001')
-BEGIN
-    INSERT INTO PhieuThuChi (maPhieu, loaiPhieu, ngayLap, soTien, lyDo) VALUES ('PT001', 'THU', DATEADD(DAY, -1, GETDATE()), 50000000, N'KH003 Thanh toán đợt 1');
-    INSERT INTO SoRiengKhachHang (maKhachHang, ngayGiaoDich, loaiGiaoDich, soTienPhatSinh, dienGiai) VALUES ('KH003', DATEADD(DAY, -1, GETDATE()), 'THANH_TOAN', -50000000, N'Thanh toán PT001');
-    UPDATE KhachHang SET duNoLuyKe = duNoLuyKe - 50000000 WHERE maDoiTuong = 'KH003';
-END
-
-IF NOT EXISTS (SELECT 1 FROM PhieuThuChi WHERE maPhieu = 'PC001')
-INSERT INTO PhieuThuChi (maPhieu, loaiPhieu, ngayLap, soTien, lyDo) VALUES ('PC001', 'CHI', DATEADD(DAY, 0, GETDATE()), 2000000, N'Chi phí điện nước tháng 1');
-
-IF NOT EXISTS (SELECT 1 FROM PhieuThuChi WHERE maPhieu = 'PC002')
-INSERT INTO PhieuThuChi (maPhieu, loaiPhieu, ngayLap, soTien, lyDo) VALUES ('PC002', 'CHI', DATEADD(DAY, 0, GETDATE()), 5000000, N'Chi phí vận hành kho');
-
+-- Sync Kho Tong
+UPDATE ChiTietTon SET soLuongTon = soLuongTon WHERE maKho='KHO_TONG_AO';

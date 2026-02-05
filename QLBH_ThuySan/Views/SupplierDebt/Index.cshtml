@@ -22,6 +22,7 @@
                 <th>Tên Nhà Cung Cấp</th>
                 <th>Số Điện Thoại</th>
                 <th>Điều Khoản Nợ</th>
+                <th>Dư Nợ Hiện Tại (Tính Nhập)</th>
                 <th>Thao Tác</th>
             </tr>
         </thead>
@@ -41,6 +42,7 @@
                             <span class="badge bg-secondary">Thanh toán ngay</span>
                         }
                     </td>
+                    <td class="text-danger fw-bold">@string.Format("{0:N0}", item.DuNoLuyKe ?? 0) đ</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary">
                             Xem Chi Tiết Nhập

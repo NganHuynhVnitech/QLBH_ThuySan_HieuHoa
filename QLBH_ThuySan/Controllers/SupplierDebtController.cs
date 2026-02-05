@@ -23,6 +23,11 @@ namespace QLBH_ThuySan.Controllers
         public async Task<IActionResult> Index()
         {
             var suppliers = await _context.NhaCungCaps.ToListAsync();
+            // User requested fix: If no imports (or default), debt = 0
+            foreach (var s in suppliers)
+            {
+                if (s.DuNoLuyKe == null) s.DuNoLuyKe = 0;
+            }
             return View(suppliers);
         }
 
@@ -52,7 +57,14 @@ namespace QLBH_ThuySan.Controllers
             
             // Calculate Total Debt (Total Imports). 
             // Note: Does not subtract payments because PhieuThuChi is generic.
-            ViewBag.TotalImportValue = imports.Sum(i => i.TongTien ?? 0);
+            var totalImport = imports.Sum(i => i.TongTien ?? 0);
+            ViewBag.TotalImportValue = totalImport;
+            
+            // User requested fix: Sync DuNoLuyKe with calculated value if needed, or default to 0
+            if (supplier.DuNoLuyKe == null)
+            {
+                 supplier.DuNoLuyKe = totalImport;
+            }
 
             return View(supplier);
         }

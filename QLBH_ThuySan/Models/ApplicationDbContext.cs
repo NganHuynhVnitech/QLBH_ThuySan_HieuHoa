@@ -12,58 +12,31 @@ namespace QLBH_ThuySan.Models
         }
 
         // DbSets
-        public virtual DbSet<BangKeChietKhau> BangKeChietKhaus { get; set; }
-        public virtual DbSet<CauHinhChietKhau> CauHinhChietKhaus { get; set; }
-        public virtual DbSet<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; }
-        public virtual DbSet<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; }
-        public virtual DbSet<ChiTietTon> ChiTietTons { get; set; }
-        public virtual DbSet<DaiLy> DaiLys { get; set; }
-        public virtual DbSet<HangHoa> HangHoas { get; set; }
-        public virtual DbSet<KhachHang> KhachHangs { get; set; }
-        public virtual DbSet<Kho> Khos { get; set; }
-        public virtual DbSet<NhaCungCap> NhaCungCaps { get; set; }
-        public virtual DbSet<PhieuNhap> PhieuNhaps { get; set; }
-        public virtual DbSet<PhieuThuChi> PhieuThuChis { get; set; }
-        public virtual DbSet<PhieuTinhChietKhau> PhieuTinhChietKhaus { get; set; }
-        public virtual DbSet<PhieuXuat> PhieuXuats { get; set; }
-        public virtual DbSet<SoRiengKhachHang> SoRiengKhachHangs { get; set; }
+        // DbSets
+        public virtual DbSet<ChiTietPhieuTinh> ChiTietPhieuTinhs { get; set; } = null!;
+        public virtual DbSet<CauHinhChietKhau> CauHinhChietKhaus { get; set; } = null!;
+        public virtual DbSet<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; } = null!;
+        public virtual DbSet<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = null!;
+        public virtual DbSet<ChiTietTon> ChiTietTons { get; set; } = null!;
+        public virtual DbSet<DaiLy> DaiLys { get; set; } = null!;
+        public virtual DbSet<DoiTuongChiPhi> DoiTuongChiPhis { get; set; } = null!;
+        public virtual DbSet<DonViTinh> DonViTinhs { get; set; } = null!;
+        public virtual DbSet<HangHoa> HangHoas { get; set; } = null!;
+        public virtual DbSet<KhachHang> KhachHangs { get; set; } = null!;
+        public virtual DbSet<Kho> Khos { get; set; } = null!;
+        public virtual DbSet<NhaCungCap> NhaCungCaps { get; set; } = null!;
+        public virtual DbSet<PhieuNhap> PhieuNhaps { get; set; } = null!;
+        public virtual DbSet<PhieuThuChi> PhieuThuChis { get; set; } = null!;
+        public virtual DbSet<PhieuTinhChietKhau> PhieuTinhChietKhaus { get; set; } = null!;
+        public virtual DbSet<PhieuXuat> PhieuXuats { get; set; } = null!;
+        public virtual DbSet<SoRiengKhachHang> SoRiengKhachHangs { get; set; } = null!;
         public virtual DbSet<NguoiDung> NguoiDungs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<BangKeChietKhau>(entity =>
-            {
-                entity.HasKey(e => e.MaBangKe).HasName("PK__BangKeCh__91E230ADB0EB5061");
 
-                entity.ToTable("BangKeChietKhau");
-
-                entity.Property(e => e.MaBangKe)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("maBangKe");
-                entity.Property(e => e.MaDoiTuong)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("maDoiTuong");
-                entity.Property(e => e.MaPhieuTinh)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("maPhieuTinh");
-                entity.Property(e => e.TongTien)
-                    .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("tongTien");
-                entity.Property(e => e.TrangThai)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasDefaultValue("Pending")
-                    .HasColumnName("trangThai");
-
-                entity.HasOne(d => d.MaPhieuTinhNavigation).WithMany(p => p.BangKeChietKhaus)
-                    .HasForeignKey(d => d.MaPhieuTinh)
-                    .HasConstraintName("FK__BangKeChi__maPhi__53D770D6");
-            });
 
             modelBuilder.Entity<CauHinhChietKhau>(entity =>
             {
@@ -319,6 +292,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenDoiTuong)
                     .HasMaxLength(100)
                     .HasColumnName("tenDoiTuong");
+                entity.Property(e => e.DuNoLuyKe)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("duNoLuyKe");
             });
 
             modelBuilder.Entity<PhieuNhap>(entity =>
@@ -334,6 +311,9 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.HanThanhToan)
                     .HasColumnType("datetime")
                     .HasColumnName("hanThanhToan");
+                entity.Property(e => e.NgayThanhToan)
+                    .HasColumnType("datetime")
+                    .HasColumnName("ngayThanhToan");
                 entity.Property(e => e.IdDaiLyNhap)
                     .HasMaxLength(20)
                     .IsUnicode(false)
@@ -401,11 +381,63 @@ namespace QLBH_ThuySan.Models
                     .HasMaxLength(10)
                     .IsUnicode(false)
                     .HasColumnName("loaiDoiTuong");
+                entity.Property(e => e.MaDoiTuong)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maDoiTuong");
                 entity.Property(e => e.NgayTao)
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")
                     .HasColumnName("ngayTao");
                 entity.Property(e => e.TuNgay).HasColumnName("tuNgay");
+                entity.Property(e => e.TongTien)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("tongTien");
+                entity.Property(e => e.TrangThai)
+                    .HasMaxLength(50)
+                    .HasDefaultValue("Chưa thanh toán")
+                    .HasColumnName("trangThai");
+
+                entity.Property(e => e.NgayThanhToan)
+                    .HasColumnType("datetime")
+                    .HasColumnName("ngayThanhToan");
+            });
+
+            modelBuilder.Entity<ChiTietPhieuTinh>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_ChiTietPhieuTinh");
+
+                entity.ToTable("ChiTietPhieuTinh");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.MaPhieuTinh)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maPhieuTinh");
+                entity.Property(e => e.MaHang)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maHang");
+                entity.Property(e => e.SoLuong).HasColumnName("soLuong");
+                entity.Property(e => e.SoTienChietKhau)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soTienChietKhau");
+                entity.Property(e => e.ThanhTien)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("thanhTien");
+                entity.Property(e => e.NoiDung)
+                    .HasMaxLength(200)
+                    .HasColumnName("noiDung");
+
+                entity.HasOne(d => d.MaHangNavigation).WithMany()
+                    .HasForeignKey(d => d.MaHang)
+                    .HasConstraintName("FK_ChiTietPhieuTinh_HangHoa");
+
+                entity.HasOne(d => d.MaPhieuTinhNavigation).WithMany(p => p.ChiTietPhieuTinhs)
+                    .HasForeignKey(d => d.MaPhieuTinh)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_ChiTietPhieuTinh_PhieuTinh");
             });
 
             modelBuilder.Entity<PhieuXuat>(entity =>
@@ -434,6 +466,9 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValue(0m)
                     .HasColumnType("decimal(18, 2)")
                     .HasColumnName("tongTien");
+                entity.Property(e => e.NgayThanhToan)
+                    .HasColumnType("datetime")
+                    .HasColumnName("ngayThanhToan");
 
                 entity.HasOne(d => d.IdDaiLyBanNavigation).WithMany(p => p.PhieuXuats)
                     .HasForeignKey(d => d.IdDaiLyBan)
@@ -442,6 +477,19 @@ namespace QLBH_ThuySan.Models
                 entity.HasOne(d => d.IdKhachHangNavigation).WithMany(p => p.PhieuXuats)
                     .HasForeignKey(d => d.IdKhachHang)
                     .HasConstraintName("FK__PhieuXuat__idKha__44952D46");
+            });
+
+            modelBuilder.Entity<DoiTuongChiPhi>(entity =>
+            {
+                entity.HasKey(e => e.MaDoiTuong);
+                entity.ToTable("DoiTuongChiPhi");
+                entity.Property(e => e.MaDoiTuong)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maDoiTuong");
+                entity.Property(e => e.TenDoiTuong)
+                    .HasMaxLength(100)
+                    .HasColumnName("tenDoiTuong");
             });
 
             modelBuilder.Entity<SoRiengKhachHang>(entity =>
@@ -492,6 +540,38 @@ namespace QLBH_ThuySan.Models
                     .HasColumnName("MatKhau");
                 entity.Property(e => e.QuyenNguoiDung)
                     .HasColumnName("QuyenNguoiDung");
+            });
+
+            modelBuilder.Entity<DonViTinh>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_DonViTinh");
+
+                entity.ToTable("DonViTinh");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.MaHang)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maHang");
+                entity.Property(e => e.TenDonVi)
+                    .HasMaxLength(50)
+                    .HasColumnName("tenDonVi");
+                entity.Property(e => e.TyLeQuyDoi)
+                    .HasDefaultValue(1)
+                    .HasColumnName("tyLeQuyDoi");
+                entity.Property(e => e.GiaBan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("giaBan");
+                entity.Property(e => e.MaHangDonVi)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("maHangDonVi");
+
+                entity.HasOne(d => d.MaHangNavigation).WithMany(p => p.DonViTinhs)
+                    .HasForeignKey(d => d.MaHang)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DonViTinh_HangHoa");
             });
 
             OnModelCreatingPartial(modelBuilder);
