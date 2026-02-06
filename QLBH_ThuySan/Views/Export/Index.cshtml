@@ -27,12 +27,14 @@
                         <th>Khách Hàng</th>
                         <th>Đại Lý Bán</th>
                         <th>Ngày Thanh Toán</th>
+                        <th>Trạng Thái</th>
                         <th class="text-end">Tổng Tiền</th>
                         <th>Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model) {
+                    @foreach (var item in Model)
+                    {
                         <tr>
                             <td><span class="badge bg-secondary">@item.MaPhieu</span></td>
                             <td>@item.NgayXuat?.ToString("dd/MM/yyyy HH:mm")</td>
@@ -43,14 +45,25 @@
                                 @(item.IdDaiLyBanNavigation?.TenDaiLy ?? item.IdDaiLyBan)
                             </td>
                             <td>@item.NgayThanhToan?.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if(item.TrangThaiThanhToan == "Đã Thanh Toán") {
+                                    <span class="badge bg-success">@item.TrangThaiThanhToan</span>
+                                } else if(item.TrangThaiThanhToan == "Thanh Toán Một Phần") {
+                                    <span class="badge bg-warning text-dark">@item.TrangThaiThanhToan</span>
+                                } else {
+                                    <span class="badge bg-danger">@item.TrangThaiThanhToan</span>
+                                }
+                            </td>
                             <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.TongTien)</td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info" title="Chi Tiết">
+                                    <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info"
+                                        title="Chi Tiết">
                                         Chi Tiết
                                     </a>
                                     <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
                                         Xóa
                                     </button>
                                 </div>
@@ -61,14 +74,17 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa phiếu xuất <strong>@item.MaPhieu</strong>?<br/>
-                                                <small class="text-danger">Cảnh báo: Việc xóa phiếu xuất sẽ KHÔNG tự động hoàn tác cập nhật tồn kho và công nợ.</small>
+                                                Bạn có chắc chắn muốn xóa phiếu xuất <strong>@item.MaPhieu</strong>?<br />
+                                                <small class="text-danger">Cảnh báo: Việc xóa phiếu xuất sẽ KHÔNG tự động
+                                                    hoàn tác cập nhật tồn kho và công nợ.</small>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Hủy</button>
                                                 <form asp-action="Delete" asp-route-id="@item.MaPhieu">
                                                     <button type="submit" class="btn btn-danger">Xóa</button>
                                                 </form>

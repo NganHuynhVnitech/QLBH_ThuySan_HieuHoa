@@ -28,38 +28,21 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @{ int index = 0; }
                     @foreach (var item in Model)
                     {
+                        index++;
                         <tr>
                             <td><span class="badge bg-secondary">@item.MaDoiTuong</span></td>
                             <td class="fw-bold">@item.TenDoiTuong</td>
                             <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-warning" title="Sửa">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                
-                                <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal-@item.MaDoiTuong" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body text-start">
-                                                Bạn có chắc chắn muốn xóa đối tượng <strong>@item.TenDoiTuong</strong> (@item.MaDoiTuong)?
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <form asp-action="Delete" asp-route-id="@item.MaDoiTuong">
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                        Sửa
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@index" title="Xóa">
+                                        Xóa
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -69,3 +52,30 @@
         </div>
     </div>
 </div>
+
+@* Generate Modals outside the table to ensure valid HTML and prevent z-index/display issues *@
+@{ int modalIndex = 0; }
+@foreach (var item in Model)
+{
+    modalIndex++;
+    <!-- Delete Modal for @item.MaDoiTuong -->
+    <div class="modal fade" id="deleteModal-@modalIndex" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận xóa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    Bạn có chắc chắn muốn xóa đối tượng <strong>@item.TenDoiTuong</strong> (@item.MaDoiTuong)?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <form asp-action="Delete" asp-route-id="@item.MaDoiTuong">
+                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

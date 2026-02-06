@@ -314,6 +314,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.NgayThanhToan)
                     .HasColumnType("datetime")
                     .HasColumnName("ngayThanhToan");
+                entity.Property(e => e.TrangThaiThanhToan)
+                    .HasMaxLength(50)
+                    .HasDefaultValueSql("(N'Chưa Thanh Toán')")
+                    .HasColumnName("trangthaithanhtoan");
                 entity.Property(e => e.IdDaiLyNhap)
                     .HasMaxLength(20)
                     .IsUnicode(false)
@@ -342,7 +346,7 @@ namespace QLBH_ThuySan.Models
 
             modelBuilder.Entity<PhieuThuChi>(entity =>
             {
-                entity.HasKey(e => e.MaPhieu).HasName("PK__PhieuThu__49A5B11FF04AD33C");
+                entity.HasKey(e => e.MaPhieu).HasName("PK__PhieuThu__458D7B2C7991D479");
 
                 entity.ToTable("PhieuThuChi");
 
@@ -364,6 +368,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.SoTien)
                     .HasColumnType("decimal(18, 2)")
                     .HasColumnName("soTien");
+                entity.Property(e => e.MaDoiTuong)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maDoiTuong");
             });
 
             modelBuilder.Entity<PhieuTinhChietKhau>(entity =>
@@ -469,6 +477,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.NgayThanhToan)
                     .HasColumnType("datetime")
                     .HasColumnName("ngayThanhToan");
+                entity.Property(e => e.TrangThaiThanhToan)
+                    .HasMaxLength(50)
+                    .HasDefaultValueSql("(N'Chưa Thanh Toán')")
+                    .HasColumnName("trangthaithanhtoan");
 
                 entity.HasOne(d => d.IdDaiLyBanNavigation).WithMany(p => p.PhieuXuats)
                     .HasForeignKey(d => d.IdDaiLyBan)

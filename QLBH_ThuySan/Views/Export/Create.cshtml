@@ -9,9 +9,11 @@
 <style>
     /* POS Specific Styles */
     .pos-container {
-        height: calc(100vh - 120px); /* Adjust based on navbar height */
+        height: calc(100vh - 120px);
+        /* Adjust based on navbar height */
         overflow: hidden;
     }
+
     .product-list-col {
         height: 100%;
         overflow-y: auto;
@@ -19,6 +21,7 @@
         background-color: #f8f9fa;
         padding: 15px;
     }
+
     .invoice-col {
         height: 100%;
         display: flex;
@@ -26,43 +29,52 @@
         background-color: #fff;
         padding: 15px;
     }
+
     .product-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 10px;
         margin-top: 15px;
     }
+
     .product-card {
         cursor: pointer;
         transition: transform 0.1s;
         border: 1px solid #e0e0e0;
     }
+
     .product-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         border-color: #007bff;
     }
+
     .product-card .card-body {
         padding: 10px;
         text-align: center;
     }
+
     .product-card .price-tag {
         color: #d9534f;
         font-weight: bold;
     }
+
     .invoice-items-container {
         flex-grow: 1;
         overflow-y: auto;
         border: 1px solid #eee;
         margin: 10px 0;
     }
+
     .invoice-footer {
         border-top: 2px solid #eee;
         padding-top: 10px;
     }
+
     .search-bar-container {
         position: relative;
     }
+
     .customer-autocomplete-results {
         position: absolute;
         z-index: 1000;
@@ -73,11 +85,13 @@
         border: 1px solid #ddd;
         display: none;
     }
+
     .result-item {
         padding: 8px;
         cursor: pointer;
         border-bottom: 1px solid #eee;
     }
+
     .result-item:hover {
         background-color: #f0f0f0;
     }
@@ -89,13 +103,14 @@
         <div class="col-md-7 col-lg-8 product-list-col">
             <div class="row mb-3">
                 <div class="col-12">
-                     <div class="input-group input-group-lg">
+                    <div class="input-group input-group-lg">
                         <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
+                        <input type="text" id="productSearch" class="form-control border-start-0"
+                            placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
                     </div>
                 </div>
             </div>
-            
+
             <!-- Product Grid -->
             <div id="productGrid" class="product-grid">
                 <!-- Products will be loaded here via JS -->
@@ -113,9 +128,11 @@
             <div class="mb-3 position-relative">
                 <label class="form-label fw-bold">Khách Hàng</label>
                 <div class="input-group">
-                    <input type="text" id="customerSearch" class="form-control" placeholder="Tìm khách hàng..." autocomplete="off">
+                    <input type="text" id="customerSearch" class="form-control" placeholder="Tìm khách hàng..."
+                        autocomplete="off">
                     <input type="hidden" id="selectedCustomerId" name="IdKhachHang" required>
-                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal"
+                        data-bs-target="#newCustomerModal">
                         <i class="bi bi-person-plus-fill"></i>
                     </button>
                 </div>
@@ -157,22 +174,33 @@
                     <span class="fs-5 fw-bold">Tổng tiền hàng:</span>
                     <span class="fs-4 fw-bold text-primary" id="totalAmount">0</span>
                 </div>
-                
+
                 <form id="checkoutForm" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="MaPhieu" id="orderCode" value="@("PX" + DateTime.Now.ToString("yyMMddHHmm"))" /> <!-- Auto gen for MVP -->
+                    <input type="hidden" name="MaPhieu" id="orderCode"
+                        value="@("PX" + DateTime.Now.ToString("yyMMddHHmm"))" /> <!-- Auto gen for MVP -->
                     <input type="hidden" name="NgayXuat" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+
+                    <div class="mb-2">
+                        <label class="small text-muted">Trạng thái thanh toán</label>
+                        <select name="TrangThaiThanhToan" class="form-select form-select-sm">
+                            <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                            <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
+                        </select>
+                    </div>
                     <!-- Details will be injected as hidden inputs before submit -->
                     <div id="hiddenInputs"></div>
-                    
+
                     <input type="hidden" name="IdDaiLyBan" id="storeId" value="" />
-                     <!-- We need to select store/agency. In POS usually fixed or logged in user's agency. 
-                          I'll add a hidden selector or modal if strictly needed. 
-                          For now, I'll default to the first Sales Agency available or ask user at start.
-                          Simpler: Add a small selector at top of invoice. -->
+                    <!-- We need to select store/agency. In POS usually fixed or logged in user's agency. 
+                                   I'll add a hidden selector or modal if strictly needed. 
+                                   For now, I'll default to the first Sales Agency available or ask user at start.
+                                   Simpler: Add a small selector at top of invoice. -->
                     <div class="mb-2">
-                        <select name="IdDaiLyBan" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyBan" required>
-                             <!-- Loaded from Controller -->
+                        <select name="IdDaiLyBan" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyBan"
+                            required>
+                            <!-- Loaded from Controller -->
                         </select>
                     </div>
 
@@ -198,7 +226,8 @@
                 <form id="quickNewCustomerForm">
                     <div class="mb-3">
                         <label class="form-label">Tên Khách Hàng <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="TenDoiTuong" required placeholder="Nhập tên khách hàng">
+                        <input type="text" class="form-control" name="TenDoiTuong" required
+                            placeholder="Nhập tên khách hàng">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Số Điện Thoại</label>
@@ -222,47 +251,47 @@
     <script>
         var cart = []; // Array of { id, name, unit, price, qty, total }
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             loadProducts('');
-            
+
             // Search Products with debounce
             let debounceTimer;
-            $('#productSearch').on('input', function() {
+            $('#productSearch').on('input', function () {
                 clearTimeout(debounceTimer);
                 var term = $(this).val();
-                debounceTimer = setTimeout(function() {
+                debounceTimer = setTimeout(function () {
                     loadProducts(term);
                 }, 300);
             });
 
             // Search Customer with debounce
-            $('#customerSearch').on('input', function() {
+            $('#customerSearch').on('input', function () {
                 var term = $(this).val();
-                if(term.length < 2) {
+                if (term.length < 2) {
                     $('#customerResults').hide();
                     return;
                 }
-                
-                $.get('/Customer/SearchJson?term=' + term, function(data) {
+
+                $.get('/Customer/SearchJson?term=' + term, function (data) {
                     $('#customerResults').empty().show();
-                    if(data.length === 0) {
+                    if (data.length === 0) {
                         $('#customerResults').append('<div class="result-item text-muted">Không tìm thấy khách hàng</div>');
                     } else {
-                        data.forEach(function(c) {
+                        data.forEach(function (c) {
                             $('#customerResults').append(`
-                                <div class="result-item" onclick="selectCustomer('${c.maDoiTuong}', '${c.tenDoiTuong}')">
-                                    <strong>${c.tenDoiTuong}</strong> <br/>
-                                    <small class="text-muted">${c.soDienThoai || ''}</small>
-                                </div>
-                            `);
+                                            <div class="result-item" onclick="selectCustomer('${c.maDoiTuong}', '${c.tenDoiTuong}')">
+                                                <strong>${c.tenDoiTuong}</strong> <br/>
+                                                <small class="text-muted">${c.soDienThoai || ''}</small>
+                                            </div>
+                                        `);
                         });
                     }
                 });
             });
 
             // Close dropdown when clicking outside
-            $(document).click(function(e) {
-                if(!$(e.target).closest('#customerSearch, #customerResults').length) {
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#customerSearch, #customerResults').length) {
                     $('#customerResults').hide();
                 }
             });
@@ -271,29 +300,29 @@
         function loadProducts(term) {
             $('#loadingProducts').removeClass('d-none');
             $('#productGrid').empty();
-            
-            $.get('/Product/SearchJson?term=' + term, function(data) {
+
+            $.get('/Product/SearchJson?term=' + term, function (data) {
                 $('#loadingProducts').addClass('d-none');
-                if(data.length === 0) {
-                     $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
-                     return;
+                if (data.length === 0) {
+                    $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
+                    return;
                 }
 
-                data.forEach(function(p) {
+                data.forEach(function (p) {
                     // Assuming Image placeholder if backend sends it, or default
-                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP'; 
+                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP';
                     var price = p.giaBanHienTai ? p.giaBanHienTai.toLocaleString() : '0';
-                    
+
                     var cardHtml = `
-                        <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
-                            <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
-                            <div class="card-body">
-                                <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
-                                <p class="card-text small text-muted">${p.maHang}</p>
-                                <p class="price-tag mb-0">${price}</p>
-                            </div>
-                        </div>
-                    `;
+                                    <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
+                                        <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
+                                            <p class="card-text small text-muted">${p.maHang}</p>
+                                            <p class="price-tag mb-0">${price}</p>
+                                        </div>
+                                    </div>
+                                `;
                     $('#productGrid').append(cardHtml);
                 });
             });
@@ -301,7 +330,7 @@
 
         function addToCart(product) {
             var existing = cart.find(x => x.id === product.maHang);
-            if(existing) {
+            if (existing) {
                 existing.qty += 1;
                 existing.total = existing.qty * existing.price;
             } else {
@@ -323,31 +352,31 @@
             var totalQty = 0;
             var totalAmt = 0;
 
-            cart.forEach(function(item, index) {
+            cart.forEach(function (item, index) {
                 totalQty += item.qty;
                 totalAmt += item.total;
-                
+
                 var tr = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>
-                            <div class="fw-bold">${item.name}</div>
-                            <small class="text-muted">${item.id}</small>
-                        </td>
-                        <td>
-                            <input type="number" class="form-control form-control-sm text-center" 
-                                value="${item.qty}" min="1" onchange="updateQty('${item.id}', this.value)">
-                        </td>
-                        <td class="text-end fw-bold">
-                            ${item.total.toLocaleString()}
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>
+                                        <div class="fw-bold">${item.name}</div>
+                                        <small class="text-muted">${item.id}</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm text-center" 
+                                            value="${item.qty}" min="1" onchange="updateQty('${item.id}', this.value)">
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        ${item.total.toLocaleString()}
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
                 tbody.append(tr);
             });
 
@@ -357,9 +386,9 @@
 
         function updateQty(id, newQty) {
             var item = cart.find(x => x.id === id);
-            if(item) {
+            if (item) {
                 item.qty = parseFloat(newQty);
-                if(item.qty <= 0) item.qty = 1;
+                if (item.qty <= 0) item.qty = 1;
                 item.total = item.qty * item.price;
                 renderCart();
             }
@@ -387,8 +416,8 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData),
-                success: function(res) {
-                    if(res.success) {
+                success: function (res) {
+                    if (res.success) {
                         selectCustomer(res.data.maDoiTuong, res.data.tenDoiTuong);
                         var modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
                         modal.hide();
@@ -396,18 +425,18 @@
                         $('#quickNewCustomerForm')[0].reset();
                     }
                 },
-                error: function(err) {
+                error: function (err) {
                     alert('Lỗi: ' + (err.responseText || 'Không thể tạo khách hàng'));
                 }
             });
         }
 
         function submitOrder() {
-            if(cart.length === 0) {
+            if (cart.length === 0) {
                 alert('Giỏ hàng trống!');
                 return;
             }
-            if(!$('#selectedCustomerId').val()) {
+            if (!$('#selectedCustomerId').val()) {
                 alert('Vui lòng chọn khách hàng!');
                 return;
             }
@@ -415,26 +444,26 @@
             var form = $('#checkoutForm');
             var hiddenDiv = $('#hiddenInputs');
             hiddenDiv.empty();
-            
+
             // Append Customer and details
-            $('<input>').attr({type: 'hidden', name: 'IdKhachHang', value: $('#selectedCustomerId').val()}).appendTo(hiddenDiv);
+            $('<input>').attr({ type: 'hidden', name: 'IdKhachHang', value: $('#selectedCustomerId').val() }).appendTo(hiddenDiv);
 
             cart.forEach((item, i) => {
-                $('<input>').attr({type: 'hidden', name: 'MaHang[]', value: item.id}).appendTo(hiddenDiv);
-                $('<input>').attr({type: 'hidden', name: 'SoLuong[]', value: item.qty}).appendTo(hiddenDiv);
-                $('<input>').attr({type: 'hidden', name: 'GiaBan[]', value: item.price}).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'MaHang[]', value: item.id }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'SoLuong[]', value: item.qty }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'GiaBan[]', value: item.price }).appendTo(hiddenDiv);
             });
 
             form.submit();
         }
 
         // F3 focus search
-        $(document).keydown(function(e) {
-            if(e.which === 114) { // F3
+        $(document).keydown(function (e) {
+            if (e.which === 114) { // F3
                 e.preventDefault();
                 $('#productSearch').focus();
             }
-            if(e.which === 119) { // F8
+            if (e.which === 119) { // F8
                 e.preventDefault();
                 submitOrder();
             }

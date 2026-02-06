@@ -14,4 +14,6 @@ public partial class PhieuThuChi
     public decimal? SoTien { get; set; }
 
     public string? LyDo { get; set; }
+
+    public string? MaDoiTuong { get; set; }
 }

@@ -2,10 +2,33 @@
 
 @{
     ViewData["Title"] = "Quản Lý Thu Chi";
-    
+
     decimal TongThu = Model.Where(x => x.LoaiPhieu == "THU").Sum(x => x.SoTien ?? 0);
-    decimal TongChi = Model.Where(x => x.LoaiPhieu == "CHI").Sum(x => x.SoTien ?? 0);
+    decimal TongChi = Model.Where(x => x.LoaiPhieu == "CHI" || x.LoaiPhieu == "NHAP").Sum(x => x.SoTien ?? 0);
     decimal ChenhLech = TongThu - TongChi;
+
+    var customerNames = ViewData["CustomerNames"] as Dictionary<string, string>;
+    var supplierNames = ViewData["SupplierNames"] as Dictionary<string, string>;
+    var costObjectNames = ViewData["CostObjectNames"] as Dictionary<string, string>;
+
+    string GetDoiTuongName(string? loaiPhieu, string? maDoiTuong)
+    {
+        if (string.IsNullOrEmpty(maDoiTuong)) return "-";
+
+        if (loaiPhieu == "THU" && customerNames != null && customerNames.ContainsKey(maDoiTuong))
+        {
+            return customerNames[maDoiTuong];
+        }
+        else if (loaiPhieu == "CHI" && supplierNames != null && supplierNames.ContainsKey(maDoiTuong))
+        {
+            return supplierNames[maDoiTuong];
+        }
+        else if (loaiPhieu == "NHAP" && costObjectNames != null && costObjectNames.ContainsKey(maDoiTuong))
+        {
+            return costObjectNames[maDoiTuong];
+        }
+        return maDoiTuong;
+    }
 }
 
 <div class="row mb-4">
@@ -56,22 +79,35 @@
                         <th>Mã Phiếu</th>
                         <th>Ngày Lập</th>
                         <th>Loại Phiếu</th>
+                        <th>Đối Tượng</th>
                         <th class="text-end">Số Tiền</th>
                         <th>Lý Do</th>
                         <th>Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model) {
+                    @foreach (var item in Model)
+                    {
                         <tr>
                             <td><span class="badge bg-secondary">@item.MaPhieu</span></td>
                             <td>@item.NgayLap?.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                @if (item.LoaiPhieu == "THU") {
+                                @if (item.LoaiPhieu == "THU")
+                                {
                                     <span class="badge bg-success">THU</span>
-                                } else {
+                                }
+                                else if (item.LoaiPhieu == "CHI")
+                                {
                                     <span class="badge bg-danger">CHI</span>
                                 }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">NHAP (Chi Phí)</span>
+                                }
+                            </td>
+                            <td class="fw-bold">
+                                @GetDoiTuongName(item.LoaiPhieu, item.MaDoiTuong)
+                                <small class="text-muted d-block">@item.MaDoiTuong</small>
                             </td>
                             <td class="text-end fw-bold @(item.LoaiPhieu == "THU" ? "text-success" : "text-danger")">
                                 @string.Format("{0:N0}", item.SoTien)
@@ -79,8 +115,9 @@
                             <td>@item.LyDo</td>
                             <td>
                                 <!-- Button trigger modal -->
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
-                                    Xóa
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
+                                    <i class="bi bi-trash"></i>
                                 </button>
 
                                 <!-- Delete Modal -->
@@ -89,13 +126,15 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa phiếu <strong>@item.MaPhieu</strong>?<br/>
+                                                Bạn có chắc chắn muốn xóa phiếu <strong>@item.MaPhieu</strong>?<br />
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Hủy</button>
                                                 <form asp-action="Delete" asp-route-id="@item.MaPhieu">
                                                     <button type="submit" class="btn btn-danger">Xóa</button>
                                                 </form>

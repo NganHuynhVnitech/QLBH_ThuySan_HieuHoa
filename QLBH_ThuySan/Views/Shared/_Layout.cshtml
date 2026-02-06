@@ -7,6 +7,7 @@
     <title>@ViewData["Title"] - QLBH_ThuySan</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/QLBH_ThuySan.styles.css" asp-append-version="true" />
 </head>
@@ -23,52 +24,78 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
+                            <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Home"
+                                asp-action="Index">Dashboard</a>
                         </li>
-                        
+
                         <!-- Module Quản Lý -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Quản Lý</a>
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Quản Lý</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index">Hàng Hóa</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Customer" asp-action="Index">Khách Hàng</a></li>
-                                <li><a class="dropdown-item" asp-controller="Supplier" asp-action="Index">Nhà Cung Cấp</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index">Hàng Hóa</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Customer" asp-action="Index">Khách Hàng</a>
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Supplier" asp-action="Index">Nhà Cung
+                                        Cấp</a></li>
                                 <li><a class="dropdown-item" asp-controller="Agency" asp-action="Index">Đại Lý</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Warehouse" asp-action="Index">Kho Hàng</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="CostObject" asp-action="Index">Đối Tượng Chi Phí</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Warehouse" asp-action="Index">Kho Hàng</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="CostObject" asp-action="Index">Đối Tượng
+                                        Chi Phí</a></li>
                             </ul>
                         </li>
 
                         <!-- Module Giao Dịch -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Giao Dịch</a>
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Giao Dịch</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="Import" asp-action="Index">Nhập Kho</a></li>
-                                <li><a class="dropdown-item" asp-controller="Export" asp-action="Index">Xuất Kho</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="CashFlow" asp-action="Index">Thu Chi</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="SupplierDebt" asp-action="Index">Công Nợ Đầu Vào (NCC)</a></li>
-                                <li><a class="dropdown-item" asp-controller="CustomerDebt" asp-action="Index">Công Nợ Khách Hàng</a></li>
+                                <li><a class="dropdown-item" asp-controller="Import" asp-action="Index">Nhập Kho</a>
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Export" asp-action="Index">Xuất Kho</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="CashFlow" asp-action="Index">Thu Chi</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="SupplierDebt" asp-action="Index">Công Nợ
+                                        Đầu Vào (NCC)</a></li>
+                                <li><a class="dropdown-item" asp-controller="CustomerDebt" asp-action="Index">Công Nợ
+                                        Khách Hàng</a></li>
                             </ul>
                         </li>
-                        
+
                         <!-- Module Chiết Khấu -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Chiết Khấu</a>
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Chiết Khấu</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="DiscountCalculation" asp-action="Index">Quản lý Chiết Khấu</a></li>
+                                <li><a class="dropdown-item" asp-controller="DiscountCalculation"
+                                        asp-action="Index">Quản lý Chiết Khấu</a></li>
                             </ul>
                         </li>
 
 
-                        
+
                         <!-- Báo Cáo -->
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Financial" asp-action="ProfitLoss">Báo Cáo P&L</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Financial"
+                                asp-action="ProfitLoss">Báo Cáo P&L</a>
                         </li>
                     </ul>
                     @if (User.Identity?.IsAuthenticated == true)

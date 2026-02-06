@@ -1,3 +1,4 @@
+
 @model QLBH_ThuySan.Models.PhieuThuChi
 
 @{
@@ -31,11 +32,62 @@
 
                         <div class="mb-3">
                             <label asp-for="LoaiPhieu" class="form-label">Loại Phiếu</label>
-                            <select asp-for="LoaiPhieu" class="form-select" required>
+                            <select asp-for="LoaiPhieu" id="LoaiPhieu" class="form-select" required onchange="togglePartnerSelect()">
                                 <option value="THU">Phiếu Thu (Doanh thu bán hàng, thu nợ...)</option>
                                 <option value="CHI">Phiếu Chi (Trả tiền hàng, chi phí vận hành...)</option>
+                                <option value="NHAP">Phiếu Chi Phí (Điện, Nước, Lương...)</option>
                             </select>
                             <span asp-validation-for="LoaiPhieu" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Đối Tượng</label>
+                            
+                            <!-- Select for Customer (THU) -->
+                            <div id="div-customer">
+                                <select name="MaDoiTuong_Customer" id="MaDoiTuong_Customer" class="form-select">
+                                    <option value="">-- Chọn Khách Hàng --</option>
+                                    @if(ViewData["Customers"] != null)
+                                    {
+                                        foreach (var item in (IEnumerable<dynamic>)ViewData["Customers"])
+                                        {
+                                            <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Select for Supplier (CHI) -->
+                            <div id="div-supplier" style="display:none;">
+                                <select name="MaDoiTuong_Supplier" id="MaDoiTuong_Supplier" class="form-select">
+                                    <option value="">-- Chọn Nhà Cung Cấp --</option>
+                                    @if (ViewData["Suppliers"] != null)
+                                    {
+                                        foreach (var item in (IEnumerable<dynamic>)ViewData["Suppliers"])
+                                        {
+                                            <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Select for CostObject (NHAP) -->
+                            <div id="div-costobject" style="display:none;">
+                                <select name="MaDoiTuong_CostObject" id="MaDoiTuong_CostObject" class="form-select">
+                                    <option value="">-- Chọn Loại Chi Phí --</option>
+                                    @if (ViewData["CostObjects"] != null)
+                                    {
+                                        foreach (var item in (IEnumerable<dynamic>)ViewData["CostObjects"])
+                                        {
+                                            <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            
+                            <!-- Hidden actual field to bind to Model -->
+                            <input type="hidden" asp-for="MaDoiTuong" id="MaDoiTuong" />
+                            <span asp-validation-for="MaDoiTuong" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
@@ -63,4 +115,45 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        function togglePartnerSelect() {
+            var type = document.getElementById("LoaiPhieu").value;
+            
+            document.getElementById("div-customer").style.display = "none";
+            document.getElementById("div-supplier").style.display = "none";
+            document.getElementById("div-costobject").style.display = "none";
+
+            if (type === "THU") {
+                document.getElementById("div-customer").style.display = "block";
+            } else if (type === "CHI") {
+                document.getElementById("div-supplier").style.display = "block";
+            } else if (type === "NHAP") {
+                document.getElementById("div-costobject").style.display = "block";
+            }
+            
+            updateHiddenField();
+        }
+
+        function updateHiddenField() {
+            var type = document.getElementById("LoaiPhieu").value;
+            var hidden = document.getElementById("MaDoiTuong");
+            
+            if (type === "THU") {
+                hidden.value = document.getElementById("MaDoiTuong_Customer").value;
+            } else if (type === "CHI") {
+                hidden.value = document.getElementById("MaDoiTuong_Supplier").value;
+            } else if (type === "NHAP") {
+                hidden.value = document.getElementById("MaDoiTuong_CostObject").value;
+            }
+        }
+
+        // Attach listeners to sub-selects
+        document.getElementById("MaDoiTuong_Customer").addEventListener("change", updateHiddenField);
+        document.getElementById("MaDoiTuong_Supplier").addEventListener("change", updateHiddenField);
+        document.getElementById("MaDoiTuong_CostObject").addEventListener("change", updateHiddenField);
+
+        // Init
+        togglePartnerSelect();
+    </script>
 }

@@ -125,6 +125,7 @@ CREATE TABLE PhieuNhap (
     hanThanhToan DATETIME, -- TÃ­nh toÃ¡n: ngayNhap + soNgayDuocNo
     tongTien DECIMAL(18, 2) DEFAULT 0,
     ngayThanhToan DATETIME NULL, -- [NEW] Payment Date
+    trangthaithanhtoan NVARCHAR(50) DEFAULT N'Chưa Thanh Toán',
     FOREIGN KEY (idDaiLyNhap) REFERENCES DaiLy(maDaiLy),
     FOREIGN KEY (idNhaCungCap) REFERENCES NhaCungCap(maDoiTuong)
 );
@@ -149,6 +150,7 @@ CREATE TABLE PhieuXuat (
     idKhachHang VARCHAR(20),
     tongTien DECIMAL(18, 2) DEFAULT 0,
     ngayThanhToan DATETIME NULL, -- [NEW] Payment Date
+    trangthaithanhtoan NVARCHAR(50) DEFAULT N'Chưa Thanh Toán',
     FOREIGN KEY (idDaiLyBan) REFERENCES DaiLy(maDaiLy),
     FOREIGN KEY (idKhachHang) REFERENCES KhachHang(maDoiTuong)
 );
@@ -220,10 +222,11 @@ CREATE TABLE SoRiengKhachHang (
 -- Class: PhieuThuChi [2]
 CREATE TABLE PhieuThuChi (
     maPhieu VARCHAR(20) PRIMARY KEY,
-    loaiPhieu VARCHAR(10) CHECK (loaiPhieu IN ('THU', 'CHI')),
+    loaiPhieu VARCHAR(10) CHECK (loaiPhieu IN ('THU', 'CHI', 'NHAP')),
     ngayLap DATETIME DEFAULT GETDATE(),
     soTien DECIMAL(18, 2),
-    lyDo NVARCHAR(200) -- Thu bÃ¡n hÃ ng, Chi tráº£ NCC...
+    lyDo NVARCHAR(200), -- Thu bán hàng, Chi trả NCC...
+    maDoiTuong VARCHAR(20) NULL -- Linked to KhachHang, NhaCungCap, or DoiTuongChiPhi
 );
 
 GO
@@ -767,8 +770,8 @@ GO
 -- 5. CRUD PHIEUNHAP & DETAILS
 IF OBJECT_ID('sp_PhieuNhap_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_PhieuNhap_Insert;
 GO
-CREATE PROCEDURE sp_PhieuNhap_Insert @maPhieu VARCHAR(20), @ngayNhap DATETIME, @idDaiLyNhap VARCHAR(20), @idNhaCungCap VARCHAR(20) AS
-INSERT INTO PhieuNhap(maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, tongTien) VALUES (@maPhieu, @ngayNhap, @idDaiLyNhap, @idNhaCungCap, 0);
+CREATE PROCEDURE sp_PhieuNhap_Insert @maPhieu VARCHAR(20), @ngayNhap DATETIME, @idDaiLyNhap VARCHAR(20), @idNhaCungCap VARCHAR(20), @trangthaithanhtoan NVARCHAR(50) = N'Chưa Thanh Toán' AS
+INSERT INTO PhieuNhap(maPhieu, ngayNhap, idDaiLyNhap, idNhaCungCap, tongTien, trangthaithanhtoan) VALUES (@maPhieu, @ngayNhap, @idDaiLyNhap, @idNhaCungCap, 0, @trangthaithanhtoan);
 GO
 
 IF OBJECT_ID('sp_ChiTietPhieuNhap_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_ChiTietPhieuNhap_Insert;
@@ -794,8 +797,8 @@ GO
 -- 6. CRUD PHIEUXUAT & DETAILS
 IF OBJECT_ID('sp_PhieuXuat_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_PhieuXuat_Insert;
 GO
-CREATE PROCEDURE sp_PhieuXuat_Insert @maPhieu VARCHAR(20), @ngayXuat DATETIME, @idDaiLyBan VARCHAR(20), @idKhachHang VARCHAR(20) AS
-INSERT INTO PhieuXuat(maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien) VALUES (@maPhieu, @ngayXuat, @idDaiLyBan, @idKhachHang, 0);
+CREATE PROCEDURE sp_PhieuXuat_Insert @maPhieu VARCHAR(20), @ngayXuat DATETIME, @idDaiLyBan VARCHAR(20), @idKhachHang VARCHAR(20), @trangthaithanhtoan NVARCHAR(50) = N'Chưa Thanh Toán' AS
+INSERT INTO PhieuXuat(maPhieu, ngayXuat, idDaiLyBan, idKhachHang, tongTien, trangthaithanhtoan) VALUES (@maPhieu, @ngayXuat, @idDaiLyBan, @idKhachHang, 0, @trangthaithanhtoan);
 GO
 
 IF OBJECT_ID('sp_ChiTietPhieuXuat_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_ChiTietPhieuXuat_Insert;

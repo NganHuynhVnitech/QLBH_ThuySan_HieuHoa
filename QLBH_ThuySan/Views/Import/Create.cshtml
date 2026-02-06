@@ -11,6 +11,7 @@
         height: calc(100vh - 120px);
         overflow: hidden;
     }
+
     .product-list-col {
         height: 100%;
         overflow-y: auto;
@@ -18,6 +19,7 @@
         background-color: #f8f9fa;
         padding: 15px;
     }
+
     .invoice-col {
         height: 100%;
         display: flex;
@@ -25,43 +27,53 @@
         background-color: #fff;
         padding: 15px;
     }
+
     .product-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 10px;
         margin-top: 15px;
     }
+
     .product-card {
         cursor: pointer;
         transition: transform 0.1s;
         border: 1px solid #e0e0e0;
     }
+
     .product-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        border-color: #28a745; /* Green for Import */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #28a745;
+        /* Green for Import */
     }
+
     .product-card .card-body {
         padding: 10px;
         text-align: center;
     }
+
     .product-card .price-tag {
         color: #28a745;
         font-weight: bold;
     }
+
     .invoice-items-container {
         flex-grow: 1;
         overflow-y: auto;
         border: 1px solid #eee;
         margin: 10px 0;
     }
+
     .invoice-footer {
         border-top: 2px solid #eee;
         padding-top: 10px;
     }
+
     .search-bar-container {
         position: relative;
     }
+
     .customer-autocomplete-results {
         position: absolute;
         z-index: 1000;
@@ -72,11 +84,13 @@
         border: 1px solid #ddd;
         display: none;
     }
+
     .result-item {
         padding: 8px;
         cursor: pointer;
         border-bottom: 1px solid #eee;
     }
+
     .result-item:hover {
         background-color: #f0f0f0;
     }
@@ -88,13 +102,15 @@
         <div class="col-md-7 col-lg-8 product-list-col">
             <div class="row mb-3">
                 <div class="col-12">
-                     <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-white border-end-0 text-success"><i class="bi bi-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0 text-success"><i
+                                class="bi bi-search"></i></span>
+                        <input type="text" id="productSearch" class="form-control border-start-0"
+                            placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
                     </div>
                 </div>
             </div>
-            
+
             <div id="productGrid" class="product-grid">
                 <!-- Products loaded here -->
             </div>
@@ -111,9 +127,11 @@
             <div class="mb-3 position-relative">
                 <label class="form-label fw-bold">Nhà Cung Cấp</label>
                 <div class="input-group">
-                    <input type="text" id="supplierSearch" class="form-control" placeholder="Tìm nhà cung cấp..." autocomplete="off">
+                    <input type="text" id="supplierSearch" class="form-control" placeholder="Tìm nhà cung cấp..."
+                        autocomplete="off">
                     <input type="hidden" id="selectedSupplierId" name="IdNhaCungCap" required>
-                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#newSupplierModal">
+                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal"
+                        data-bs-target="#newSupplierModal">
                         <i class="bi bi-person-plus-fill"></i>
                     </button>
                 </div>
@@ -148,7 +166,7 @@
 
             <!-- Footer -->
             <div class="invoice-footer">
-                 <div class="d-flex justify-content-between mb-2">
+                <div class="d-flex justify-content-between mb-2">
                     <span>Tổng số lượng:</span>
                     <strong id="totalQty">0</strong>
                 </div>
@@ -156,20 +174,30 @@
                     <span class="fs-5 fw-bold">Tổng tiền nhập:</span>
                     <span class="fs-4 fw-bold text-success" id="totalAmount">0</span>
                 </div>
-                
+
                 <form id="checkoutForm" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="MaPhieu" value="@("PN" + DateTime.Now.ToString("yyMMddHHmm"))" />
                     <input type="hidden" name="NgayNhap" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
-                     <div class="mb-2">
+                    <div class="mb-2">
                         <label class="small text-muted">Hạn thanh toán</label>
-                        <input type="date" name="HanThanhToan" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                        <input type="date" name="HanThanhToan" class="form-control form-control-sm"
+                            value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">Trạng thái</label>
+                        <select name="TrangThaiThanhToan" class="form-select form-select-sm">
+                            <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                            <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
+                        </select>
                     </div>
 
                     <div id="hiddenInputs"></div>
-                    
+
                     <div class="mb-2">
-                        <select name="IdDaiLyNhap" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyNhap" required>
+                        <select name="IdDaiLyNhap" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyNhap"
+                            required>
                         </select>
                     </div>
 
@@ -200,7 +228,7 @@
                         <label class="form-label">Số Điện Thoại</label>
                         <input type="text" class="form-control" name="SoDienThoai" placeholder="Số điện thoại">
                     </div>
-                     <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Địa Chỉ</label>
                         <input type="text" class="form-control" name="DiaChi">
                     </div>
@@ -216,47 +244,47 @@
 
 @section Scripts {
     <script>
-        var cart = []; 
+        var cart = [];
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             loadProducts('');
-            
+
             let debounceTimer;
-            $('#productSearch').on('input', function() {
+            $('#productSearch').on('input', function () {
                 clearTimeout(debounceTimer);
                 var term = $(this).val();
-                debounceTimer = setTimeout(function() {
+                debounceTimer = setTimeout(function () {
                     loadProducts(term);
                 }, 300);
             });
 
             // Search Supplier
-            $('#supplierSearch').on('input', function() {
+            $('#supplierSearch').on('input', function () {
                 var term = $(this).val();
-                if(term.length < 2) {
+                if (term.length < 2) {
                     $('#supplierResults').hide();
                     return;
                 }
-                
-                $.get('/Supplier/SearchJson?term=' + term, function(data) {
+
+                $.get('/Supplier/SearchJson?term=' + term, function (data) {
                     $('#supplierResults').empty().show();
-                    if(data.length === 0) {
+                    if (data.length === 0) {
                         $('#supplierResults').append('<div class="result-item text-muted">Không tìm thấy NCC</div>');
                     } else {
-                        data.forEach(function(s) {
+                        data.forEach(function (s) {
                             $('#supplierResults').append(`
-                                <div class="result-item" onclick="selectSupplier('${s.maDoiTuong}', '${s.tenDoiTuong}')">
-                                    <strong>${s.tenDoiTuong}</strong> <br/>
-                                    <small class="text-muted">${s.soDienThoai || ''}</small>
-                                </div>
-                            `);
+                                    <div class="result-item" onclick="selectSupplier('${s.maDoiTuong}', '${s.tenDoiTuong}')">
+                                        <strong>${s.tenDoiTuong}</strong> <br/>
+                                        <small class="text-muted">${s.soDienThoai || ''}</small>
+                                    </div>
+                                `);
                         });
                     }
                 });
             });
 
-             $(document).click(function(e) {
-                if(!$(e.target).closest('#supplierSearch, #supplierResults').length) {
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#supplierSearch, #supplierResults').length) {
                     $('#supplierResults').hide();
                 }
             });
@@ -265,29 +293,29 @@
         function loadProducts(term) {
             $('#loadingProducts').removeClass('d-none');
             $('#productGrid').empty();
-            
-            $.get('/Product/SearchJson?term=' + term, function(data) {
+
+            $.get('/Product/SearchJson?term=' + term, function (data) {
                 $('#loadingProducts').addClass('d-none');
-                if(data.length === 0) {
-                     $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
-                     return;
+                if (data.length === 0) {
+                    $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
+                    return;
                 }
 
-                data.forEach(function(p) {
-                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP'; 
+                data.forEach(function (p) {
+                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP';
                     // Use Cost Price for Import
                     var price = p.giaVonHienTai ? p.giaVonHienTai.toLocaleString() : '0';
-                    
+
                     var cardHtml = `
-                        <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
-                            <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
-                            <div class="card-body">
-                                <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
-                                <p class="card-text small text-muted">${p.maHang}</p>
-                                <p class="price-tag mb-0">${price}</p>
+                            <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
+                                <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
+                                    <p class="card-text small text-muted">${p.maHang}</p>
+                                    <p class="price-tag mb-0">${price}</p>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                     $('#productGrid').append(cardHtml);
                 });
             });
@@ -295,7 +323,7 @@
 
         function addToCart(product) {
             var existing = cart.find(x => x.id === product.maHang);
-            if(existing) {
+            if (existing) {
                 existing.qty += 1;
                 existing.total = existing.qty * existing.price;
             } else {
@@ -319,35 +347,35 @@
             var totalQty = 0;
             var totalAmt = 0;
 
-            cart.forEach(function(item, index) {
+            cart.forEach(function (item, index) {
                 totalQty += item.qty;
                 totalAmt += item.total;
-                
+
                 var tr = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>
-                            <div class="fw-bold">${item.name}</div>
-                            <small class="text-muted">${item.id}</small>
-                        </td>
-                        <td>
-                            <input type="number" class="form-control form-control-sm text-center" 
-                                value="${item.qty}" min="1" onchange="updateRow('${item.id}', this.value, ${item.price})">
-                        </td>
-                         <td>
-                            <input type="number" class="form-control form-control-sm text-end" 
-                                value="${item.price}" onchange="updateRow('${item.id}', ${item.qty}, this.value)">
-                        </td>
-                        <td class="text-end fw-bold">
-                            ${item.total.toLocaleString()}
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <div class="fw-bold">${item.name}</div>
+                                <small class="text-muted">${item.id}</small>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center" 
+                                    value="${item.qty}" min="1" onchange="updateRow('${item.id}', this.value, ${item.price})">
+                            </td>
+                             <td>
+                                <input type="number" class="form-control form-control-sm text-end" 
+                                    value="${item.price}" onchange="updateRow('${item.id}', ${item.qty}, this.value)">
+                            </td>
+                            <td class="text-end fw-bold">
+                                ${item.total.toLocaleString()}
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
                 tbody.append(tr);
             });
 
@@ -357,7 +385,7 @@
 
         function updateRow(id, newQty, newPrice) {
             var item = cart.find(x => x.id === id);
-            if(item) {
+            if (item) {
                 item.qty = parseFloat(newQty) || 1;
                 item.price = parseFloat(newPrice) || 0;
                 item.total = item.qty * item.price;
@@ -387,26 +415,26 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData),
-                success: function(res) {
-                    if(res.success) {
+                success: function (res) {
+                    if (res.success) {
                         selectSupplier(res.data.maDoiTuong, res.data.tenDoiTuong);
                         var modal = bootstrap.Modal.getInstance(document.getElementById('newSupplierModal'));
                         modal.hide();
                         $('#quickNewSupplierForm')[0].reset();
                     }
                 },
-                error: function(err) {
-                     alert(err.responseText);
+                error: function (err) {
+                    alert(err.responseText);
                 }
             });
         }
 
         function submitOrder() {
-            if(cart.length === 0) {
+            if (cart.length === 0) {
                 alert('Giỏ hàng trống!');
                 return;
             }
-            if(!$('#selectedSupplierId').val()) {
+            if (!$('#selectedSupplierId').val()) {
                 alert('Vui lòng chọn Nhà Cung Cấp!');
                 return;
             }
@@ -414,24 +442,24 @@
             var form = $('#checkoutForm');
             var hiddenDiv = $('#hiddenInputs');
             hiddenDiv.empty();
-            
-            $('<input>').attr({type: 'hidden', name: 'IdNhaCungCap', value: $('#selectedSupplierId').val()}).appendTo(hiddenDiv);
+
+            $('<input>').attr({ type: 'hidden', name: 'IdNhaCungCap', value: $('#selectedSupplierId').val() }).appendTo(hiddenDiv);
 
             cart.forEach((item, i) => {
-                $('<input>').attr({type: 'hidden', name: 'MaHang[]', value: item.id}).appendTo(hiddenDiv);
-                $('<input>').attr({type: 'hidden', name: 'SoLuong[]', value: item.qty}).appendTo(hiddenDiv);
-                $('<input>').attr({type: 'hidden', name: 'DonGiaNhap[]', value: item.price}).appendTo(hiddenDiv); // DonGiaNhap for Import
+                $('<input>').attr({ type: 'hidden', name: 'MaHang[]', value: item.id }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'SoLuong[]', value: item.qty }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'DonGiaNhap[]', value: item.price }).appendTo(hiddenDiv); // DonGiaNhap for Import
             });
 
             form.submit();
         }
 
-        $(document).keydown(function(e) {
-            if(e.which === 114) { // F3
+        $(document).keydown(function (e) {
+            if (e.which === 114) { // F3
                 e.preventDefault();
                 $('#productSearch').focus();
             }
-             if(e.which === 120) { // F9
+            if (e.which === 120) { // F9
                 e.preventDefault();
                 submitOrder();
             }

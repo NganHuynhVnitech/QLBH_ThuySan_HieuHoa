@@ -18,10 +18,12 @@ namespace QLBH_ThuySan.Controllers
         // GET: CashFlow
         public async Task<IActionResult> Index()
         {
-            var items = await _context.PhieuThuChis
-                .OrderByDescending(p => p.NgayLap)
-                .ToListAsync();
-            return View(items);
+            // Pre-load names for display
+            ViewData["CustomerNames"] = await _context.KhachHangs.ToDictionaryAsync(k => k.MaDoiTuong, k => k.TenDoiTuong);
+            ViewData["SupplierNames"] = await _context.NhaCungCaps.ToDictionaryAsync(n => n.MaDoiTuong, n => n.TenDoiTuong);
+            ViewData["CostObjectNames"] = await _context.DoiTuongChiPhis.ToDictionaryAsync(d => d.MaDoiTuong, d => d.TenDoiTuong);
+
+            return View(await _context.PhieuThuChis.OrderByDescending(p => p.NgayLap).ToListAsync());
         }
 
         // GET: CashFlow/Details/5
@@ -45,13 +47,16 @@ namespace QLBH_ThuySan.Controllers
         // GET: CashFlow/Create
         public IActionResult Create()
         {
+            ViewData["Customers"] = _context.KhachHangs.Select(k => new { k.MaDoiTuong, k.TenDoiTuong }).ToList();
+            ViewData["Suppliers"] = _context.NhaCungCaps.Select(n => new { n.MaDoiTuong, n.TenDoiTuong }).ToList();
+            ViewData["CostObjects"] = _context.DoiTuongChiPhis.Select(d => new { d.MaDoiTuong, d.TenDoiTuong }).ToList();
             return View();
         }
 
         // POST: CashFlow/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MaPhieu,LoaiPhieu,NgayLap,SoTien,LyDo")] PhieuThuChi phieuThuChi)
+        public async Task<IActionResult> Create([Bind("MaPhieu,LoaiPhieu,NgayLap,SoTien,LyDo,MaDoiTuong")] PhieuThuChi phieuThuChi)
         {
             if (ModelState.IsValid)
             {

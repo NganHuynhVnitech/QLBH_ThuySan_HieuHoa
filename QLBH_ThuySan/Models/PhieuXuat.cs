@@ -17,6 +17,8 @@ public partial class PhieuXuat
 
     public DateTime? NgayThanhToan { get; set; }
 
+    public string? TrangThaiThanhToan { get; set; }
+
     public virtual ICollection<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = new List<ChiTietPhieuXuat>();
 
     public virtual DaiLy? IdDaiLyBanNavigation { get; set; }
