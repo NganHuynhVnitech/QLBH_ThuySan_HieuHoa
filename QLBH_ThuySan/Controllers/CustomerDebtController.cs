@@ -20,6 +20,7 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: PrivateLedger - List all customers with their ledger entries
+        [HttpGet("/PrivateLedger")]
         public async Task<IActionResult> Index()
         {
             var customers = await _context.KhachHangs.ToListAsync();
@@ -27,6 +28,7 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: PrivateLedger/Details/KH001 - View ledger entries for a specific customer
+        [HttpGet("/PrivateLedger/Details/{id?}")]
         public async Task<IActionResult> Details(string? id)
         {
             if (id == null)
@@ -52,6 +54,7 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: PrivateLedger/Create
+        [HttpGet("/PrivateLedger/Create")]
         public IActionResult Create()
         {
             return View();
@@ -59,6 +62,7 @@ namespace QLBH_ThuySan.Controllers
 
         // POST: PrivateLedger/Create - Create a new customer
         [HttpPost]
+        [HttpPost("/PrivateLedger/Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("MaDoiTuong,TenDoiTuong,SoDienThoai,DiaChi,AoNuoi")] KhachHang khachHang)
         {
@@ -74,6 +78,7 @@ namespace QLBH_ThuySan.Controllers
 
         // POST: PrivateLedger/AddEntry - Add a ledger entry for a customer
         [HttpPost]
+        [HttpPost("/PrivateLedger/AddEntry")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddEntry(string maKhachHang, string loaiGiaoDich, decimal soTienPhatSinh, string? dienGiai)
         {
