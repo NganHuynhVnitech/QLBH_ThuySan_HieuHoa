@@ -60,6 +60,7 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // POST: Import/Create
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("MaPhieu,NgayNhap,IdDaiLyNhap,IdNhaCungCap,TrangThaiThanhToan")] PhieuNhap phieuNhap, string[] MaHang, double[] SoLuong, decimal[] DonGiaNhap)
         {
