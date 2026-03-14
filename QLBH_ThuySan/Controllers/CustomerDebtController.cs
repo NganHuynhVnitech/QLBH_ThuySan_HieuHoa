@@ -61,7 +61,6 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // POST: PrivateLedger/Create - Create a new customer
-        [HttpPost]
         [HttpPost("/PrivateLedger/Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("MaDoiTuong,TenDoiTuong,SoDienThoai,DiaChi,AoNuoi")] KhachHang khachHang)
@@ -77,7 +76,6 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // POST: PrivateLedger/AddEntry - Add a ledger entry for a customer
-        [HttpPost]
         [HttpPost("/PrivateLedger/AddEntry")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddEntry(string maKhachHang, string loaiGiaoDich, decimal soTienPhatSinh, string? dienGiai)
