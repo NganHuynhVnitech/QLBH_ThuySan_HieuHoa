@@ -111,6 +111,53 @@ namespace QLBH_ThuySan.Controllers
             return View(phieuNhap);
         }
 
+        // POST: Import/Pay/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Pay(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            var phieuNhap = await _context.PhieuNhaps.FirstOrDefaultAsync(p => p.MaPhieu == id);
+
+            if (phieuNhap == null)
+            {
+                return NotFound();
+            }
+
+            if (phieuNhap.TrangThaiThanhToan == "Đã Thanh Toán")
+            {
+                TempData["ErrorMessage"] = "Phiếu nhập này đã được thanh toán.";
+                return RedirectToAction(nameof(Details), new { id = phieuNhap.MaPhieu });
+            }
+
+            // Update PhieuNhap status
+            phieuNhap.TrangThaiThanhToan = "Đã Thanh Toán";
+            phieuNhap.NgayThanhToan = DateTime.Now;
+
+            // Create corresponding PhieuThuChi (Payment Voucher)
+            var paymentVoucher = new PhieuThuChi
+            {
+                MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                LoaiPhieu = "NHAP",
+                NgayLap = DateTime.Now,
+                SoTien = phieuNhap.TongTien,
+                LyDo = "Thanh toán phiếu nhập " + phieuNhap.MaPhieu,
+                MaDoiTuong = phieuNhap.IdNhaCungCap
+            };
+
+            _context.PhieuThuChis.Add(paymentVoucher);
+            _context.Update(phieuNhap);
+            
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Thanh toán thành công và đã tạo phiếu chi.";
+            return RedirectToAction(nameof(Details), new { id = phieuNhap.MaPhieu });
+        }
+
         // POST: Import/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
