@@ -139,7 +139,7 @@ namespace QLBH_ThuySan.Controllers
                 { "DanhSachKho", khos }
             };
 
-            memoryStream.SaveAs(sheets);
+            MiniExcel.SaveAs(memoryStream, sheets);
             memoryStream.Position = 0;
 
             return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Template_TonKhoBanDau.xlsx");
