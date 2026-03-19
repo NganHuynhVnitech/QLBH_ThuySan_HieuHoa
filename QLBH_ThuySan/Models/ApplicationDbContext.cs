@@ -482,6 +482,26 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValueSql("(N'Chưa Thanh Toán')")
                     .HasColumnName("trangthaithanhtoan");
 
+                entity.Property(e => e.LoaiXuat)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasDefaultValueSql("('SALES')")
+                    .HasColumnName("loaiXuat");
+
+                entity.Property(e => e.IdNhaCungCap)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("idNhaCungCap");
+
+                entity.Property(e => e.MaKhoNhan)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maKhoNhan");
+
+                entity.Property(e => e.LyDo)
+                    .HasMaxLength(200)
+                    .HasColumnName("lyDo");
+
                 entity.HasOne(d => d.IdDaiLyBanNavigation).WithMany(p => p.PhieuXuats)
                     .HasForeignKey(d => d.IdDaiLyBan)
                     .HasConstraintName("FK__PhieuXuat__idDai__43A1090D");
@@ -489,6 +509,14 @@ namespace QLBH_ThuySan.Models
                 entity.HasOne(d => d.IdKhachHangNavigation).WithMany(p => p.PhieuXuats)
                     .HasForeignKey(d => d.IdKhachHang)
                     .HasConstraintName("FK__PhieuXuat__idKha__44952D46");
+
+                entity.HasOne(d => d.IdNhaCungCapNavigation).WithMany()
+                    .HasForeignKey(d => d.IdNhaCungCap)
+                    .HasConstraintName("FK_PhieuXuat_NhaCungCap");
+
+                entity.HasOne(d => d.MaKhoNhanNavigation).WithMany()
+                    .HasForeignKey(d => d.MaKhoNhan)
+                    .HasConstraintName("FK_PhieuXuat_KhoNhan");
             });
 
             modelBuilder.Entity<DoiTuongChiPhi>(entity =>

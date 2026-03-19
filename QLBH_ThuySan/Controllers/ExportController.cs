@@ -16,109 +16,66 @@ namespace QLBH_ThuySan.Controllers
             _context = context;
         }
 
-        // GET: Export
-        public async Task<IActionResult> Index()
+        // GET: Export Dashboard
+        public async Task<IActionResult> Index(string type = "", DateTime? fromDate = null, DateTime? toDate = null)
         {
-            var exports = await _context.PhieuXuats
+            var query = _context.PhieuXuats
                 .Include(p => p.IdDaiLyBanNavigation)
                 .Include(p => p.IdKhachHangNavigation)
-                .OrderByDescending(p => p.NgayXuat)
-                .ToListAsync();
+                .Include(p => p.IdNhaCungCapNavigation)
+                .Include(p => p.MaKhoNhanNavigation)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                query = query.Where(p => p.LoaiXuat == type);
+            }
+            if (fromDate.HasValue)
+            {
+                query = query.Where(p => p.NgayXuat >= fromDate.Value);
+            }
+            if (toDate.HasValue)
+            {
+                query = query.Where(p => p.NgayXuat <= toDate.Value.AddDays(1).AddTicks(-1));
+            }
+
+            var exports = await query.OrderByDescending(p => p.NgayXuat).ToListAsync();
+
+            ViewData["CurrentType"] = type;
+            ViewData["FromDate"] = fromDate?.ToString("yyyy-MM-dd");
+            ViewData["ToDate"] = toDate?.ToString("yyyy-MM-dd");
+
             return View(exports);
         }
 
         // GET: Export/Details/5
         public async Task<IActionResult> Details(string? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var phieuXuat = await _context.PhieuXuats
                 .Include(p => p.IdDaiLyBanNavigation)
                 .Include(p => p.IdKhachHangNavigation)
+                .Include(p => p.IdNhaCungCapNavigation)
+                .Include(p => p.MaKhoNhanNavigation)
                 .Include(p => p.ChiTietPhieuXuats)
                 .ThenInclude(ct => ct.MaHangNavigation)
                 .FirstOrDefaultAsync(m => m.MaPhieu == id);
 
-            if (phieuXuat == null)
-            {
-                return NotFound();
-            }
+            if (phieuXuat == null) return NotFound();
 
             return View(phieuXuat);
         }
 
-        // GET: Export/Create
-        public IActionResult Create()
+        // GET: Export/CreateSlip
+        public IActionResult CreateSlip()
         {
-            ViewData["IdDaiLyBan"] = new SelectList(_context.DaiLys.Where(d => d.LoaiDaiLy == "BAN_C" || d.LoaiDaiLy == "NHAP_B"), "MaDaiLy", "TenDaiLy");
-            ViewData["IdKhachHang"] = new SelectList(_context.KhachHangs, "MaDoiTuong", "TenDoiTuong");
-            
-            // Should pass product list with current Price as default?
-            ViewData["HangHoaList"] =  _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.DonViTinh, h.GiaBanHienTai }).ToList();
+            // Prepare dropdown data for the frontend Vue/JS
+            ViewData["Khos"] = _context.Khos.Select(k => new { k.MaKho, k.TenKho }).ToList();
+            ViewData["HangHoas"] = _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.GiaBanHienTai, h.DonViTinh }).ToList();
+            ViewData["NhaCungCaps"] = _context.NhaCungCaps.Select(n => new { n.MaDoiTuong, n.TenDoiTuong }).ToList();
+
             return View();
-        }
-
-        // POST: Export/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MaPhieu,NgayXuat,IdDaiLyBan,IdKhachHang,TrangThaiThanhToan")] PhieuXuat phieuXuat, string[] MaHang, double[] SoLuong, decimal[] GiaBan)
-        {
-            if (ModelState.IsValid)
-            {
-                // Check duplicate ID
-                if (_context.PhieuXuats.Any(e => e.MaPhieu == phieuXuat.MaPhieu))
-                {
-                    ModelState.AddModelError("MaPhieu", "Mã phiếu đã tồn tại.");
-                    ViewData["IdDaiLyBan"] = new SelectList(_context.DaiLys.Where(d => d.LoaiDaiLy == "BAN_C" || d.LoaiDaiLy == "NHAP_B"), "MaDaiLy", "TenDaiLy", phieuXuat.IdDaiLyBan);
-                    ViewData["IdKhachHang"] = new SelectList(_context.KhachHangs, "MaDoiTuong", "TenDoiTuong", phieuXuat.IdKhachHang);
-                    ViewData["HangHoaList"] = _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.DonViTinh, h.GiaBanHienTai }).ToList();
-                    return View(phieuXuat);
-                }
-
-                // Add Details
-                if (MaHang != null && MaHang.Length > 0)
-                {
-                    for (int i = 0; i < MaHang.Length; i++)
-                    {
-                        var detail = new ChiTietPhieuXuat
-                        {
-                            MaPhieu = phieuXuat.MaPhieu,
-                            MaHang = MaHang[i],
-                            SoLuong = SoLuong[i],
-                            GiaBan = GiaBan[i],
-                            GiaVonTaiThoiDiem = 0 // Will be updated by SP
-                        };
-                        _context.Add(detail);
-                    }
-                }
-
-                phieuXuat.TongTien = 0; // Will be updated by SP
-                _context.Add(phieuXuat);
-                await _context.SaveChangesAsync();
-
-                // Call SP logic
-                await _context.Database.ExecuteSqlRawAsync("EXEC sp_PhieuXuat_XuLy @p0", phieuXuat.MaPhieu);
-
-                return RedirectToAction(nameof(Index));
-            }
-            
-            ViewData["IdDaiLyBan"] = new SelectList(_context.DaiLys.Where(d => d.LoaiDaiLy == "BAN_C" || d.LoaiDaiLy == "NHAP_B"), "MaDaiLy", "TenDaiLy", phieuXuat.IdDaiLyBan);
-            ViewData["IdKhachHang"] = new SelectList(_context.KhachHangs, "MaDoiTuong", "TenDoiTuong", phieuXuat.IdKhachHang);
-            ViewData["HangHoaList"] = _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.DonViTinh, h.GiaBanHienTai }).ToList();
-            return View(phieuXuat);
-        }
-
-        // POST: Export/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
-            // Similar warning as Import: Delete does not revert business logic perfectly in simple delete SP.
-            await _context.Database.ExecuteSqlRawAsync("EXEC sp_PhieuXuat_Delete @p0", id);
-            return RedirectToAction(nameof(Index));
         }
     }
 }
