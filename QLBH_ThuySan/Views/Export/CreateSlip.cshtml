@@ -12,8 +12,19 @@
     var khos = ViewData["Khos"] as IEnumerable<dynamic>;
     var hangHoas = ViewData["HangHoas"] as IEnumerable<dynamic>;
     var nhaCungCaps = ViewData["NhaCungCaps"] as IEnumerable<dynamic>;
+
+    if (formType == "RETURN_VENDOR")
+    {
+        Layout = null;
+    }
 }
 
+@if (formType == "RETURN_VENDOR")
+{
+    @await Html.PartialAsync("_CreateReturnVendorSlip")
+}
+else
+{
 <div class="container mt-4">
     <h2>@slipTitle</h2>
     <hr />
@@ -102,7 +113,10 @@
         }
     </select>
 </template>
+}
 
+@if (formType != "RETURN_VENDOR")
+{
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -206,4 +220,5 @@
             });
         });
     </script>
+}
 }

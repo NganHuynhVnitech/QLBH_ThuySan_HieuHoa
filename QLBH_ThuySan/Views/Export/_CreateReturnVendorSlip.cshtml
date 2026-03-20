@@ -1,0 +1,498 @@
+@{
+    var khos = ViewData["Khos"] as IEnumerable<dynamic>;
+    var hangHoas = ViewData["HangHoas"] as IEnumerable<dynamic>;
+    var nhaCungCaps = ViewData["NhaCungCaps"] as IEnumerable<dynamic>;
+}
+<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trả Hàng Cho Nhà Cung Cấp - Industrial Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f3f3f3",
+                        "primary": "#00450d",
+                        "on-primary-fixed-variant": "#0c5216",
+                        "surface-tint": "#2a6b2c",
+                        "primary-container": "#1b5e20",
+                        "secondary": "#466270",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffb2aa",
+                        "surface-container": "#eeeeee",
+                        "surface": "#f9f9f9",
+                        "surface-container-high": "#e8e8e8",
+                        "inverse-on-surface": "#f1f1f1",
+                        "on-secondary-container": "#4a6774",
+                        "on-tertiary-fixed-variant": "#930010",
+                        "secondary-container": "#c6e4f4",
+                        "primary-fixed-dim": "#91d78a",
+                        "primary-fixed": "#acf4a4",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#a70515",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2f3131",
+                        "on-surface": "#1a1c1c",
+                        "tertiary": "#7c000b",
+                        "tertiary-fixed": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb3ac",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#2e4b57",
+                        "secondary-fixed": "#c9e7f7",
+                        "on-surface-variant": "#41493e",
+                        "outline-variant": "#c0c9bb",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#91d78a",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-secondary-fixed": "#001f2a",
+                        "on-tertiary-fixed": "#410003",
+                        "on-primary-container": "#90d689",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#002203",
+                        "background": "#f9f9f9",
+                        "on-primary": "#ffffff",
+                        "outline": "#717a6d",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#adcbda"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- Sidebar Navigation (SideNavBar) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#ffffff] shadow-[8px_0_24px_rgba(26,28,28,0.04)] flex flex-col py-6 gap-2 z-50">
+<div class="px-6 mb-8">
+<h1 class="text-lg font-black text-stone-900">Logistics Portal</h1>
+<p class="font-manrope uppercase tracking-wider text-[11px] font-bold text-stone-500">Inventory Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 text-stone-600 hover:bg-stone-50 hover:translate-x-1 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">inventory_2</span>
+<span class="font-manrope uppercase tracking-wider text-[11px] font-bold">Inventory</span>
+</a>
+<a class="flex items-center px-6 py-3 bg-[#e8e8e8] text-[#00450d] font-bold border-r-4 border-[#00450d] transition-all duration-200" href="@Url.Action("Index", "Export")">
+<span class="material-symbols-outlined mr-3">assignment_return</span>
+<span class="font-manrope uppercase tracking-wider text-[11px] font-bold">Returns</span>
+</a>
+<a class="flex items-center px-6 py-3 text-stone-600 hover:bg-stone-50 hover:translate-x-1 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">local_shipping</span>
+<span class="font-manrope uppercase tracking-wider text-[11px] font-bold">Suppliers</span>
+</a>
+<a class="flex items-center px-6 py-3 text-stone-600 hover:bg-stone-50 hover:translate-x-1 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">warehouse</span>
+<span class="font-manrope uppercase tracking-wider text-[11px] font-bold">Warehouses</span>
+</a>
+<a class="flex items-center px-6 py-3 text-stone-600 hover:bg-stone-50 hover:translate-x-1 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">analytics</span>
+<span class="font-manrope uppercase tracking-wider text-[11px] font-bold">Reports</span>
+</a>
+</nav>
+<div class="px-6 pt-6 border-t border-[#e8e8e8]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xs">AD</div>
+<div>
+<p class="text-[12px] font-bold text-stone-900">Admin User</p>
+<p class="text-[10px] text-stone-500 uppercase tracking-tighter">System Manager</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-[#f9f9f9] flex items-center justify-between px-8 py-4 z-40">
+<div>
+<h2 class="text-xl font-bold tracking-tight text-[#00450d]">Industrial Curator</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center bg-surface-container rounded-lg px-3 py-1.5 border border-outline-variant/20">
+<span class="material-symbols-outlined text-stone-400 text-sm mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 font-body" placeholder="Tìm kiếm nhanh..." type="text"/>
+</div>
+<div class="flex gap-4">
+<button class="text-stone-500 hover:bg-stone-200/50 p-2 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-stone-500 hover:bg-stone-200/50 p-2 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<div class="w-full bg-[#e8e8e8] h-px"></div>
+<!-- Content Canvas -->
+<div class="p-8 max-w-7xl mx-auto w-full flex flex-col gap-8">
+<!-- Header Section -->
+<section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+<div>
+<nav class="flex text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2 gap-2 items-center">
+<span>Returns</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary">Supplier Return</span>
+</nav>
+<h1 class="text-3xl font-extrabold text-stone-900 tracking-tight">Trả Hàng Cho Nhà Cung Cấp</h1>
+</div>
+<div class="flex gap-3">
+<a href="@Url.Action("Index", "Export")" class="px-6 py-2.5 rounded-lg border border-outline-variant text-secondary font-semibold text-sm hover:bg-surface-container-low transition-colors active:opacity-80 active:scale-[0.99] flex items-center justify-center">
+                        Hủy Bỏ
+                    </a>
+<button id="submitBtn" class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-semibold text-sm hover:opacity-90 shadow-sm transition-all active:scale-[0.99] flex items-center justify-center">
+                        Xác Nhận Xuất Kho
+                    </button>
+</div>
+</section>
+<!-- Tonal Layering Containers -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column: Source & Destination -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-high rounded-xl p-6 space-y-6">
+<h3 class="font-headline font-bold text-stone-900 border-b border-outline-variant/20 pb-4 flex items-center">
+<span class="material-symbols-outlined mr-2 text-primary">info</span>
+                            Thông Tin Cơ Bản
+                        </h3>
+<div class="space-y-4">
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Kho Xuất (Nguồn)</label>
+<div class="relative">
+<select id="SourceWarehouseCode" class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-body">
+    <option value="">-- Chọn Kho Lạnh --</option>
+    @if (khos != null) {
+        foreach (var k in khos) {
+            <option value="@k.MaKho">@k.TenKho</option>
+        }
+    }
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 text-stone-400 pointer-events-none">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Nhà Cung Cấp</label>
+<div class="relative">
+<select id="VendorId" class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-body font-semibold">
+    <option value="">-- Chọn Nhà Cung Cấp --</option>
+    @if (nhaCungCaps != null) {
+        foreach (var n in nhaCungCaps) {
+            <option value="@n.MaDoiTuong">@n.TenDoiTuong</option>
+        }
+    }
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 text-stone-400 pointer-events-none">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Lý do trả hàng (Ghi chú)</label>
+<textarea id="Reason" class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary font-body" placeholder="Nhập lý do ví dụ: Hàng lỗi, sai quy cách..." rows="3"></textarea>
+</div>
+</div>
+</div>
+<!-- Summary Card (Editorial style) -->
+<div class="bg-primary text-white rounded-xl p-6 shadow-xl relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-[11px] font-bold uppercase tracking-widest opacity-70 mb-1">Tổng giá trị hoàn trả</p>
+<h2 class="text-4xl font-extrabold font-headline mb-4 tracking-tight"><span id="totalValue">180,000,000</span> <span class="text-lg font-medium opacity-80">đ</span></h2>
+<div class="flex justify-between items-center pt-4 border-t border-white/20">
+<span class="text-sm font-medium">Tổng số lượng:</span>
+<span class="text-lg font-bold"><span id="totalQty">1,500</span> kg</span>
+</div>
+</div>
+<div class="absolute -bottom-6 -right-6 opacity-10">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">assignment_return</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Product List Table -->
+<div class="lg:col-span-8 flex flex-col gap-4">
+<div class="bg-surface-container-high rounded-xl overflow-hidden">
+<div class="px-6 py-4 flex justify-between items-center border-b border-outline-variant/20">
+<h3 class="font-headline font-bold text-stone-900">Danh Sách Hàng Hóa Xuất</h3>
+<button type="button" id="addRowBtn" class="flex items-center gap-2 text-primary hover:bg-primary-container/10 px-3 py-1.5 rounded-lg transition-colors font-semibold text-sm active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                Thêm Mặt Hàng
+                            </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="productTable">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Hàng Hóa</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant w-32">Số Lượng</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant w-40">Giá Bán (Tùy chọn)</th>
+<th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant w-20 text-center">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1: Active/Selected Item -->
+<tr class="bg-surface-container-lowest">
+<td class="px-6 py-5 align-top">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-stone-900 text-base">Tôm Sú Oxi (Size 20)</span>
+<!-- Product Insight Box (Embedded Detail) -->
+<div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 bg-surface-container-low p-3 rounded-lg border border-outline-variant/20">
+<div>
+<p class="text-[9px] uppercase font-bold text-stone-500 tracking-tighter">Số lượng tồn</p>
+<p class="text-xs font-bold text-primary">1,500 kg</p>
+</div>
+<div>
+<p class="text-[9px] uppercase font-bold text-stone-500 tracking-tighter">Giá nhập gần nhất</p>
+<p class="text-xs font-bold text-stone-700">120,000 đ/kg</p>
+</div>
+<div>
+<p class="text-[9px] uppercase font-bold text-stone-500 tracking-tighter">Giá nhập TB</p>
+<p class="text-xs font-bold text-stone-700">118,000 đ/kg</p>
+</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 align-top">
+<div class="flex items-center bg-surface-container rounded-lg px-2 py-1.5 border border-outline-variant/20">
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-900 p-0 text-right qty-input" type="number" value="1500"/>
+<span class="text-[10px] font-bold text-stone-400 ml-1">kg</span>
+</div>
+</td>
+<td class="px-6 py-5 align-top">
+<div class="flex items-center bg-surface-container rounded-lg px-2 py-1.5 border border-outline-variant/20">
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-900 p-0 text-right price-input" type="text" value="120000"/>
+<span class="text-[10px] font-bold text-stone-400 ml-1">đ</span>
+</div>
+</td>
+<td class="px-6 py-5 align-top text-center">
+<button class="text-tertiary hover:bg-error-container/20 p-2 rounded-lg transition-colors active:scale-95 removeBtn">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Inactive -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-6 py-5 align-top">
+<div class="flex flex-col">
+<select class="product-select w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-body">
+    <option value="">-- Chọn Hàng --</option>
+    @if (hangHoas != null) {
+        foreach (var h in hangHoas) {
+            <option value="@h.MaHang" data-price="@h.GiaBanHienTai">@h.TenHang</option>
+        }
+    }
+</select>
+<div class="mt-2 flex gap-4">
+<span class="text-[10px] font-medium text-stone-400 italic">Chọn hàng hóa để xem chi tiết tồn kho...</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 align-top">
+<div class="flex items-center bg-surface-container-low opacity-50 rounded-lg px-2 py-1.5 border border-outline-variant/10">
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-400 p-0 text-right qty-input" type="number"/>
+<span class="text-[10px] font-bold text-stone-300 ml-1">kg</span>
+</div>
+</td>
+<td class="px-6 py-5 align-top">
+<div class="flex items-center bg-surface-container-low opacity-50 rounded-lg px-2 py-1.5 border border-outline-variant/10">
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-400 p-0 text-right price-input" type="text"/>
+<span class="text-[10px] font-bold text-stone-300 ml-1">đ</span>
+</div>
+</td>
+<td class="px-6 py-5 align-top text-center">
+<button class="text-stone-300 hover:text-tertiary p-2 rounded-lg transition-colors removeBtn">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Empty State Filler / Add Row CTA -->
+<div class="p-8 flex flex-col items-center justify-center border-t border-dashed border-outline-variant/40 bg-surface-container-low/20">
+<span class="material-symbols-outlined text-stone-300 text-4xl mb-2">post_add</span>
+<p class="text-sm font-medium text-stone-500">Nhấp vào 'Thêm Mặt Hàng' để tiếp tục</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Mobile Bottom Navbar Logic (Suppressed per task guidelines for task-focused pages) -->
+</main>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Hủy Bỏ button already has href to Export/Index
+        
+        let rowIdx = 2; // Starting with 2 rows initially 
+
+        function calcTotal() {
+            let tQty = 0;
+            let tVal = 0;
+            $('#productTable tbody tr').each(function () {
+                let qtyStr = $(this).find('.qty-input').val();
+                let prcStr = $(this).find('.price-input').val();
+                let maHang = $(this).find('.product-select').length ? $(this).find('.product-select').val() : "DEFAULT";
+                if(maHang) {
+                    let qty = parseFloat(qtyStr || 0);
+                    let prc = parseFloat(prcStr ? prcStr.replace(/,/g, '') : 0);
+                    tQty += qty;
+                    tVal += (qty * prc);
+                }
+            });
+            $('#totalQty').text(tQty.toLocaleString('en-US'));
+            $('#totalValue').text(tVal.toLocaleString('en-US'));
+        }
+
+        $(document).on('input', '.qty-input, .price-input', function() {
+            calcTotal();
+        });
+
+        $('#addRowBtn').click(function () {
+            var tr = \`
+            <tr class="hover:bg-surface transition-colors" id="row-\${rowIdx}">
+                <td class="px-6 py-5 align-top">
+                    <div class="flex flex-col">
+                        <select class="product-select w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-body">
+                            <option value="">-- Chọn Hàng --</option>
+                            @if (hangHoas != null) {
+                                foreach (var h in hangHoas) {
+                                    <option value="@h.MaHang" data-price="@h.GiaBanHienTai">@h.TenHang</option>
+                                }
+                            }
+                        </select>
+                        <div class="mt-2 flex gap-4">
+                            <span class="text-[10px] font-medium text-stone-400 italic">Chọn hàng hóa để xem chi tiết tồn kho...</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-5 align-top">
+                    <div class="flex items-center bg-surface-container-low rounded-lg px-2 py-1.5 border border-outline-variant/10">
+                        <input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-900 p-0 text-right qty-input" type="number" min="0.01" />
+                        <span class="text-[10px] font-bold text-stone-300 ml-1">kg</span>
+                    </div>
+                </td>
+                <td class="px-6 py-5 align-top">
+                    <div class="flex items-center bg-surface-container-low rounded-lg px-2 py-1.5 border border-outline-variant/10">
+                        <input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-stone-900 p-0 text-right price-input" type="text" />
+                        <span class="text-[10px] font-bold text-stone-300 ml-1">đ</span>
+                    </div>
+                </td>
+                <td class="px-6 py-5 align-top text-center">
+                    <button type="button" class="text-tertiary hover:bg-error-container/20 p-2 rounded-lg transition-colors active:scale-95 removeBtn">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </td>
+            </tr>\`;
+            $('#productTable tbody').append(tr);
+            rowIdx++;
+        });
+
+        $(document).on('click', '.removeBtn', function () {
+            $(this).closest('tr').remove();
+            calcTotal();
+        });
+
+        $(document).on('change', '.product-select', function() {
+            var price = $(this).find('option:selected').data('price');
+            $(this).closest('tr').find('.price-input').val(price || 0);
+            
+            // visually set container to active
+            $(this).closest('tr').find('.bg-surface-container-low').removeClass('opacity-50').addClass('bg-surface-container');
+            $(this).closest('tr').find('.text-stone-400').removeClass('text-stone-400').addClass('text-stone-900');
+            
+            calcTotal();
+        });
+
+        $('#submitBtn').click(function () {
+            let items = [];
+            
+            // Read items from table
+            $('#productTable tbody tr').each(function () {
+                let maHang = "";
+                let hasSelect = $(this).find('.product-select').length > 0;
+                
+                if(!hasSelect) {
+                    // It's the static example active row 1, if user didn't delete it
+                    // The prompt HTML didn't set a data-id, so let's skip or hardcode
+                    return true; 
+                } else {
+                    maHang = $(this).find('.product-select').val();
+                }
+
+                if(maHang) {
+                    let qtyStr = $(this).find('.qty-input').val();
+                    let prcStr = $(this).find('.price-input').val();
+                    let qty = parseFloat(qtyStr);
+                    let price = parseFloat(prcStr ? prcStr.replace(/,/g, '') : 0);
+
+                    if (qty > 0) {
+                        items.push({ MaHang: maHang, SoLuong: qty, GiaBan: price });
+                    }
+                }
+            });
+
+            if (items.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 hàng hóa hợp lệ để xuất.");
+                return;
+            }
+
+            let sourceCode = $('#SourceWarehouseCode').val();
+            let vendorId = $('#VendorId').val();
+
+            if (!sourceCode) {
+                alert("Vui lòng chọn Kho Xuất.");
+                return;
+            }
+            if (!vendorId) {
+                alert("Vui lòng chọn Nhà Cung Cấp.");
+                return;
+            }
+
+            var payload = {
+                SourceWarehouseCode: sourceCode,
+                VendorId: vendorId,
+                Items: items
+            };
+
+            var apiUrl = "/api/inventory/outbound/return-vendor";
+
+            $('#submitBtn').prop('disabled', true).text('Đang xử lý...');
+
+            $.ajax({
+                url: apiUrl,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    alert(res.message);
+                    window.location.href = '@Url.Action("Index", "Export")';
+                },
+                error: function (xhr) {
+                    $('#submitBtn').prop('disabled', false).text('Xác Nhận Xuất Kho');
+                    var msg = xhr.responseJSON?.message || "Có lỗi xảy ra khi tạo phiếu.";
+                    alert("Lỗi: " + msg);
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+</body></html>
