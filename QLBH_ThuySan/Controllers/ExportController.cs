@@ -72,10 +72,91 @@ namespace QLBH_ThuySan.Controllers
         {
             // Prepare dropdown data for the frontend Vue/JS
             ViewData["Khos"] = _context.Khos.Select(k => new { k.MaKho, k.TenKho }).ToList();
-            ViewData["HangHoas"] = _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.GiaBanHienTai, h.DonViTinh }).ToList();
+            ViewData["HangHoas"] = _context.HangHoas
+                .Include(h => h.ChiTietTons)
+                .Select(h => new { 
+                    h.MaHang, 
+                    h.TenHang, 
+                    h.GiaBanHienTai, 
+                    h.GiaVonHienTai,
+                    h.DonViTinh,
+                    TonKho = h.ChiTietTons.Sum(t => t.SoLuongTon ?? 0)
+                }).ToList();
             ViewData["NhaCungCaps"] = _context.NhaCungCaps.Select(n => new { n.MaDoiTuong, n.TenDoiTuong }).ToList();
 
             return View();
+        }
+
+        [HttpGet("api/inventory/vendor-products")]
+        public async Task<IActionResult> GetVendorProducts(string vendorId, string? warehouseCode = null)
+        {
+            if (string.IsNullOrEmpty(vendorId))
+                return BadRequest(new { message = "VendorId is required" });
+
+            var products = await _context.PhieuNhaps
+                .Where(p => p.IdNhaCungCap == vendorId)
+                .SelectMany(p => p.ChiTietPhieuNhaps)
+                .Select(ct => ct.MaHangNavigation)
+                .Distinct()
+                .Select(h => new {
+                    h.MaHang,
+                    h.TenHang,
+                    GiaBanHienTai = h.GiaBanHienTai,
+                    GiaVonHienTai = h.GiaVonHienTai,
+                    h.DonViTinh,
+                    TonKho = string.IsNullOrEmpty(warehouseCode)
+                        ? h.ChiTietTons.Sum(t => t.SoLuongTon ?? 0)
+                        : h.ChiTietTons.Where(t => t.MaKho == warehouseCode).Sum(t => t.SoLuongTon ?? 0)
+                })
+                .ToListAsync();
+
+            return Ok(products);
+        }
+
+        [HttpGet("api/inventory/warehouse-products")]
+        public async Task<IActionResult> GetWarehouseProducts(string warehouseCode)
+        {
+            if (string.IsNullOrEmpty(warehouseCode))
+                return BadRequest(new { message = "WarehouseCode is required" });
+
+            // Get products that have stock in this warehouse
+            var products = await _context.ChiTietTons
+                .Where(t => t.MaKho == warehouseCode && t.SoLuongTon > 0)
+                .Select(t => t.MaHangNavigation)
+                .Select(h => new {
+                    h.MaHang,
+                    h.TenHang,
+                    h.DonViTinh,
+                    TonKho = h.ChiTietTons.Where(t => t.MaKho == warehouseCode).Sum(t => t.SoLuongTon ?? 0),
+                    GiaVonHienTai = h.GiaVonHienTai ?? 0,
+                    // Get last purchase price
+                    GiaNhapGanNhat = _context.ChiTietPhieuNhaps
+                        .Where(ct => ct.MaHang == h.MaHang)
+                        .OrderByDescending(ct => ct.MaPhieuNavigation.NgayNhap)
+                        .Select(ct => ct.DonGiaNhap)
+                        .FirstOrDefault() ?? 0
+                })
+                .ToListAsync();
+
+            return Ok(products);
+        }
+
+        [HttpGet("api/inventory/product-stock")]
+        public async Task<IActionResult> GetProductStock(string maHang, string warehouseCodes)
+        {
+            if (string.IsNullOrEmpty(maHang) || string.IsNullOrEmpty(warehouseCodes))
+                return BadRequest(new { message = "MaHang and WarehouseCodes (comma-separated) are required" });
+
+            var codes = warehouseCodes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var stocks = await _context.ChiTietTons
+                .Where(t => t.MaHang == maHang && codes.Contains(t.MaKho))
+                .Select(t => new {
+                    t.MaKho,
+                    TonKho = t.SoLuongTon ?? 0
+                })
+                .ToListAsync();
+
+            return Ok(stocks);
         }
     }
 }

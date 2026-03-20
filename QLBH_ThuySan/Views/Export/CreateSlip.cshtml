@@ -12,16 +12,19 @@
     var khos = ViewData["Khos"] as IEnumerable<dynamic>;
     var hangHoas = ViewData["HangHoas"] as IEnumerable<dynamic>;
     var nhaCungCaps = ViewData["NhaCungCaps"] as IEnumerable<dynamic>;
-
-    if (formType == "RETURN_VENDOR")
-    {
-        Layout = null;
-    }
 }
 
 @if (formType == "RETURN_VENDOR")
 {
     @await Html.PartialAsync("_CreateReturnVendorSlip")
+}
+else if (formType == "DAMAGE_LOSS")
+{
+    @await Html.PartialAsync("_CreateDamageLossSlip")
+}
+else if (formType == "TRANSFER")
+{
+    @await Html.PartialAsync("_CreateTransferSlip")
 }
 else
 {
@@ -115,7 +118,7 @@ else
 </template>
 }
 
-@if (formType != "RETURN_VENDOR")
+@if (formType != "RETURN_VENDOR" && formType != "DAMAGE_LOSS" && formType != "TRANSFER")
 {
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

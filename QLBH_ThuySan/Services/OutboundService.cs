@@ -40,7 +40,7 @@ namespace QLBH_ThuySan.Services
 
                 string maKhoTongAo = _config.GetValue<string>("KhoTongAo_MaKho") ?? "KHO_TONG";
 
-                string maPhieu = prefix + "_" + DateTime.Now.ToString("ddMMyyHHmmssff");
+                string maPhieu = prefix + "_" + DateTime.Now.ToString("yyMMddHHmmss");
                 decimal tongTien = 0;
 
                 var phieuXuat = new PhieuXuat
@@ -49,6 +49,7 @@ namespace QLBH_ThuySan.Services
                     NgayXuat = DateTime.Now,
                     LoaiXuat = loaiXuat,
                     IdDaiLyBan = khoVatLy.MaDaiLyPhuTrach,
+                    MaKhoXuat = dto.SourceWarehouseCode,
                     TrangThaiThanhToan = "Chưa Thanh Toán"
                 };
                 
@@ -79,13 +80,14 @@ namespace QLBH_ThuySan.Services
                     // Deduct Physical Stock
                     await ValidateAndDeductStock(dto.SourceWarehouseCode, item.MaHang, item.SoLuong, "Kho Vật Lý");
 
-                    // For Transfers, we DO NOT deduct Virtual Stock (KHO_TONG) because it stays within the franchise.
-                    // For Sales, Returns, and Damage, we DO deduct Virtual Stock because it leaves the ecosystem.
-                    if (loaiXuat != "TRANSFER")
+                    // For Transfers, Return Vendor, and Damage, we DO NOT deduct Virtual Stock (KHO_TONG).
+                    // This ensures stock is only affected in the selected physical warehouse.
+                    // For Sales, we DO deduct Virtual Stock because it leaves the ecosystem.
+                    if (loaiXuat != "TRANSFER" && loaiXuat != "RETURN_VENDOR" && loaiXuat != "DAMAGE_LOSS")
                     {
                         await ValidateAndDeductStock(maKhoTongAo, item.MaHang, item.SoLuong, "Kho Tổng (Ảo)");
                     }
-                    else
+                    else if (loaiXuat == "TRANSFER")
                     {
                         // Transfer logic: Add to Destination Physical Warehouse
                         var transferDto = (OutboundTransferDto)dto;
@@ -106,10 +108,12 @@ namespace QLBH_ThuySan.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                // Surface the inner exception for debugging
+                var innerMsg = ex.InnerException?.Message ?? ex.Message;
+                throw new Exception(innerMsg, ex);
             }
         }
 

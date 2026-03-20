@@ -498,6 +498,11 @@ namespace QLBH_ThuySan.Models
                     .IsUnicode(false)
                     .HasColumnName("maKhoNhan");
 
+                entity.Property(e => e.MaKhoXuat)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maKhoXuat");
+
                 entity.Property(e => e.LyDo)
                     .HasMaxLength(200)
                     .HasColumnName("lyDo");
@@ -517,6 +522,10 @@ namespace QLBH_ThuySan.Models
                 entity.HasOne(d => d.MaKhoNhanNavigation).WithMany()
                     .HasForeignKey(d => d.MaKhoNhan)
                     .HasConstraintName("FK_PhieuXuat_KhoNhan");
+
+                entity.HasOne(d => d.MaKhoXuatNavigation).WithMany()
+                    .HasForeignKey(d => d.MaKhoXuat)
+                    .HasConstraintName("FK_PhieuXuat_KhoXuat");
             });
 
             modelBuilder.Entity<DoiTuongChiPhi>(entity =>

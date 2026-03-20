@@ -1,7 +1,5 @@
 @{
     var khos = ViewData["Khos"] as IEnumerable<dynamic>;
-
-    var nhaCungCaps = ViewData["NhaCungCaps"] as IEnumerable<dynamic>;
 }
 <script>
     window.tailwind = {
@@ -11,10 +9,10 @@
             extend: {
                 colors: {
                     "surface-container-low": "#f3f3f3",
-                    "primary": "#0061a4", /* Blue for Returns */
-                    "on-primary-fixed-variant": "#00487d",
-                    "surface-tint": "#0061a4",
-                    "primary-container": "#d1e4ff",
+                    "primary": "#ba1a1a", /* Red for Damage */
+                    "on-primary-fixed-variant": "#410002",
+                    "surface-tint": "#93000a",
+                    "primary-container": "#ffdad6",
                     "secondary": "#466270",
                     "surface-container-lowest": "#ffffff",
                     "on-tertiary-container": "#ffb2aa",
@@ -25,8 +23,8 @@
                     "on-secondary-container": "#4a6774",
                     "on-tertiary-fixed-variant": "#930010",
                     "secondary-container": "#c6e4f4",
-                    "primary-fixed-dim": "#a0c9ff",
-                    "primary-fixed": "#d1e4ff",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "primary-fixed": "#ffdad6",
                     "on-error": "#ffffff",
                     "surface-variant": "#e2e2e2",
                     "on-secondary": "#ffffff",
@@ -44,14 +42,14 @@
                     "outline-variant": "#c0c9bb",
                     "on-tertiary": "#ffffff",
                     "surface-dim": "#dadada",
-                    "inverse-primary": "#a0c9ff",
+                    "inverse-primary": "#ffb4ab",
                     "surface-bright": "#f9f9f9",
                     "surface-container-highest": "#e2e2e2",
                     "on-secondary-fixed": "#001f2a",
                     "on-tertiary-fixed": "#410003",
-                    "on-primary-container": "#001d36",
+                    "on-primary-container": "#410002",
                     "on-error-container": "#93000a",
-                    "on-primary-fixed": "#001d36",
+                    "on-primary-fixed": "#410002",
                     "background": "#f9f9f9",
                     "on-primary": "#ffffff",
                     "outline": "#717a6d",
@@ -63,52 +61,23 @@
                     "body": ["Inter"],
                     "label": ["Inter"]
                 },
-                borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
             },
         },
     }
 </script>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
-    rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
 
-    h1,
-    h2,
-    h3,
-    .font-headline {
-        font-family: 'Manrope', sans-serif;
-    }
-
-    .navbar .collapse {
-        visibility: visible !important;
-    }
-
-    .navbar-collapse.collapse:not(.show) {
-        display: none !important;
-        visibility: visible !important;
-    }
-
-    .navbar-collapse.collapse.d-sm-inline-flex {
-        display: inline-flex !important;
-        visibility: visible !important;
-    }
-
-    .navbar .dropdown-menu {
-        visibility: visible !important;
-    }
-
-    header .container-fluid,
-    .navbar .container-fluid,
-    .container {
-        max-width: 100% !important;
-    }
+    .navbar .collapse { visibility: visible !important; }
+    .navbar-collapse.collapse:not(.show) { display: none !important; visibility: visible !important; }
+    .navbar-collapse.collapse.d-sm-inline-flex { display: inline-flex !important; visibility: visible !important; }
+    .navbar .dropdown-menu { visibility: visible !important; }
+    header .container-fluid, .navbar .container-fluid, .container { max-width: 100% !important; }
 </style>
 
 <div class="bg-surface p-4 sm:p-8 font-body text-on-surface min-h-screen">
@@ -116,19 +85,16 @@
         <!-- Header Section -->
         <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="space-y-1">
-
                 <h1 class="text-3xl font-extrabold tracking-tight text-primary flex items-center gap-3">
-                    <span class="material-symbols-outlined text-4xl">assignment_return</span>
-                    Trả Hàng Cho Nhà Cung Cấp
+                    <span class="material-symbols-outlined text-4xl">inventory_2</span>
+                    Phiếu Hủy / Báo Cáo Hao Hụt
                 </h1>
-                <p class="text-on-surface-variant font-medium">Hoàn trả hàng hóa lỗi, kém chất lượng hoặc sai quy cách
-                    cho đối tác</p>
+                <p class="text-on-surface-variant font-medium">Ghi nhận hàng hóa hư hỏng, hết hạn hoặc thất thoát kho bãi</p>
             </div>
             <div class="flex items-center gap-3">
-                <button type="button" onclick="window.history.back()"
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary-container transition-colors rounded-xl border border-outline-variant">
-                    <span class="material-symbols-outlined text-sm">close</span>
-                    Hủy Bỏ
+                <button type="button" onclick="window.location.reload()" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary-container transition-colors rounded-xl border border-outline-variant">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    Làm mới
                 </button>
             </div>
         </header>
@@ -137,73 +103,48 @@
         <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div class="lg:col-span-8 space-y-8">
                 <!-- Core Details Card -->
-                <section
-                    class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant transition-all hover:shadow-md">
+                <section class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant transition-all hover:shadow-md">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-2">
-                            <label
-                                class="block text-sm font-bold text-on-surface-variant ml-1 uppercase tracking-widest text-[11px]">Kho
-                                Xuất (Nguồn)</label>
+                            <label class="block text-sm font-bold text-on-surface-variant ml-1">Kho Xuất (Nguồn)</label>
                             <div class="relative group">
-                                <span
-                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">warehouse</span>
-                                <select id="SourceWarehouseCode"
-                                    class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">warehouse</span>
+                                <select id="SourceWarehouseCode" class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
                                     <option value="">-- Chọn kho xuất hàng --</option>
                                     @foreach (var k in khos)
-
                                     {
                                         <option value="@k.MaKho">@k.TenKho</option>
                                     }
                                 </select>
-                                <span
-                                    class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+                                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label
-                                class="block text-sm font-bold text-on-surface-variant ml-1 uppercase tracking-widest text-[11px]">Nhà
-                                Cung Cấp</label>
+                            <label class="block text-sm font-bold text-on-surface-variant ml-1">Lý Do Hủy / Hao Hụt</label>
                             <div class="relative group">
-                                <span
-                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">person</span>
-                                <select id="VendorId"
-                                    class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
-                                    <option value="">-- Chọn Nhà Cung Cấp --</option>
-                                    @foreach (var n in nhaCungCaps)
-
-                                    {
-                                        <option value="@n.MaDoiTuong">@n.TenDoiTuong</option>
-                                    }
-                                </select>
-                                <span
-                                    class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">description</span>
+                                <input type="text" id="Reason" placeholder="Ví dụ: Bể vỡ, hết hạn, hao hụt kho..." class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-semibold outline-none" />
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <!-- Product Selection Table -->
-                <section
-                    class="bg-surface-container-lowest rounded-3xl shadow-sm border border-outline-variant overflow-hidden">
-                    <div
-                        class="p-6 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+                <section class="bg-surface-container-lowest rounded-3xl shadow-sm border border-outline-variant overflow-hidden">
+                    <div class="p-6 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
                         <h3 class="text-xl font-bold flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">list_alt</span>
-                            Danh Sách Hàng Hóa Xuất Trả
+                            Danh Sách Hàng Hóa Tiêu Hủy
                         </h3>
-                        <span id="rowCount"
-                            class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">0
-                            mặt hàng</span>
+                        <span id="rowCount" class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">0 mặt hàng</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table id="productTable" class="w-full text-left border-collapse">
                             <thead>
-                                <tr
-                                    class="bg-surface-container text-on-surface-variant uppercase text-sm font-bold tracking-widest">
+                                <tr class="bg-surface-container text-on-surface-variant uppercase text-sm font-bold tracking-widest">
                                     <th class="px-6 py-4">Tên Sản Phẩm</th>
                                     <th class="px-6 py-4 w-40">Số Lượng</th>
-                                    <th class="px-6 py-4 w-48 text-right">Giá Trị Hoàn Trả</th>
+                                    <th class="px-6 py-4 w-48 text-right">Thành Tiền</th>
                                     <th class="px-6 py-4 w-20 text-center"></th>
                                 </tr>
                             </thead>
@@ -213,8 +154,7 @@
                         </table>
                     </div>
                     <div class="p-6 bg-surface-container-low border-t border-outline-variant">
-                        <button type="button" id="addRowBtn"
-                            class="flex items-center gap-2 px-6 py-3 bg-secondary text-white font-bold rounded-2xl hover:bg-secondary/90 hover:shadow-lg active:scale-95 transition-all">
+                        <button type="button" id="addRowBtn" class="flex items-center gap-2 px-6 py-3 bg-secondary text-white font-bold rounded-2xl hover:bg-on-secondary-container hover:shadow-lg active:scale-95 transition-all">
                             <span class="material-symbols-outlined">add_shopping_cart</span>
                             Thêm Mặt Hàng
                         </button>
@@ -225,72 +165,57 @@
             <!-- Right Sidebar: Info & Actions -->
             <aside class="lg:col-span-4 space-y-6">
                 <!-- Product Insight Box -->
-                <section id="productInsight"
-                    class="hidden bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                <section id="productInsight" class="hidden bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div class="flex items-center gap-3 pb-4 border-b border-outline-variant">
                         <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                             <span class="material-symbols-outlined">info</span>
                         </div>
                         <div>
                             <h4 class="font-bold text-lg leading-tight" id="insightProductName">Tôm Sú Oxi</h4>
-                            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider"
-                                id="insightProductCode">#HH001</p>
+                            <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="insightProductCode">#HH001</p>
                         </div>
                     </div>
-
+                    
                     <div class="grid grid-cols-1 gap-4">
-                        <div
-                            class="p-4 bg-primary/5 rounded-2xl border border-primary/10 group transition-all hover:bg-primary/10">
-                            <p class="text-[10px] font-bold text-on-surface-variant uppercase mb-2 tracking-widest">SỐ
-                                LƯỢNG TỒN TẠI KHO</p>
+                        <div class="p-4 bg-primary/5 rounded-2xl border border-primary/10 group transition-all hover:bg-primary/10">
+                            <p class="text-xs font-bold text-on-surface-variant uppercase mb-2 tracking-widest">SỐ LƯỢNG TỒN</p>
                             <p class="text-2xl font-black text-primary" id="insightStock">0 kg</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-4 bg-surface rounded-2xl border border-outline-variant">
-                                <p
-                                    class="text-[9px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">
-                                    GIÁ NHẬP CUỐI</p>
-                                <p class="text-sm font-bold" id="insightLastPrice">0 VND</p>
+                                <p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">GIÁ NHẬP GẦN NHẤT</p>
+                                <p class="text-lg font-bold" id="insightLastPrice">0 VND</p>
                             </div>
                             <div class="p-4 bg-surface rounded-2xl border border-outline-variant">
-                                <p
-                                    class="text-[9px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">
-                                    GIÁ NHẬP TB</p>
-                                <p class="text-sm font-bold" id="insightAvgPrice">0 VND</p>
+                                <p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">GIÁ NHẬP TB</p>
+                                <p class="text-lg font-bold" id="insightAvgPrice">0 VND</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <!-- Summary Card -->
-                <section
-                    class="bg-primary-container rounded-3xl p-6 shadow-lg border border-primary/10 space-y-6 sticky top-8">
+                <section class="bg-primary-container rounded-3xl p-6 shadow-lg border border-primary/20 space-y-6 sticky top-8">
                     <h3 class="text-xl font-bold flex items-center gap-2 text-on-primary-fixed-variant">
                         <span class="material-symbols-outlined">calculate</span>
                         Tổng Kết Phiếu
                     </h3>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center py-2 border-b border-on-primary-fixed-variant/10">
-                            <span
-                                class="text-sm font-semibold text-on-primary-fixed-variant opacity-80 uppercase tracking-widest">Tổng
-                                lượng</span>
+                            <span class="text-sm font-semibold text-on-primary-fixed-variant opacity-80 uppercase tracking-widest">Tổng lượng</span>
                             <span class="font-bold text-lg" id="totalQty">0</span>
                         </div>
                         <div class="pt-2">
-                            <span
-                                class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">GIÁ
-                                TRỊ HOÀN TRẢ (DỰ TÍNH)</span>
-                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter"
-                                id="totalValue">0 VND</p>
+                            <span class="text-xs font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">GIÁ TRỊ HAO HỤT (Dự tính)</span>
+                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter" id="totalValue">0 VND</p>
                         </div>
                     </div>
                     <div class="pt-6 space-y-3">
-                        <button type="button" id="submitBtn"
-                            class="w-full py-4 bg-primary text-white font-black text-lg rounded-2xl shadow-xl hover:bg-on-primary-fixed-variant hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group px-4">
+                        <button type="button" id="submitBtn" class="w-full py-4 bg-primary text-white font-black text-lg rounded-2xl shadow-xl hover:bg-on-primary-fixed-variant hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group">
                             XÁC NHẬN XUẤT KHO
-                            <span
-                                class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </button>
+                        <p class="text-[10px] text-on-primary-fixed-variant/60 font-medium text-center italic">* Vui lòng kiểm tra kỹ số lượng trước khi xác nhận.</p>
                     </div>
                 </section>
             </aside>
@@ -301,47 +226,40 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
-        let vendorProducts = [];
+        let warehouseProducts = [];
         let rowIdx = 0;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('vi-VN').format(num);
         }
 
-        async function fetchVendorProducts() {
-            const vendorId = $('#VendorId').val();
-            const warehouseCode = $('#SourceWarehouseCode').val();
-
-            if (!vendorId) {
-                vendorProducts = [];
+        async function fetchWarehouseProducts(warehouseCode) {
+            if (!warehouseCode) {
+                warehouseProducts = [];
                 updateAllDropdowns();
                 return;
             }
-
             try {
-                let url = `/api/inventory/vendor-products?vendorId=${vendorId}`;
-                if (warehouseCode) url += `&warehouseCode=${warehouseCode}`;
-
-                const response = await fetch(url);
-                vendorProducts = await response.json();
+                const response = await fetch(`/api/inventory/warehouse-products?warehouseCode=${warehouseCode}`);
+                warehouseProducts = await response.json();
                 updateAllDropdowns();
             } catch (error) {
-                console.error("Error fetching vendor products:", error);
-                vendorProducts = [];
+                console.error("Error fetching products:", error);
+                warehouseProducts = [];
             }
         }
 
         function updateAllDropdowns() {
-            $('.product-select').each(function () {
+            $('.product-select').each(function() {
                 const currentVal = $(this).val();
-                let options = '<option value="">-- Chọn Hàng --</option>';
-                vendorProducts.forEach(p => {
+                let options = '<option value="">-- Chọn HH --</option>';
+                warehouseProducts.forEach(p => {
                     const selected = p.maHang === currentVal ? 'selected' : '';
                     options += `<option value="${p.maHang}" ${selected} 
                         data-name="${p.tenHang}"
                         data-unit="${p.donViTinh || ''}"
                         data-stock="${p.tonKho}" 
-                        data-lastprice="${p.giaVonHienTai}"
+                        data-lastprice="${p.giaNhapGanNhat}"
                         data-avgprice="${p.giaVonHienTai}">${p.tenHang}</option>`;
                 });
                 $(this).html(options);
@@ -349,13 +267,13 @@
         }
 
         function addRow() {
-            let options = '<option value="">-- Chọn Hàng --</option>';
-            vendorProducts.forEach(p => {
+            let options = '<option value="">-- Chọn HH --</option>';
+            warehouseProducts.forEach(p => {
                 options += `<option value="${p.maHang}" 
                     data-name="${p.tenHang}"
                     data-unit="${p.donViTinh || ''}"
                     data-stock="${p.tonKho}" 
-                    data-lastprice="${p.giaVonHienTai}"
+                    data-lastprice="${p.giaNhapGanNhat}"
                     data-avgprice="${p.giaVonHienTai}">${p.tenHang}</option>`;
             });
 
@@ -373,13 +291,10 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 text-right">
-                        <div class="flex items-center bg-surface border border-outline-variant rounded-xl px-2 py-1">
-                            <input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-right price-input" type="text" value="0"/>
-                            <span class="text-[9px] font-bold text-outline ml-1">VND</span>
-                        </div>
+                        <span class="row-total font-bold text-on-surface">0 VND</span>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        <button type="button" class="removeBtn w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error/10 transition-all active:scale-75">
+                        <button type="button" class="removeBtn w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error/10 hover:shadow-inner transition-all active:scale-75">
                             <span class="material-symbols-outlined text-xl">delete</span>
                         </button>
                     </td>
@@ -395,15 +310,15 @@
             let totalVal = 0;
             let count = 0;
 
-            $('#productTable tbody tr').each(function () {
+            $('#productTable tbody tr').each(function() {
                 count++;
                 const qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                const priceStr = $(this).find('.price-input').val();
-                const price = parseFloat(priceStr.replace(/\./g, '')) || 0;
-                const rowTotal = qty * price;
-
+                const cost = parseFloat($(this).find('.product-select option:selected').data('avgprice')) || 0;
+                const rowTotal = qty * cost;
+                
                 totalQty += qty;
                 totalVal += rowTotal;
+                $(this).find('.row-total').text(formatNumber(rowTotal) + ' VND');
             });
 
             $('#totalQty').text(totalQty.toFixed(2));
@@ -411,60 +326,57 @@
             $('#rowCount').text(`${count} mặt hàng`);
         }
 
-        $(document).on('input', '.price-input', function () {
-            let val = $(this).val().replace(/\D/g, '');
-            if (val) $(this).val(formatNumber(parseInt(val)));
-            updateStats();
+        // Event: Warehouse Change
+        $('#SourceWarehouseCode').change(function() {
+            fetchWarehouseProducts($(this).val());
         });
 
-        $('#VendorId, #SourceWarehouseCode').change(fetchVendorProducts);
-
+        // Event: Add Row
         $('#addRowBtn').click(addRow);
 
-        $(document).on('click', '.removeBtn', function () {
-            $(this).closest('tr').remove();
-            updateStats();
+        // Event: Remove Row
+        $(document).on('click', '.removeBtn', function() {
+            $(this).closest('tr').fadeOut(200, function() {
+                $(this).remove();
+                updateStats();
+            });
         });
 
+        // Event: Input change
         $(document).on('change input', '.qty-input, .product-select', updateStats);
 
-        $(document).on('change', '.product-select', function () {
+        // Event: Product Insight
+        $(document).on('change', '.product-select', function() {
             const opt = $(this).find('option:selected');
             const maHang = $(this).val();
-
+            
             if (maHang) {
                 $('#insightProductName').text(opt.data('name'));
                 $('#insightProductCode').text('#' + maHang);
                 $('#insightStock').text(opt.data('stock') + ' ' + (opt.data('unit') || ''));
                 $('#insightLastPrice').text(formatNumber(opt.data('lastprice')) + ' VND');
                 $('#insightAvgPrice').text(formatNumber(opt.data('avgprice')) + ' VND');
-
                 $(this).closest('tr').find('.unit-label').text(opt.data('unit'));
-                $(this).closest('tr').find('.price-input').val(formatNumber(opt.data('avgprice')));
-
                 $('#productInsight').removeClass('hidden').addClass('animate-in p-6');
             } else {
                 $('#productInsight').addClass('hidden');
             }
-            updateStats();
         });
 
-        $('#submitBtn').click(function () {
+        // Submit form
+        $('#submitBtn').click(function() {
             const warehouse = $('#SourceWarehouseCode').val();
-            const vendor = $('#VendorId').val();
+            const reason = $('#Reason').val();
             const items = [];
 
             if (!warehouse) { alert("Vui lòng chọn kho xuất."); return; }
-            if (!vendor) { alert("Vui lòng chọn nhà cung cấp."); return; }
+            if (!reason) { alert("Vui lòng nhập lý do tiêu hủy."); return; }
 
-            $('#productTable tbody tr').each(function () {
+            $('#productTable tbody tr').each(function() {
                 const maHang = $(this).find('.product-select').val();
                 const qty = parseFloat($(this).find('.qty-input').val());
-                const priceStr = $(this).find('.price-input').val();
-                const price = parseFloat(priceStr.replace(/\./g, '')) || 0;
-
                 if (maHang && qty > 0) {
-                    items.push({ MaHang: maHang, SoLuong: qty, GiaBan: price });
+                    items.push({ MaHang: maHang, SoLuong: qty });
                 }
             });
 
@@ -472,30 +384,29 @@
 
             const payload = {
                 SourceWarehouseCode: warehouse,
-                VendorId: vendor,
+                Reason: reason,
                 Items: items
             };
 
             $('#submitBtn').prop('disabled', true).text('ĐANG XỬ LÝ...');
 
             $.ajax({
-                url: '/api/inventory/outbound/return-vendor',
+                url: '/api/inventory/outbound/damage',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(payload),
-                success: function (res) {
-                    alert("Xuất trả hàng thành công!");
+                success: function(res) {
+                    alert("Xuất hủy/hao hụt thành công!");
                     window.location.href = '/Export/Index';
                 },
-                error: function (xhr) {
+                error: function(xhr) {
                     $('#submitBtn').prop('disabled', false).text('XÁC NHẬN XUẤT KHO');
                     alert("Lỗi: " + (xhr.responseJSON?.message || "Không thể lưu phiếu."));
                 }
             });
         });
 
-        // Trigger initial load
-        if ($('#VendorId').val()) fetchVendorProducts();
+        // Auto add first row
         addRow();
     });
 </script>

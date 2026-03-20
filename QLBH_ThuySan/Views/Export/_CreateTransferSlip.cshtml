@@ -1,7 +1,5 @@
 @{
     var khos = ViewData["Khos"] as IEnumerable<dynamic>;
-
-    var nhaCungCaps = ViewData["NhaCungCaps"] as IEnumerable<dynamic>;
 }
 <script>
     window.tailwind = {
@@ -11,10 +9,10 @@
             extend: {
                 colors: {
                     "surface-container-low": "#f3f3f3",
-                    "primary": "#0061a4", /* Blue for Returns */
-                    "on-primary-fixed-variant": "#00487d",
-                    "surface-tint": "#0061a4",
-                    "primary-container": "#d1e4ff",
+                    "primary": "#2a6b2c", /* Green for Transfer */
+                    "on-primary-fixed-variant": "#002106",
+                    "surface-tint": "#2a6b2c",
+                    "primary-container": "#acf4a4",
                     "secondary": "#466270",
                     "surface-container-lowest": "#ffffff",
                     "on-tertiary-container": "#ffb2aa",
@@ -25,8 +23,8 @@
                     "on-secondary-container": "#4a6774",
                     "on-tertiary-fixed-variant": "#930010",
                     "secondary-container": "#c6e4f4",
-                    "primary-fixed-dim": "#a0c9ff",
-                    "primary-fixed": "#d1e4ff",
+                    "primary-fixed-dim": "#91d78a",
+                    "primary-fixed": "#acf4a4",
                     "on-error": "#ffffff",
                     "surface-variant": "#e2e2e2",
                     "on-secondary": "#ffffff",
@@ -44,14 +42,14 @@
                     "outline-variant": "#c0c9bb",
                     "on-tertiary": "#ffffff",
                     "surface-dim": "#dadada",
-                    "inverse-primary": "#a0c9ff",
+                    "inverse-primary": "#91d78a",
                     "surface-bright": "#f9f9f9",
                     "surface-container-highest": "#e2e2e2",
                     "on-secondary-fixed": "#001f2a",
                     "on-tertiary-fixed": "#410003",
-                    "on-primary-container": "#001d36",
+                    "on-primary-container": "#002203",
                     "on-error-container": "#93000a",
-                    "on-primary-fixed": "#001d36",
+                    "on-primary-fixed": "#002203",
                     "background": "#f9f9f9",
                     "on-primary": "#ffffff",
                     "outline": "#717a6d",
@@ -118,11 +116,11 @@
             <div class="space-y-1">
 
                 <h1 class="text-3xl font-extrabold tracking-tight text-primary flex items-center gap-3">
-                    <span class="material-symbols-outlined text-4xl">assignment_return</span>
-                    Trả Hàng Cho Nhà Cung Cấp
+                    <span class="material-symbols-outlined text-4xl">local_shipping</span>
+                    Điều Chuyển Kho Nội Bộ
                 </h1>
-                <p class="text-on-surface-variant font-medium">Hoàn trả hàng hóa lỗi, kém chất lượng hoặc sai quy cách
-                    cho đối tác</p>
+                <p class="text-on-surface-variant font-medium">Luân chuyển hàng hóa giữa các kho vật lý trong hệ thống
+                </p>
             </div>
             <div class="flex items-center gap-3">
                 <button type="button" onclick="window.history.back()"
@@ -149,7 +147,7 @@
                                     class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">warehouse</span>
                                 <select id="SourceWarehouseCode"
                                     class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
-                                    <option value="">-- Chọn kho xuất hàng --</option>
+                                    <option value="">-- Chọn kho xuất --</option>
                                     @foreach (var k in khos)
 
                                     {
@@ -162,18 +160,18 @@
                         </div>
                         <div class="space-y-2">
                             <label
-                                class="block text-sm font-bold text-on-surface-variant ml-1 uppercase tracking-widest text-[11px]">Nhà
-                                Cung Cấp</label>
+                                class="block text-sm font-bold text-on-surface-variant ml-1 uppercase tracking-widest text-[11px]">Kho
+                                Nhận (Đích)</label>
                             <div class="relative group">
                                 <span
-                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">person</span>
-                                <select id="VendorId"
+                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">input_circle</span>
+                                <select id="DestinationWarehouseCode"
                                     class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
-                                    <option value="">-- Chọn Nhà Cung Cấp --</option>
-                                    @foreach (var n in nhaCungCaps)
+                                    <option value="">-- Chọn kho nhận --</option>
+                                    @foreach (var k in khos)
 
                                     {
-                                        <option value="@n.MaDoiTuong">@n.TenDoiTuong</option>
+                                        <option value="@k.MaKho">@k.TenKho</option>
                                     }
                                 </select>
                                 <span
@@ -190,7 +188,7 @@
                         class="p-6 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
                         <h3 class="text-xl font-bold flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">list_alt</span>
-                            Danh Sách Hàng Hóa Xuất Trả
+                            Danh Sách Hàng Hóa Điều Chuyển
                         </h3>
                         <span id="rowCount"
                             class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">0
@@ -202,8 +200,7 @@
                                 <tr
                                     class="bg-surface-container text-on-surface-variant uppercase text-sm font-bold tracking-widest">
                                     <th class="px-6 py-4">Tên Sản Phẩm</th>
-                                    <th class="px-6 py-4 w-40">Số Lượng</th>
-                                    <th class="px-6 py-4 w-48 text-right">Giá Trị Hoàn Trả</th>
+                                    <th class="px-6 py-4 w-48 text-center">Số Lượng Chuyển</th>
                                     <th class="px-6 py-4 w-20 text-center"></th>
                                 </tr>
                             </thead>
@@ -232,32 +229,36 @@
                             <span class="material-symbols-outlined">info</span>
                         </div>
                         <div>
-                            <h4 class="font-bold text-lg leading-tight" id="insightProductName">Tôm Sú Oxi</h4>
+                            <h4 class="font-bold text-lg leading-tight" id="insightProductName">Sản phẩm</h4>
                             <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider"
-                                id="insightProductCode">#HH001</p>
+                                id="insightProductCode">#CODE</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 gap-4">
                         <div
-                            class="p-4 bg-primary/5 rounded-2xl border border-primary/10 group transition-all hover:bg-primary/10">
-                            <p class="text-[10px] font-bold text-on-surface-variant uppercase mb-2 tracking-widest">SỐ
-                                LƯỢNG TỒN TẠI KHO</p>
-                            <p class="text-2xl font-black text-primary" id="insightStock">0 kg</p>
+                            class="p-4 bg-primary/5 rounded-2xl border border-primary/10 transition-all hover:bg-primary/10">
+                            <p
+                                class="text-[10px] font-bold text-on-surface-variant uppercase mb-2 tracking-widest text-center">
+                                TRẠNG THÁI TỒN KHO</p>
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                    <p class="text-[9px] font-bold text-on-surface-variant opacity-60 uppercase mb-1">
+                                        KHO XUẤT</p>
+                                    <p class="text-xl font-black text-primary" id="insightSourceStock">0 kg</p>
+                                </div>
+                                <div class="border-l border-outline-variant/30">
+                                    <p class="text-[9px] font-bold text-on-surface-variant opacity-60 uppercase mb-1">
+                                        KHO NHẬN</p>
+                                    <p class="text-xl font-black text-secondary" id="insightDestStock">0 kg</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-surface rounded-2xl border border-outline-variant">
-                                <p
-                                    class="text-[9px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">
-                                    GIÁ NHẬP CUỐI</p>
-                                <p class="text-sm font-bold" id="insightLastPrice">0 VND</p>
-                            </div>
-                            <div class="p-4 bg-surface rounded-2xl border border-outline-variant">
-                                <p
-                                    class="text-[9px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight">
-                                    GIÁ NHẬP TB</p>
-                                <p class="text-sm font-bold" id="insightAvgPrice">0 VND</p>
-                            </div>
+                        <div class="p-4 bg-surface rounded-2xl border border-outline-variant">
+                            <p
+                                class="text-[9px] font-bold text-on-surface-variant uppercase mb-1 tracking-widest leading-tight text-center">
+                                GIÁ TRỊ TRUNG BÌNH</p>
+                            <p class="text-lg font-bold text-center" id="insightAvgPrice">0 VND</p>
                         </div>
                     </div>
                 </section>
@@ -272,22 +273,22 @@
                     <div class="space-y-4">
                         <div class="flex justify-between items-center py-2 border-b border-on-primary-fixed-variant/10">
                             <span
-                                class="text-sm font-semibold text-on-primary-fixed-variant opacity-80 uppercase tracking-widest">Tổng
-                                lượng</span>
-                            <span class="font-bold text-lg" id="totalQty">0</span>
+                                class="text-sm font-semibold text-on-primary-fixed-variant opacity-80 uppercase tracking-widest">Số
+                                mặt hàng</span>
+                            <span class="font-bold text-lg" id="summaryCount">0</span>
                         </div>
                         <div class="pt-2">
                             <span
-                                class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">GIÁ
-                                TRỊ HOÀN TRẢ (DỰ TÍNH)</span>
-                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter"
-                                id="totalValue">0 VND</p>
+                                class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">TỔNG
+                                LƯỢNG ĐIỀU CHUYỂN</span>
+                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter" id="totalQty">
+                                0</p>
                         </div>
                     </div>
                     <div class="pt-6 space-y-3">
                         <button type="button" id="submitBtn"
                             class="w-full py-4 bg-primary text-white font-black text-lg rounded-2xl shadow-xl hover:bg-on-primary-fixed-variant hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group px-4">
-                            XÁC NHẬN XUẤT KHO
+                            XÁC NHẬN ĐIỀU CHUYỂN
                             <span
                                 class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </button>
@@ -301,33 +302,26 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
-        let vendorProducts = [];
+        let warehouseProducts = [];
         let rowIdx = 0;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('vi-VN').format(num);
         }
 
-        async function fetchVendorProducts() {
-            const vendorId = $('#VendorId').val();
-            const warehouseCode = $('#SourceWarehouseCode').val();
-
-            if (!vendorId) {
-                vendorProducts = [];
+        async function fetchWarehouseProducts(warehouseCode) {
+            if (!warehouseCode) {
+                warehouseProducts = [];
                 updateAllDropdowns();
                 return;
             }
-
             try {
-                let url = `/api/inventory/vendor-products?vendorId=${vendorId}`;
-                if (warehouseCode) url += `&warehouseCode=${warehouseCode}`;
-
-                const response = await fetch(url);
-                vendorProducts = await response.json();
+                const response = await fetch(`/api/inventory/warehouse-products?warehouseCode=${warehouseCode}`);
+                warehouseProducts = await response.json();
                 updateAllDropdowns();
             } catch (error) {
-                console.error("Error fetching vendor products:", error);
-                vendorProducts = [];
+                console.error("Error fetching products:", error);
+                warehouseProducts = [];
             }
         }
 
@@ -335,13 +329,12 @@
             $('.product-select').each(function () {
                 const currentVal = $(this).val();
                 let options = '<option value="">-- Chọn Hàng --</option>';
-                vendorProducts.forEach(p => {
+                warehouseProducts.forEach(p => {
                     const selected = p.maHang === currentVal ? 'selected' : '';
                     options += `<option value="${p.maHang}" ${selected} 
                         data-name="${p.tenHang}"
                         data-unit="${p.donViTinh || ''}"
                         data-stock="${p.tonKho}" 
-                        data-lastprice="${p.giaVonHienTai}"
                         data-avgprice="${p.giaVonHienTai}">${p.tenHang}</option>`;
                 });
                 $(this).html(options);
@@ -350,12 +343,11 @@
 
         function addRow() {
             let options = '<option value="">-- Chọn Hàng --</option>';
-            vendorProducts.forEach(p => {
+            warehouseProducts.forEach(p => {
                 options += `<option value="${p.maHang}" 
                     data-name="${p.tenHang}"
                     data-unit="${p.donViTinh || ''}"
                     data-stock="${p.tonKho}" 
-                    data-lastprice="${p.giaVonHienTai}"
                     data-avgprice="${p.giaVonHienTai}">${p.tenHang}</option>`;
             });
 
@@ -367,15 +359,9 @@
                         </select>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="relative items-center flex">
+                        <div class="relative items-center flex max-w-[200px] mx-auto">
                             <input type="number" step="0.01" class="qty-input w-full p-2.5 bg-surface border border-outline-variant rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-bold text-center" value="1" min="0.01" />
                             <span class="unit-label absolute right-3 text-[10px] font-black text-on-surface-variant uppercase">KG</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <div class="flex items-center bg-surface border border-outline-variant rounded-xl px-2 py-1">
-                            <input class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-right price-input" type="text" value="0"/>
-                            <span class="text-[9px] font-bold text-outline ml-1">VND</span>
                         </div>
                     </td>
                     <td class="px-6 py-4 text-center">
@@ -392,32 +378,28 @@
 
         function updateStats() {
             let totalQty = 0;
-            let totalVal = 0;
             let count = 0;
 
             $('#productTable tbody tr').each(function () {
                 count++;
                 const qty = parseFloat($(this).find('.qty-input').val()) || 0;
-                const priceStr = $(this).find('.price-input').val();
-                const price = parseFloat(priceStr.replace(/\./g, '')) || 0;
-                const rowTotal = qty * price;
-
                 totalQty += qty;
-                totalVal += rowTotal;
             });
 
             $('#totalQty').text(totalQty.toFixed(2));
-            $('#totalValue').text(formatNumber(totalVal) + ' VND');
+            $('#summaryCount').text(count);
             $('#rowCount').text(`${count} mặt hàng`);
         }
 
-        $(document).on('input', '.price-input', function () {
-            let val = $(this).val().replace(/\D/g, '');
-            if (val) $(this).val(formatNumber(parseInt(val)));
-            updateStats();
+        $('#SourceWarehouseCode').change(function () {
+            fetchWarehouseProducts($(this).val());
         });
 
-        $('#VendorId, #SourceWarehouseCode').change(fetchVendorProducts);
+        $('#DestinationWarehouseCode').change(function () {
+            // Update insight if product selected
+            const maHang = $('.product-select:focus').val() || $('.product-select').first().val();
+            if (maHang) updateProductInsight(maHang);
+        });
 
         $('#addRowBtn').click(addRow);
 
@@ -428,74 +410,92 @@
 
         $(document).on('change input', '.qty-input, .product-select', updateStats);
 
-        $(document).on('change', '.product-select', function () {
-            const opt = $(this).find('option:selected');
-            const maHang = $(this).val();
+        async function updateProductInsight(maHang) {
+            const source = $('#SourceWarehouseCode').val();
+            const dest = $('#DestinationWarehouseCode').val();
 
-            if (maHang) {
-                $('#insightProductName').text(opt.data('name'));
-                $('#insightProductCode').text('#' + maHang);
-                $('#insightStock').text(opt.data('stock') + ' ' + (opt.data('unit') || ''));
-                $('#insightLastPrice').text(formatNumber(opt.data('lastprice')) + ' VND');
-                $('#insightAvgPrice').text(formatNumber(opt.data('avgprice')) + ' VND');
-
-                $(this).closest('tr').find('.unit-label').text(opt.data('unit'));
-                $(this).closest('tr').find('.price-input').val(formatNumber(opt.data('avgprice')));
-
-                $('#productInsight').removeClass('hidden').addClass('animate-in p-6');
-            } else {
+            if (!maHang) {
                 $('#productInsight').addClass('hidden');
+                return;
             }
-            updateStats();
+
+            // Get product name/unit from dropdown
+            const opt = $(`.product-select option[value="${maHang}"]`).first();
+            $('#insightProductName').text(opt.data('name') || maHang);
+            $('#insightProductCode').text('#' + maHang);
+            $('#insightAvgPrice').text(formatNumber(opt.data('avgprice') || 0) + ' VND');
+
+            // Set initial source stock from dropdown (faster)
+            $('#insightSourceStock').text((opt.data('stock') || 0) + ' ' + (opt.data('unit') || ''));
+            $('#insightDestStock').text('...');
+
+            $('#productInsight').removeClass('hidden').addClass('animate-in p-6');
+
+            if (maHang && source && dest) {
+                try {
+                    const response = await fetch(`/api/inventory/product-stock?maHang=${maHang}&warehouseCodes=${source},${dest}`);
+                    const stocks = await response.json();
+
+                    const srcStock = stocks.find(s => s.maKho === source)?.tonKho || 0;
+                    const dstStock = stocks.find(s => s.maKho === dest)?.tonKho || 0;
+
+                    $('#insightSourceStock').text(srcStock + ' ' + (opt.data('unit') || ''));
+                    $('#insightDestStock').text(dstStock + ' ' + (opt.data('unit') || ''));
+                } catch (e) {
+                    console.error("Error fetching dual stock:", e);
+                }
+            }
+        }
+
+        $(document).on('change', '.product-select', function () {
+            updateProductInsight($(this).val());
         });
 
         $('#submitBtn').click(function () {
-            const warehouse = $('#SourceWarehouseCode').val();
-            const vendor = $('#VendorId').val();
+            const source = $('#SourceWarehouseCode').val();
+            const dest = $('#DestinationWarehouseCode').val();
             const items = [];
 
-            if (!warehouse) { alert("Vui lòng chọn kho xuất."); return; }
-            if (!vendor) { alert("Vui lòng chọn nhà cung cấp."); return; }
+            if (!source || !dest) { alert("Vui lòng chọn đầy đủ kho xuất và kho nhận."); return; }
+            if (source === dest) { alert("Kho nhận phải khác kho xuất."); return; }
 
             $('#productTable tbody tr').each(function () {
                 const maHang = $(this).find('.product-select').val();
                 const qty = parseFloat($(this).find('.qty-input').val());
-                const priceStr = $(this).find('.price-input').val();
-                const price = parseFloat(priceStr.replace(/\./g, '')) || 0;
 
                 if (maHang && qty > 0) {
-                    items.push({ MaHang: maHang, SoLuong: qty, GiaBan: price });
+                    items.push({ MaHang: maHang, SoLuong: qty });
                 }
             });
 
             if (items.length === 0) { alert("Vui lòng chọn sản phẩm."); return; }
 
             const payload = {
-                SourceWarehouseCode: warehouse,
-                VendorId: vendor,
+                SourceWarehouseCode: source,
+                DestinationWarehouseCode: dest,
                 Items: items
             };
 
             $('#submitBtn').prop('disabled', true).text('ĐANG XỬ LÝ...');
 
             $.ajax({
-                url: '/api/inventory/outbound/return-vendor',
+                url: '/api/inventory/outbound/transfer',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(payload),
                 success: function (res) {
-                    alert("Xuất trả hàng thành công!");
+                    alert("Điều chuyển kho thành công!");
                     window.location.href = '/Export/Index';
                 },
                 error: function (xhr) {
-                    $('#submitBtn').prop('disabled', false).text('XÁC NHẬN XUẤT KHO');
+                    $('#submitBtn').prop('disabled', false).text('XÁC NHẬN ĐIỀU CHUYỂN');
                     alert("Lỗi: " + (xhr.responseJSON?.message || "Không thể lưu phiếu."));
                 }
             });
         });
 
         // Trigger initial load
-        if ($('#VendorId').val()) fetchVendorProducts();
+        if ($('#SourceWarehouseCode').val()) fetchWarehouseProducts($('#SourceWarehouseCode').val());
         addRow();
     });
 </script>

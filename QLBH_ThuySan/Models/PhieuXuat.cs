@@ -25,6 +25,8 @@ public partial class PhieuXuat
 
     public string? MaKhoNhan { get; set; }
 
+    public string? MaKhoXuat { get; set; }
+
     public string? LyDo { get; set; }
 
     public virtual ICollection<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = new List<ChiTietPhieuXuat>();
@@ -36,4 +38,6 @@ public partial class PhieuXuat
     public virtual NhaCungCap? IdNhaCungCapNavigation { get; set; }
 
     public virtual Kho? MaKhoNhanNavigation { get; set; }
+
+    public virtual Kho? MaKhoXuatNavigation { get; set; }
 }
