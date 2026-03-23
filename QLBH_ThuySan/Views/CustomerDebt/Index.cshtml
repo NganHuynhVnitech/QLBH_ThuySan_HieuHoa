@@ -6,22 +6,92 @@
 
 <h2>Theo Dõi Công Nợ Khách Hàng</h2>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Thêm Khách Hàng Mới</a>
-</p>
+<div class="row mb-3">
+    <div class="col-md-12">
+        <form asp-action="Index" method="get" class="card card-body bg-light">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <input type="text" name="searchMaKh" value="@ViewData["searchMaKh"]" class="form-control" placeholder="Mã KH" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="searchTenKh" value="@ViewData["searchTenKh"]" class="form-control" placeholder="Tên KH" />
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="searchSdt" value="@ViewData["searchSdt"]" class="form-control" placeholder="SĐT" />
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="searchDiaChi" value="@ViewData["searchDiaChi"]" class="form-control" placeholder="Địa Chỉ" />
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="searchAoNuoi" value="@ViewData["searchAoNuoi"]" class="form-control" placeholder="Ao Nuôi" />
+                </div>
+                <div class="col-md-1 d-flex align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="filterDuNo" id="filterDuNo" value="true" @(Convert.ToBoolean(ViewData["filterDuNo"]) ? "checked" : "") />
+                        <label class="form-check-label" for="filterDuNo">Nợ >0</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-md-12 text-end">
+                    <a asp-action="Create" class="btn btn-primary me-2">Thêm Khách Hàng Mới</a>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Tìm kiếm</button>
+                    <a asp-action="Index" class="btn btn-secondary">Đặt lại</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Mã Khách Hàng</th>
-            <th>Tên Khách Hàng</th>
-            <th>Số Điện Thoại</th>
-            <th>Địa Chỉ</th>
-            <th>Ao Nuôi</th>
-            <th>Dư Nợ Lũy Kế</th>
-            <th></th>
-        </tr>
-    </thead>
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["MaSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Mã Khách Hàng <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["TenSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Tên Khách Hàng <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["SdtSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Số Điện Thoại <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["DcSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Địa Chỉ <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["AoSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Ao Nuôi <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["DuNoSortParm"]" 
+                       asp-route-searchMaKh="@ViewData["searchMaKh"]" asp-route-searchTenKh="@ViewData["searchTenKh"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-searchAoNuoi="@ViewData["searchAoNuoi"]" asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-dark">Dư Nợ Lũy Kế <i class="bi bi-arrow-down-up small text-muted"></i></a>
+                </th>
+                <th>Thao Tác</th>
+            </tr>
+        </thead>
     <tbody>
         @foreach (var item in Model)
         {
@@ -35,6 +105,11 @@
                     <strong class="@((item.DuNoLuyKe ?? 0) > 0 ? "text-danger" : "text-success")">
                         @((item.DuNoLuyKe ?? 0).ToString("N0")) VNĐ
                     </strong>
+                    @if ((item.DuNoLuyKe ?? 0) < 0)
+                    {
+                        <br />
+                        <span class="text-muted small">(Khách hàng thanh toán thừa, cần thối lại)</span>
+                    }
                 </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-info">Chi Tiết</a>
@@ -43,3 +118,4 @@
         }
     </tbody>
 </table>
+</div>

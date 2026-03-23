@@ -41,7 +41,7 @@ namespace QLBH_ThuySan.Services
                 string maKhoTongAo = _config.GetValue<string>("KhoTongAo_MaKho") ?? "KHO_TONG";
 
                 string maPhieu = prefix + "_" + DateTime.Now.ToString("yyMMddHHmmss");
-                decimal tongTien = 0;
+                decimal soPhaiThanhToan = 0;
 
                 var phieuXuat = new PhieuXuat
                 {
@@ -75,7 +75,7 @@ namespace QLBH_ThuySan.Services
                     };
                     _context.ChiTietPhieuXuats.Add(ctPx);
 
-                    tongTien += (decimal)item.SoLuong * giaBan;
+                    soPhaiThanhToan += (decimal)item.SoLuong * giaBan;
 
                     // Deduct Physical Stock
                     await ValidateAndDeductStock(dto.SourceWarehouseCode, item.MaHang, item.SoLuong, "Kho Vật Lý");
@@ -104,7 +104,17 @@ namespace QLBH_ThuySan.Services
                     }
                 }
 
-                phieuXuat.TongTien = tongTien;
+                phieuXuat.SoPhaiThanhToan = soPhaiThanhToan;
+                if (phieuXuat.TrangThaiThanhToan == "Đã Thanh Toán" || phieuXuat.TrangThaiThanhToan == "Hoàn Tất")
+                {
+                    phieuXuat.SoDaThanhToan = soPhaiThanhToan;
+                    phieuXuat.SoChuaThanhToan = 0;
+                }
+                else
+                {
+                    phieuXuat.SoDaThanhToan = 0;
+                    phieuXuat.SoChuaThanhToan = soPhaiThanhToan;
+                }
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -132,7 +142,7 @@ namespace QLBH_ThuySan.Services
                     {
                         MaKhachHang = dto.CustomerId,
                         NgayGiaoDich = DateTime.Now,
-                        LoaiGiaoDich = "Mua Hàng",
+                        LoaiGiaoDich = "MUA_HANG",
                         SoTienPhatSinh = amount,
                         DienGiai = $"Tự động ghi nợ xuất bán hàng (POS)"
                     });
@@ -179,3 +189,4 @@ namespace QLBH_ThuySan.Services
         }
     }
 }
+

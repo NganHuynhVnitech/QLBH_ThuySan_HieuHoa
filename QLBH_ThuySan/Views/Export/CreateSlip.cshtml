@@ -40,8 +40,10 @@ else
                 <label class="form-label fw-bold">Kho Xuất (Nguồn)<span class="text-danger">*</span></label>
                 <select id="SourceWarehouseCode" class="form-select" required>
                     <option value="">-- Chọn Kho --</option>
-                    @foreach(var k in khos) {
-                        <option value="@k.MaKho">@k.TenKho</option>
+                    @if (khos != null) {
+                        @foreach(var k in khos) {
+                            <option value="@k.MaKho">@k.TenKho</option>
+                        }
                     }
                 </select>
             </div>
@@ -52,8 +54,10 @@ else
                     <label class="form-label fw-bold text-primary">Kho Nhận (Đích)<span class="text-danger">*</span></label>
                     <select id="DestinationWarehouseCode" class="form-select" required>
                         <option value="">-- Chọn Kho Nhận --</option>
-                        @foreach(var k in khos) {
-                            <option value="@k.MaKho">@k.TenKho</option>
+                        @if (khos != null) {
+                            @foreach(var k in khos) {
+                                <option value="@k.MaKho">@k.TenKho</option>
+                            }
                         }
                     </select>
                 </div>
@@ -64,8 +68,10 @@ else
                     <label class="form-label fw-bold text-warning">Nhà Cung Cấp<span class="text-danger">*</span></label>
                     <select id="VendorId" class="form-select" required>
                         <option value="">-- Chọn Nhà Cung Cấp --</option>
-                        @foreach(var n in nhaCungCaps) {
-                            <option value="@n.MaDoiTuong">@n.TenDoiTuong</option>
+                        @if (nhaCungCaps != null) {
+                            @foreach(var n in nhaCungCaps) {
+                                <option value="@n.MaDoiTuong">@n.TenDoiTuong</option>
+                            }
                         }
                     </select>
                 </div>
@@ -111,8 +117,10 @@ else
 <template id="productSelectTemplate">
     <select class="form-select product-select" required>
         <option value="">-- Chọn HH --</option>
-        @foreach(var h in hangHoas) {
-            <option value="@h.MaHang" data-price="@h.GiaBanHienTai">@h.TenHang</option>
+        @if (hangHoas != null) {
+            @foreach(var h in hangHoas) {
+                <option value="@h.MaHang" data-price="@h.GiaBanHienTai">@h.TenHang</option>
+            }
         }
     </select>
 </template>

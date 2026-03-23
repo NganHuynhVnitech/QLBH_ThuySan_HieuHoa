@@ -21,7 +21,7 @@ namespace QLBH_ThuySan.Controllers
         // GET: CostObject
         public async Task<IActionResult> Index()
         {
-            return View(await _context.DoiTuongChiPhis.ToListAsync());
+            return View(await _context.DoiTuongChiPhis.Where(x => !x.IsDisabled).ToListAsync());
         }
 
         // GET: CostObject/Create
@@ -108,7 +108,8 @@ namespace QLBH_ThuySan.Controllers
             var doiTuongChiPhi = await _context.DoiTuongChiPhis.FindAsync(id);
             if (doiTuongChiPhi != null)
             {
-                _context.DoiTuongChiPhis.Remove(doiTuongChiPhi);
+                doiTuongChiPhi.IsDisabled = true;
+                _context.Update(doiTuongChiPhi);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

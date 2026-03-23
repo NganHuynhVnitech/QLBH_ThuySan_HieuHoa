@@ -16,9 +16,49 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Product
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchMa, string? searchTen, string? sortOrder = null)
         {
-            return View(await _context.HangHoas.ToListAsync());
+            var query = _context.HangHoas.Where(h => !h.IsDisabled);
+
+            if (!string.IsNullOrEmpty(searchMa))
+            {
+                query = query.Where(h => h.MaHang != null && h.MaHang.Contains(searchMa));
+            }
+
+            if (!string.IsNullOrEmpty(searchTen))
+            {
+                query = query.Where(h => h.TenHang != null && h.TenHang.Contains(searchTen));
+            }
+
+            ViewData["searchMa"] = searchMa;
+            ViewData["searchTen"] = searchTen;
+
+            // Sorting Parameters
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["MaSortParm"] = String.IsNullOrEmpty(sortOrder) ? "ma_desc" : "";
+            ViewData["TenSortParm"] = sortOrder == "name_asc" ? "name_desc" : "name_asc";
+            ViewData["DvtSortParm"] = sortOrder == "unit_asc" ? "unit_desc" : "unit_asc";
+            ViewData["QcSortParm"] = sortOrder == "qc_asc" ? "qc_desc" : "qc_asc";
+            ViewData["VonSortParm"] = sortOrder == "cost_asc" ? "cost_desc" : "cost_asc";
+            ViewData["BanSortParm"] = sortOrder == "price_asc" ? "price_desc" : "price_asc";
+
+            query = sortOrder switch
+            {
+                "ma_desc" => query.OrderByDescending(h => h.MaHang),
+                "name_asc" => query.OrderBy(h => h.TenHang),
+                "name_desc" => query.OrderByDescending(h => h.TenHang),
+                "unit_asc" => query.OrderBy(h => h.DonViTinh),
+                "unit_desc" => query.OrderByDescending(h => h.DonViTinh),
+                "qc_asc" => query.OrderBy(h => h.QuyCach),
+                "qc_desc" => query.OrderByDescending(h => h.QuyCach),
+                "cost_asc" => query.OrderBy(h => h.GiaVonHienTai),
+                "cost_desc" => query.OrderByDescending(h => h.GiaVonHienTai),
+                "price_asc" => query.OrderBy(h => h.GiaBanHienTai),
+                "price_desc" => query.OrderByDescending(h => h.GiaBanHienTai),
+                _ => query.OrderBy(h => h.MaHang),
+            };
+
+            return View(await query.ToListAsync());
         }
 
         // GET: Product/Details/5
@@ -161,7 +201,8 @@ namespace QLBH_ThuySan.Controllers
             var hangHoa = await _context.HangHoas.FindAsync(id);
             if (hangHoa != null)
             {
-                _context.HangHoas.Remove(hangHoa);
+                hangHoa.IsDisabled = true;
+                _context.Update(hangHoa);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
@@ -176,7 +217,7 @@ namespace QLBH_ThuySan.Controllers
             }
 
             var products = await _context.HangHoas
-                .Where(p => p.TenHang.Contains(term) || p.MaHang.Contains(term))
+                .Where(p => !p.IsDisabled && (p.TenHang.Contains(term) || p.MaHang.Contains(term)))
                 .Take(20)
                 .Select(p => new
                 {
@@ -185,6 +226,7 @@ namespace QLBH_ThuySan.Controllers
                     p.DonViTinh,
                     p.GiaBanHienTai,
                     p.GiaVonHienTai,
+                    TonKho = p.ChiTietTons.Sum(t => t.SoLuongTon ?? 0),
                     // Use a placeholder if no image
                     HinhAnh = "/images/product_placeholder.png" 
                 })

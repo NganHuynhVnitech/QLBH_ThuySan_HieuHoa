@@ -49,7 +49,7 @@ namespace QLBH_ThuySan.Controllers
                 query = query.Where(p => p.NgayThanhToan <= paymentTo.Value);
             
             if (!string.IsNullOrEmpty(ruleSearch))
-                query = query.Where(p => p.ChiTietPhieuTinhs.Any(c => c.NoiDung.Contains(ruleSearch)));
+                query = query.Where(p => p.ChiTietPhieuTinhs.Any(c => c.NoiDung != null && c.NoiDung.Contains(ruleSearch)));
 
             // Execute Query first (needed for in-memory name resolution)
             var list = await query.OrderByDescending(p => p.NgayTao).ToListAsync();
@@ -59,8 +59,8 @@ namespace QLBH_ThuySan.Controllers
             var nccIds = list.Where(p => p.LoaiDoiTuong == "NCC").Select(p => p.MaDoiTuong).Distinct().ToList();
             var khIds = list.Where(p => p.LoaiDoiTuong == "KHACH").Select(p => p.MaDoiTuong).Distinct().ToList();
 
-            var nccNames = await _context.NhaCungCaps.Where(n => nccIds.Contains(n.MaDoiTuong)).ToDictionaryAsync(k => k.MaDoiTuong, v => v.TenDoiTuong);
-            var khNames = await _context.KhachHangs.Where(k => khIds.Contains(k.MaDoiTuong)).ToDictionaryAsync(k => k.MaDoiTuong, v => v.TenDoiTuong);
+            var nccNames = await _context.NhaCungCaps.Where(n => nccIds.Contains(n.MaDoiTuong)).ToDictionaryAsync(k => k.MaDoiTuong, v => v.TenDoiTuong ?? "");
+            var khNames = await _context.KhachHangs.Where(k => khIds.Contains(k.MaDoiTuong)).ToDictionaryAsync(k => k.MaDoiTuong, v => v.TenDoiTuong ?? "");
 
             var viewModels = list.Select(p => {
                 string name = p.MaDoiTuong ?? "";
@@ -79,7 +79,9 @@ namespace QLBH_ThuySan.Controllers
                     TenDoiTuong = name ?? "",
                     TuNgay = p.TuNgay,
                     DenNgay = p.DenNgay,
-                    TongTien = p.TongTien ?? 0,
+                    SoPhaiThanhToan = p.SoPhaiThanhToan ?? 0,
+                    SoDaThanhToan = p.SoDaThanhToan ?? 0,
+                    SoChuaThanhToan = p.SoChuaThanhToan ?? 0,
                     TrangThai = p.TrangThai ?? "",
                     NgayThanhToan = p.NgayThanhToan,
                     QuyTacChietKhau = rules.Length > 50 ? rules.Substring(0, 50) + "..." : rules
@@ -234,7 +236,7 @@ namespace QLBH_ThuySan.Controllers
                     DenNgay = DateOnly.FromDateTime(DateTime.Parse(request.ToDate)),
                     NgayTao = DateTime.Now,
                     TrangThai = "Chưa thanh toán",
-                    TongTien = 0 // Will sum below
+                    SoPhaiThanhToan = 0 // Will sum below
                 };
                 
                 _context.PhieuTinhChietKhaus.Add(phieu);
@@ -281,7 +283,9 @@ namespace QLBH_ThuySan.Controllers
                 }
 
                 // 3. Update Header Total
-                phieu.TongTien = totalAmount;
+                phieu.SoPhaiThanhToan = totalAmount;
+                phieu.SoDaThanhToan = 0;
+                phieu.SoChuaThanhToan = totalAmount;
                 _context.Update(phieu);
                 await _context.SaveChangesAsync();
 
@@ -329,7 +333,7 @@ namespace QLBH_ThuySan.Controllers
                 TenDoiTuong = partnerName,
                 TuNgay = phieu.TuNgay?.ToDateTime(TimeOnly.MinValue),
                 DenNgay = phieu.DenNgay?.ToDateTime(TimeOnly.MinValue),
-                TongTienChietKhau = phieu.TongTien ?? 0,
+                SoPhaiThanhToanChietKhau = phieu.SoPhaiThanhToan ?? 0,
                 TrangThai = phieu.TrangThai ?? "",
                 NgayThanhToan = phieu.NgayThanhToan
             };
@@ -339,10 +343,10 @@ namespace QLBH_ThuySan.Controllers
             {
                 var productItem = new QLBH_ThuySan.Models.ViewModels.DiscountPrintProductItem
                 {
-                    TenHang = item.MaHangNavigation?.TenHang ?? item.MaHang,
+                    TenHang = item.MaHangNavigation?.TenHang ?? item.MaHang ?? "",
                     DonViTinh = item.MaHangNavigation?.DonViTinh ?? "",
                     TongSoLuong = item.SoLuong ?? 0,
-                    TongTienChietKhau = item.ThanhTien ?? 0,
+                    SoPhaiThanhToanChietKhau = item.ThanhTien ?? 0,
                     QuyTacApDung = item.NoiDung ?? ""
                 };
 
@@ -457,4 +461,5 @@ namespace QLBH_ThuySan.Controllers
     }
     }
 }
+
 

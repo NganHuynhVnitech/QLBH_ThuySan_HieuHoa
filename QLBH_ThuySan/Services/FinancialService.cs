@@ -40,14 +40,14 @@ namespace QLBH_ThuySan.Services
                 .Where(px => px.NgayXuat >= startDate && px.NgayXuat <= endDate)
                 .ToListAsync();
 
-            report.TotalRevenue = salesOrders.Sum(px => px.TongTien ?? 0);
+            report.TotalRevenue = salesOrders.Sum(px => px.SoPhaiThanhToan ?? 0);
 
             // Calculate total purchases from purchase orders (PhieuNhap)
             var purchaseOrders = await _context.PhieuNhaps
                 .Where(pn => pn.NgayNhap >= startDate && pn.NgayNhap <= endDate)
                 .ToListAsync();
 
-            report.TotalPurchases = purchaseOrders.Sum(pn => pn.TongTien ?? 0);
+            report.TotalPurchases = purchaseOrders.Sum(pn => pn.SoPhaiThanhToan ?? 0);
 
             // Calculate expenses and receipts from cash receipts/payments (PhieuThuChi)
             var cashTransactions = await _context.PhieuThuChis
@@ -66,3 +66,4 @@ namespace QLBH_ThuySan.Services
         }
     }
 }
+

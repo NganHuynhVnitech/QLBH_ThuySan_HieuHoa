@@ -21,15 +21,170 @@ namespace QLBH_ThuySan.Controllers
 
         // GET: PrivateLedger - List all customers with their ledger entries
         [HttpGet("/PrivateLedger")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string? searchMaKh, 
+            string? searchTenKh, 
+            string? searchSdt, 
+            string? searchDiaChi, 
+            string? searchAoNuoi, 
+            bool filterDuNo = false,
+            string? sortOrder = null)
         {
-            var customers = await _context.KhachHangs.ToListAsync();
-            return View(customers);
+            var query = _context.KhachHangs.AsQueryable();
+
+            // Run global auto-recovery for all customers to ensure DuNoLuyKe is synced
+            // In a production environment with millions of rows, this should be a background job or one-time migration.
+            var allPhieuXuats = await _context.PhieuXuats.Where(p => p.LoaiXuat == "SALES").ToListAsync();
+            var allEntries = await _context.SoRiengKhachHangs.ToListAsync();
+            var customersToUpdate = new List<KhachHang>();
+            bool globalNeedsSave = false;
+
+            foreach (var kh in await query.ToListAsync())
+            {
+                var pxs = allPhieuXuats.Where(p => p.IdKhachHang == kh.MaDoiTuong).ToList();
+                var entries = allEntries.Where(e => e.MaKhachHang == kh.MaDoiTuong).ToList();
+                bool khNeedsSave = false;
+                
+                // Fix missing entries for PhieuXuat created via ExportController previously
+                foreach (var px in pxs)
+                {
+                    bool hasEntry = entries.Any(e => e.LoaiGiaoDich == "MUA_HANG" && 
+                                                   (e.SoTienPhatSinh == px.SoPhaiThanhToan && e.NgayGiaoDich?.Date == px.NgayXuat?.Date) ||
+                                                   (e.DienGiai != null && e.DienGiai.Contains(px.MaPhieu)));
+                    if (!hasEntry)
+                    {
+                        var newEntry = new SoRiengKhachHang
+                        {
+                            MaKhachHang = kh.MaDoiTuong,
+                            NgayGiaoDich = px.NgayXuat ?? DateTime.Now,
+                            LoaiGiaoDich = "MUA_HANG",
+                            SoTienPhatSinh = px.SoPhaiThanhToan,
+                            DienGiai = $"Tự động ghi nợ xuất bán hàng {px.MaPhieu} (Auto-recovered)"
+                        };
+                        _context.SoRiengKhachHangs.Add(newEntry);
+                        entries.Add(newEntry);
+                        khNeedsSave = true;
+
+                        if (px.TrangThaiThanhToan == "Đã Thanh Toán")
+                        {
+                            var paymentEntry = new SoRiengKhachHang
+                            {
+                                MaKhachHang = kh.MaDoiTuong,
+                                NgayGiaoDich = px.NgayXuat ?? DateTime.Now,
+                                LoaiGiaoDich = "THANH_TOAN",
+                                SoTienPhatSinh = px.SoPhaiThanhToan,
+                                DienGiai = $"Thanh toán ngay cho phiếu {px.MaPhieu} (Auto-recovered)"
+                            };
+                            _context.SoRiengKhachHangs.Add(paymentEntry);
+                            entries.Add(paymentEntry);
+                        }
+                    }
+                }
+
+                foreach (var entry in entries)
+                {
+                    if (entry.SoTienPhatSinh < 0)
+                    {
+                        entry.SoTienPhatSinh = Math.Abs(entry.SoTienPhatSinh.Value);
+                        _context.Update(entry);
+                        khNeedsSave = true;
+                    }
+                    if (entry.LoaiGiaoDich == "Mua Hàng")
+                    {
+                        entry.LoaiGiaoDich = "MUA_HANG";
+                        _context.Update(entry);
+                        khNeedsSave = true;
+                    }
+                }
+
+                if (khNeedsSave || kh.DuNoLuyKe < 0 || entries.Any())
+                {
+                    decimal calculatedDebt = 0;
+                    foreach (var entry in entries.OrderBy(e => e.NgayGiaoDich))
+                    {
+                        if (entry.LoaiGiaoDich == "MUA_HANG" || entry.LoaiGiaoDich == "Mua Hàng")
+                            calculatedDebt += entry.SoTienPhatSinh ?? 0;
+                        else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU")
+                            calculatedDebt -= entry.SoTienPhatSinh ?? 0;
+                    }
+                    
+                    if (kh.DuNoLuyKe != calculatedDebt)
+                    {
+                        kh.DuNoLuyKe = calculatedDebt;
+                        _context.Update(kh);
+                        khNeedsSave = true;
+                    }
+                }
+
+                if (khNeedsSave)
+                {
+                    globalNeedsSave = true;
+                }
+            }
+
+            if (globalNeedsSave)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            if (!string.IsNullOrEmpty(searchMaKh))
+                query = query.Where(k => k.MaDoiTuong != null && k.MaDoiTuong.Contains(searchMaKh));
+            
+            if (!string.IsNullOrEmpty(searchTenKh))
+                query = query.Where(k => k.TenDoiTuong != null && k.TenDoiTuong.Contains(searchTenKh));
+
+            if (!string.IsNullOrEmpty(searchSdt))
+                query = query.Where(k => k.SoDienThoai != null && k.SoDienThoai.Contains(searchSdt));
+                
+            if (!string.IsNullOrEmpty(searchDiaChi))
+                query = query.Where(k => k.DiaChi != null && k.DiaChi.Contains(searchDiaChi));
+                
+            if (!string.IsNullOrEmpty(searchAoNuoi))
+                query = query.Where(k => k.AoNuoi != null && k.AoNuoi.Contains(searchAoNuoi));
+                
+            if (filterDuNo)
+                query = query.Where(k => k.DuNoLuyKe > 0);
+
+            ViewData["searchMaKh"] = searchMaKh;
+            ViewData["searchTenKh"] = searchTenKh;
+            ViewData["searchSdt"] = searchSdt;
+            ViewData["searchDiaChi"] = searchDiaChi;
+            ViewData["searchAoNuoi"] = searchAoNuoi;
+            ViewData["filterDuNo"] = filterDuNo;
+
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["MaSortParm"] = String.IsNullOrEmpty(sortOrder) ? "ma_desc" : "";
+            ViewData["TenSortParm"] = sortOrder == "ten_asc" ? "ten_desc" : "ten_asc";
+            ViewData["SdtSortParm"] = sortOrder == "sdt_asc" ? "sdt_desc" : "sdt_asc";
+            ViewData["DcSortParm"] = sortOrder == "dc_asc" ? "dc_desc" : "dc_asc";
+            ViewData["AoSortParm"] = sortOrder == "ao_asc" ? "ao_desc" : "ao_asc";
+            ViewData["DuNoSortParm"] = sortOrder == "duno_asc" ? "duno_desc" : "duno_asc";
+
+            query = sortOrder switch
+            {
+                "ma_desc" => query.OrderByDescending(k => k.MaDoiTuong),
+                "ten_asc" => query.OrderBy(k => k.TenDoiTuong),
+                "ten_desc" => query.OrderByDescending(k => k.TenDoiTuong),
+                "sdt_asc" => query.OrderBy(k => k.SoDienThoai),
+                "sdt_desc" => query.OrderByDescending(k => k.SoDienThoai),
+                "dc_asc" => query.OrderBy(k => k.DiaChi),
+                "dc_desc" => query.OrderByDescending(k => k.DiaChi),
+                "ao_asc" => query.OrderBy(k => k.AoNuoi),
+                "ao_desc" => query.OrderByDescending(k => k.AoNuoi),
+                "duno_asc" => query.OrderBy(k => k.DuNoLuyKe),
+                "duno_desc" => query.OrderByDescending(k => k.DuNoLuyKe),
+                _ => query.OrderBy(k => k.MaDoiTuong)
+            };
+
+            return View(await query.ToListAsync());
         }
 
         // GET: PrivateLedger/Details/KH001 - View ledger entries for a specific customer
         [HttpGet("/PrivateLedger/Details/{id?}")]
-        public async Task<IActionResult> Details(string? id)
+        public async Task<IActionResult> Details(
+            string? id,
+            string? pxMaPhieu, DateTime? pxFromDate, DateTime? pxToDate, string? pxTrangThai, string? pxSortOrder,
+            DateTime? entryFromDate, DateTime? entryToDate, string? entryLoai, string? entryDienGiai, string? entrySortOrder)
         {
             if (id == null)
             {
@@ -44,12 +199,170 @@ namespace QLBH_ThuySan.Controllers
                 return NotFound();
             }
 
+            // 1. Initial Load
             var entries = await _context.SoRiengKhachHangs
                 .Where(e => e.MaKhachHang == id)
                 .OrderByDescending(e => e.NgayGiaoDich)
                 .ToListAsync();
 
+            var phieuXuats = await _context.PhieuXuats
+                .Include(p => p.ChiTietPhieuXuats)
+                    .ThenInclude(c => c.MaHangNavigation)
+                .Where(p => p.IdKhachHang == id)
+                .OrderByDescending(p => p.NgayXuat)
+                .ToListAsync();
+
+            // 2. Auto-correct logic (Keep existing)
+            bool needsSave = false;
+            foreach (var px in phieuXuats.Where(p => p.LoaiXuat == "SALES"))
+            {
+                bool hasEntry = entries.Any(e => e.LoaiGiaoDich == "MUA_HANG" && 
+                                               (e.SoTienPhatSinh == px.SoPhaiThanhToan && e.NgayGiaoDich?.Date == px.NgayXuat?.Date) ||
+                                               (e.DienGiai != null && e.DienGiai.Contains(px.MaPhieu)));
+                if (!hasEntry)
+                {
+                    var newEntry = new SoRiengKhachHang
+                    {
+                        MaKhachHang = id,
+                        NgayGiaoDich = px.NgayXuat ?? DateTime.Now,
+                        LoaiGiaoDich = "MUA_HANG",
+                        SoTienPhatSinh = px.SoPhaiThanhToan,
+                        DienGiai = $"Tự động ghi nợ xuất bán hàng {px.MaPhieu} (Auto-recovered)"
+                    };
+                    _context.SoRiengKhachHangs.Add(newEntry);
+                    entries.Add(newEntry);
+                    needsSave = true;
+
+                    if (px.TrangThaiThanhToan == "Đã Thanh Toán")
+                    {
+                        var paymentEntry = new SoRiengKhachHang
+                        {
+                            MaKhachHang = id,
+                            NgayGiaoDich = px.NgayXuat ?? DateTime.Now,
+                            LoaiGiaoDich = "THANH_TOAN",
+                            SoTienPhatSinh = px.SoPhaiThanhToan,
+                            DienGiai = $"Thanh toán ngay cho phiếu {px.MaPhieu} (Auto-recovered)"
+                        };
+                        _context.SoRiengKhachHangs.Add(paymentEntry);
+                        entries.Add(paymentEntry);
+                    }
+                }
+            }
+
+            foreach (var entry in entries)
+            {
+                if (entry.SoTienPhatSinh < 0)
+                {
+                    entry.SoTienPhatSinh = Math.Abs(entry.SoTienPhatSinh.Value);
+                    _context.Update(entry);
+                    needsSave = true;
+                }
+                if (entry.LoaiGiaoDich == "Mua Hàng")
+                {
+                    entry.LoaiGiaoDich = "MUA_HANG";
+                    _context.Update(entry);
+                    needsSave = true;
+                }
+            }
+
+            if (needsSave || (customer.DuNoLuyKe ?? 0) < 0 || entries.Any())
+            {
+                decimal calculatedDebt = 0;
+                foreach (var entry in entries.OrderBy(e => e.NgayGiaoDich))
+                {
+                    if (entry.LoaiGiaoDich == "MUA_HANG")
+                        calculatedDebt += entry.SoTienPhatSinh ?? 0;
+                    else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU")
+                        calculatedDebt -= entry.SoTienPhatSinh ?? 0;
+                }
+                
+                if (customer.DuNoLuyKe != calculatedDebt)
+                {
+                    customer.DuNoLuyKe = calculatedDebt;
+                    _context.Update(customer);
+                    needsSave = true;
+                }
+            }
+
+            if (needsSave)
+            {
+                await _context.SaveChangesAsync();
+                // Refresh lists after save
+                entries = await _context.SoRiengKhachHangs.Where(e => e.MaKhachHang == id).ToListAsync();
+                phieuXuats = await _context.PhieuXuats
+                    .Include(p => p.ChiTietPhieuXuats).ThenInclude(c => c.MaHangNavigation)
+                    .Where(p => p.IdKhachHang == id).ToListAsync();
+            }
+
+            // 3. Apply Filters and Sorting to Purchase History (phieuXuats)
+            if (!string.IsNullOrEmpty(pxMaPhieu)) phieuXuats = phieuXuats.Where(p => p.MaPhieu != null && p.MaPhieu.Contains(pxMaPhieu)).ToList();
+            if (pxFromDate.HasValue) phieuXuats = phieuXuats.Where(p => p.NgayXuat?.Date >= pxFromDate.Value.Date).ToList();
+            if (pxToDate.HasValue) phieuXuats = phieuXuats.Where(p => p.NgayXuat?.Date <= pxToDate.Value.Date).ToList();
+            if (!string.IsNullOrEmpty(pxTrangThai)) phieuXuats = phieuXuats.Where(p => p.TrangThaiThanhToan == pxTrangThai).ToList();
+
+            ViewData["PXSort_Ma"] = pxSortOrder == "ma_asc" ? "ma_desc" : "ma_asc";
+            ViewData["PXSort_Date"] = string.IsNullOrEmpty(pxSortOrder) || pxSortOrder == "date_desc" ? "date_asc" : "date_desc";
+            ViewData["PXSort_Status"] = pxSortOrder == "status_asc" ? "status_desc" : "status_asc";
+            ViewData["PXSort_Total"] = pxSortOrder == "total_asc" ? "total_desc" : "total_asc";
+            ViewData["PXSort_Paid"] = pxSortOrder == "paid_asc" ? "paid_desc" : "paid_asc";
+            ViewData["PXSort_Debt"] = pxSortOrder == "debt_asc" ? "debt_desc" : "debt_asc";
+
+            phieuXuats = pxSortOrder switch {
+                "ma_asc" => phieuXuats.OrderBy(p => p.MaPhieu).ToList(),
+                "ma_desc" => phieuXuats.OrderByDescending(p => p.MaPhieu).ToList(),
+                "date_asc" => phieuXuats.OrderBy(p => p.NgayXuat).ToList(),
+                "date_desc" => phieuXuats.OrderByDescending(p => p.NgayXuat).ToList(),
+                "status_asc" => phieuXuats.OrderBy(p => p.TrangThaiThanhToan).ToList(),
+                "status_desc" => phieuXuats.OrderByDescending(p => p.TrangThaiThanhToan).ToList(),
+                "total_asc" => phieuXuats.OrderBy(p => p.SoPhaiThanhToan).ToList(),
+                "total_desc" => phieuXuats.OrderByDescending(p => p.SoPhaiThanhToan).ToList(),
+                "paid_asc" => phieuXuats.OrderBy(p => p.SoDaThanhToan).ToList(),
+                "paid_desc" => phieuXuats.OrderByDescending(p => p.SoDaThanhToan).ToList(),
+                "debt_asc" => phieuXuats.OrderBy(p => p.SoChuaThanhToan).ToList(),
+                "debt_desc" => phieuXuats.OrderByDescending(p => p.SoChuaThanhToan).ToList(),
+                _ => phieuXuats.OrderByDescending(p => p.NgayXuat).ToList()
+            };
+
+            // 4. Apply Filters and Sorting to Transaction History (entries)
+            if (entryFromDate.HasValue) entries = entries.Where(e => e.NgayGiaoDich?.Date >= entryFromDate.Value.Date).ToList();
+            if (entryToDate.HasValue) entries = entries.Where(e => e.NgayGiaoDich?.Date <= entryToDate.Value.Date).ToList();
+            if (!string.IsNullOrEmpty(entryLoai)) entries = entries.Where(e => e.LoaiGiaoDich == entryLoai).ToList();
+            if (!string.IsNullOrEmpty(entryDienGiai)) entries = entries.Where(e => e.DienGiai != null && e.DienGiai.Contains(entryDienGiai)).ToList();
+
+            ViewData["EntrySort_Id"] = entrySortOrder == "id_asc" ? "id_desc" : "id_asc";
+            ViewData["EntrySort_Date"] = string.IsNullOrEmpty(entrySortOrder) || entrySortOrder == "date_desc" ? "date_asc" : "date_desc";
+            ViewData["EntrySort_Type"] = entrySortOrder == "type_asc" ? "type_desc" : "type_asc";
+            ViewData["EntrySort_Amount"] = entrySortOrder == "amount_asc" ? "amount_desc" : "amount_asc";
+            ViewData["EntrySort_Desc"] = entrySortOrder == "desc_asc" ? "desc_desc" : "desc_asc";
+
+            entries = entrySortOrder switch {
+                "id_asc" => entries.OrderBy(e => e.Id).ToList(),
+                "id_desc" => entries.OrderByDescending(e => e.Id).ToList(),
+                "date_asc" => entries.OrderBy(e => e.NgayGiaoDich).ToList(),
+                "date_desc" => entries.OrderByDescending(e => e.NgayGiaoDich).ToList(),
+                "type_asc" => entries.OrderBy(e => e.LoaiGiaoDich).ToList(),
+                "type_desc" => entries.OrderByDescending(e => e.LoaiGiaoDich).ToList(),
+                "amount_asc" => entries.OrderBy(e => e.SoTienPhatSinh).ToList(),
+                "amount_desc" => entries.OrderByDescending(e => e.SoTienPhatSinh).ToList(),
+                "desc_asc" => entries.OrderBy(e => e.DienGiai).ToList(),
+                "desc_desc" => entries.OrderByDescending(e => e.DienGiai).ToList(),
+                _ => entries.OrderByDescending(e => e.NgayGiaoDich).ToList()
+            };
+
+            ViewData["pxMaPhieu"] = pxMaPhieu;
+            ViewData["pxFromDate"] = pxFromDate?.ToString("yyyy-MM-dd");
+            ViewData["pxToDate"] = pxToDate?.ToString("yyyy-MM-dd");
+            ViewData["pxTrangThai"] = pxTrangThai;
+            ViewData["pxSortOrder"] = pxSortOrder;
+
+            ViewData["entryFromDate"] = entryFromDate?.ToString("yyyy-MM-dd");
+            ViewData["entryToDate"] = entryToDate?.ToString("yyyy-MM-dd");
+            ViewData["entryLoai"] = entryLoai;
+            ViewData["entryDienGiai"] = entryDienGiai;
+            ViewData["entrySortOrder"] = entrySortOrder;
+
             ViewBag.Entries = entries;
+            ViewBag.PhieuXuats = phieuXuats;
             return View(customer);
         }
 
@@ -80,6 +393,9 @@ namespace QLBH_ThuySan.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddEntry(string maKhachHang, string loaiGiaoDich, decimal soTienPhatSinh, string? dienGiai)
         {
+            // Ensure soTienPhatSinh is always positive
+            soTienPhatSinh = Math.Abs(soTienPhatSinh);
+
             var ledgerEntry = new SoRiengKhachHang
             {
                 MaKhachHang = maKhachHang,
@@ -95,14 +411,43 @@ namespace QLBH_ThuySan.Controllers
             var customer = await _context.KhachHangs.FindAsync(maKhachHang);
             if (customer != null)
             {
-                // If loaiGiaoDich is "No" (debt), add to balance; if "Thu" (payment), subtract
-                if (loaiGiaoDich == "No")
+                // MUA_HANG creates debt (+); THANH_TOAN/CAN_TRU clears debt (-)
+                if (loaiGiaoDich == "MUA_HANG")
                 {
                     customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) + soTienPhatSinh;
                 }
-                else if (loaiGiaoDich == "Thu")
+                else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU")
                 {
                     customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - soTienPhatSinh;
+
+                    // Distribute payment to unpaid PhieuXuats
+                    var unpaidInvoices = await _context.PhieuXuats
+                        .Where(p => p.IdKhachHang == maKhachHang && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
+                        .OrderBy(p => p.NgayXuat)
+                        .ToListAsync();
+                    
+                    decimal remainingPayment = soTienPhatSinh;
+                    foreach(var inv in unpaidInvoices)
+                    {
+                        if (remainingPayment <= 0) break;
+                        
+                        var debt = inv.SoChuaThanhToan ?? 0;
+                        if (remainingPayment >= debt)
+                        {
+                            remainingPayment -= debt;
+                            inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                            inv.SoChuaThanhToan = 0;
+                            inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                            inv.NgayThanhToan = DateTime.Now;
+                        }
+                        else
+                        {
+                            inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                            inv.SoChuaThanhToan -= remainingPayment;
+                            remainingPayment = 0;
+                        }
+                        _context.Update(inv);
+                    }
                 }
                 _context.Update(customer);
             }
@@ -110,5 +455,116 @@ namespace QLBH_ThuySan.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = maKhachHang });
         }
+        // POST: PrivateLedger/PayBill - Pay for a specific bill (partially or fully)
+        [HttpPost("/PrivateLedger/PayBill")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayBill(string maKhachHang, string maPhieu, decimal amount, string? dienGiai)
+        {
+            if (amount <= 0)
+            {
+                return RedirectToAction(nameof(Details), new { id = maKhachHang });
+            }
+
+            // 1. Create a ledger entry for the payment
+            var ledgerEntry = new SoRiengKhachHang
+            {
+                MaKhachHang = maKhachHang,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = "THANH_TOAN",
+                SoTienPhatSinh = amount,
+                DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Thanh toán cho phiếu {maPhieu}" : dienGiai
+            };
+            _context.Add(ledgerEntry);
+
+            // 2. Update customer cumulative debt
+            var customer = await _context.KhachHangs.FindAsync(maKhachHang);
+            if (customer != null)
+            {
+                customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - amount;
+                _context.Update(customer);
+
+                // 3. Distribute payment to unpaid PhieuXuats using FIFO logic
+                // This maintains system consistency as requested in previous logic requirements.
+                var unpaidInvoices = await _context.PhieuXuats
+                    .Where(p => p.IdKhachHang == maKhachHang && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
+                    .OrderBy(p => p.NgayXuat)
+                    .ToListAsync();
+                
+                decimal remainingPayment = amount;
+                foreach(var inv in unpaidInvoices)
+                {
+                    if (remainingPayment <= 0) break;
+                    
+                    var debt = inv.SoChuaThanhToan ?? 0;
+                    if (remainingPayment >= debt)
+                    {
+                        remainingPayment -= debt;
+                        inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                        inv.SoChuaThanhToan = 0;
+                        inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                        inv.NgayThanhToan = DateTime.Now;
+                    }
+                    else
+                    {
+                        inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                        inv.SoChuaThanhToan -= remainingPayment;
+                        remainingPayment = 0;
+                        if (inv.SoChuaThanhToan > 0)
+                        {
+                            inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                        }
+                    }
+                    _context.Update(inv);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Details), new { id = maKhachHang });
+        }
+        // GET: PrivateLedger/Print
+        [HttpGet("/PrivateLedger/Print")]
+        public async Task<IActionResult> Print(string id, int[] selectedEntries, string[] selectedBills)
+        {
+            var customer = await _context.KhachHangs.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            var entries = await _context.SoRiengKhachHangs
+                .Where(e => selectedEntries.Contains(e.Id))
+                .OrderBy(e => e.NgayGiaoDich)
+                .ToListAsync();
+
+            var phieuXuats = await _context.PhieuXuats
+                .Include(p => p.ChiTietPhieuXuats)
+                    .ThenInclude(c => c.MaHangNavigation)
+                .Where(p => selectedBills.Contains(p.MaPhieu))
+                .OrderBy(p => p.NgayXuat)
+                .ToListAsync();
+
+            // Also check if any selectedEntries of type MUA_HANG mention a MaPhieu that wasn't explicitly selected in selectedBills
+            foreach (var entry in entries.Where(e => e.LoaiGiaoDich == "MUA_HANG"))
+            {
+                // Try to extract MaPhieu from DienGiai (e.g. "PX260314162441")
+                var words = entry.DienGiai?.Split(' ');
+                if (words != null)
+                {
+                    foreach (var word in words)
+                    {
+                        if (word.StartsWith("PX") && !phieuXuats.Any(p => p.MaPhieu == word))
+                        {
+                            var px = await _context.PhieuXuats
+                                .Include(p => p.ChiTietPhieuXuats)
+                                    .ThenInclude(c => c.MaHangNavigation)
+                                .FirstOrDefaultAsync(p => p.MaPhieu == word);
+                            if (px != null) phieuXuats.Add(px);
+                        }
+                    }
+                }
+            }
+
+            ViewBag.Entries = entries;
+            ViewBag.PhieuXuats = phieuXuats.OrderBy(p => p.NgayXuat).ToList();
+            return View(customer);
+        }
     }
 }
+

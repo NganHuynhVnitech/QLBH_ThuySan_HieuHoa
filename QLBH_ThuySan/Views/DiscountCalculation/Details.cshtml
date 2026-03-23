@@ -14,7 +14,9 @@
             </p>
         </div>
         <div class="col-md-4 text-end align-self-center">
-            <h3 class="text-success fw-bold">@string.Format("{0:N0}", Model.TongTien) đ</h3>
+            <h4 class="text-primary fw-bold">Phải TT: @string.Format("{0:N0}", Model.SoPhaiThanhToan) đ</h4>
+            <h4 class="text-success fw-bold">Đã TT: @string.Format("{0:N0}", Model.SoDaThanhToan) đ</h4>
+            <h4 class="text-danger fw-bold">Còn Nợ: @string.Format("{0:N0}", Model.SoChuaThanhToan) đ</h4>
             <span class="badge bg-warning text-dark fs-6">@Model.TrangThai</span>
             <div class="mt-2">
                 <a asp-action="Print" asp-route-id="@Model.MaPhieuTinh" class="btn btn-secondary me-2" target="_blank">
@@ -66,3 +68,4 @@
         </div>
     </div>
 </div>
+

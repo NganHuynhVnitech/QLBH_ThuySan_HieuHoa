@@ -1,4 +1,5 @@
 @using QLBH_ThuySan.ViewModels
+@using System.Globalization
 @{
     ViewData["Title"] = "Thiết lập Tồn kho ban đầu";
     var isFinalized = ViewBag.IsFinalized as bool? ?? false;
@@ -48,9 +49,9 @@
                                             <div class="fw-bold">@item.MaHangNavigation?.TenHang</div>
                                             <div class="small text-muted">@item.MaHang</div>
                                         </td>
-                                        <td>@item.SoLuong?.ToString("N2")</td>
-                                        <td>@item.DonGiaNhap?.ToString("N0") đ</td>
-                                        <td>@item.ThanhTien?.ToString("N0") đ</td>
+                                        <td>@item.SoLuong?.ToString("N2", new CultureInfo("vi-VN"))</td>
+                                        <td>@item.DonGiaNhap?.ToString("N0", new CultureInfo("vi-VN")) đ</td>
+                                        <td>@item.ThanhTien?.ToString("N0", new CultureInfo("vi-VN")) đ</td>
                                     </tr>
                                 }
                             }
@@ -183,9 +184,9 @@
                                         <td><span class="badge bg-info text-dark">@item.MaKho</span></td>
                                         <td>@item.MaHang</td>
                                         <td class="fw-bold">@item.TenHang</td>
-                                        <td class="text-end">@item.SoLuong.ToString("N2")</td>
-                                        <td class="text-end">@item.GiaVon.ToString("N0") đ</td>
-                                        <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0") đ</td>
+                                        <td class="text-end">@item.SoLuong.ToString("N2", new CultureInfo("vi-VN"))</td>
+                                        <td class="text-end">@item.GiaVon.ToString("N0", new CultureInfo("vi-VN")) đ</td>
+                                        <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0", new CultureInfo("vi-VN")) đ</td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-sm btn-outline-danger btn-delete-draft" data-kho="@item.MaKho" data-hang="@item.MaHang">
                                                 <i class="fas fa-trash"></i>

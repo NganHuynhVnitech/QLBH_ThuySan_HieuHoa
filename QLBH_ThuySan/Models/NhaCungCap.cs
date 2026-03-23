@@ -18,6 +18,7 @@ public partial class NhaCungCap
     public int? SoNgayDuocNo { get; set; }
 
     public decimal? DuNoLuyKe { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<PhieuNhap> PhieuNhaps { get; set; } = new List<PhieuNhap>();
 }

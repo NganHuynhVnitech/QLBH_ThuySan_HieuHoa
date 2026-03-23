@@ -67,6 +67,72 @@ namespace QLBH_ThuySan.Controllers
                 }
 
                 _context.Add(phieuThuChi);
+
+                // NEW PAYMENT DISTRIBUTION LOGIC
+                if (!string.IsNullOrEmpty(phieuThuChi.MaDoiTuong) && phieuThuChi.SoTien > 0)
+                {
+                    if (phieuThuChi.MaDoiTuong.StartsWith("KH") && (phieuThuChi.LoaiPhieu == "THU" || phieuThuChi.LoaiPhieu == "Thu"))
+                    {
+                        var unpaidInvoices = await _context.PhieuXuats
+                            .Where(p => p.IdKhachHang == phieuThuChi.MaDoiTuong && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
+                            .OrderBy(p => p.NgayXuat)
+                            .ToListAsync();
+                        
+                        decimal remainingPayment = phieuThuChi.SoTien ?? 0;
+                        foreach(var inv in unpaidInvoices)
+                        {
+                            if (remainingPayment <= 0) break;
+                            
+                            var debt = inv.SoChuaThanhToan ?? 0;
+                            if (remainingPayment >= debt)
+                            {
+                                remainingPayment -= debt;
+                                inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                                inv.SoChuaThanhToan = 0;
+                                inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                                inv.NgayThanhToan = phieuThuChi.NgayLap ?? DateTime.Now;
+                            }
+                            else
+                            {
+                                inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                                inv.SoChuaThanhToan -= remainingPayment;
+                                remainingPayment = 0;
+                            }
+                            _context.Update(inv);
+                        }
+                    }
+                    else if (phieuThuChi.MaDoiTuong.StartsWith("NCC") && (phieuThuChi.LoaiPhieu == "CHI" || phieuThuChi.LoaiPhieu == "Chi" || phieuThuChi.LoaiPhieu == "NHAP"))
+                    {
+                        var unpaidInvoices = await _context.PhieuNhaps
+                            .Where(p => p.IdNhaCungCap == phieuThuChi.MaDoiTuong && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
+                            .OrderBy(p => p.NgayNhap)
+                            .ToListAsync();
+                        
+                        decimal remainingPayment = phieuThuChi.SoTien ?? 0;
+                        foreach(var inv in unpaidInvoices)
+                        {
+                            if (remainingPayment <= 0) break;
+                            
+                            var debt = inv.SoChuaThanhToan ?? 0;
+                            if (remainingPayment >= debt)
+                            {
+                                remainingPayment -= debt;
+                                inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                                inv.SoChuaThanhToan = 0;
+                                inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                                inv.NgayThanhToan = phieuThuChi.NgayLap ?? DateTime.Now;
+                            }
+                            else
+                            {
+                                inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                                inv.SoChuaThanhToan -= remainingPayment;
+                                remainingPayment = 0;
+                            }
+                            _context.Update(inv);
+                        }
+                    }
+                }
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }

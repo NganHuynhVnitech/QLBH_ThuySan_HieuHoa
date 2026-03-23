@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- DATABASE SETUP: Cá»¬A HÃ€NG THá»¦Y Sáº¢N HIá»†U HOA
 -- Dá»±a trÃªn Class Diagram Docx [1-10]
 -- =============================================
@@ -40,7 +40,8 @@ CREATE TABLE HangHoa (
     donViTinh NVARCHAR(20),
     quyCach NVARCHAR(50),
     giaVonHienTai DECIMAL(18, 2) DEFAULT 0, -- Cáº­p nháº­t bá»Ÿi COGS Engine
-    giaBanHienTai DECIMAL(18, 2) DEFAULT 0
+    giaBanHienTai DECIMAL(18, 2) DEFAULT 0,
+    isDisabled BIT NOT NULL DEFAULT 0
 );
 
 -- Class: DonViTinh (Unit Conversion) [New User Request]
@@ -62,7 +63,8 @@ CREATE TABLE NhaCungCap (
     diaChi NVARCHAR(200),
     maSoThue VARCHAR(50),
     soNgayDuocNo INT DEFAULT 0, -- Quan trá»ng Ä‘á»ƒ tÃ­nh háº¡n thanh toÃ¡n
-    duNoLuyKe DECIMAL(18, 2) DEFAULT 0 -- Tá»•ng dÆ° ná»£ hiá»‡n táº¡i
+    duNoLuyKe DECIMAL(18, 2) DEFAULT 0, -- Tá»•ng dÆ° ná»£ hiá»‡n táº¡i
+    isDisabled BIT NOT NULL DEFAULT 0
 );
 
 -- Class: KhachHang (Inherits DoiTuong) [3]
@@ -72,7 +74,8 @@ CREATE TABLE KhachHang (
     soDienThoai VARCHAR(20),
     diaChi NVARCHAR(200),
     aoNuoi NVARCHAR(100),
-    duNoLuyKe DECIMAL(18, 2) DEFAULT 0 -- LiÃªn káº¿t SoRieng
+    duNoLuyKe DECIMAL(18, 2) DEFAULT 0, -- LiÃªn káº¿t SoRieng
+    isDisabled BIT NOT NULL DEFAULT 0
 );
 
 -- Class: DaiLy (Inherits DoiTuong) [3]
@@ -678,14 +681,14 @@ GO
 -- 1. CRUD HANGHOA
 IF OBJECT_ID('sp_HangHoa_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_HangHoa_Insert;
 GO
-CREATE PROCEDURE sp_HangHoa_Insert @maHang VARCHAR(20), @tenHang NVARCHAR(100), @donViTinh NVARCHAR(20), @quyCach NVARCHAR(50) AS
-INSERT INTO HangHoa(maHang, tenHang, donViTinh, quyCach) VALUES (@maHang, @tenHang, @donViTinh, @quyCach);
+CREATE PROCEDURE sp_HangHoa_Insert @maHang VARCHAR(20), @tenHang NVARCHAR(100), @donViTinh NVARCHAR(20), @quyCach NVARCHAR(50), @isDisabled BIT = 0 AS
+INSERT INTO HangHoa(maHang, tenHang, donViTinh, quyCach, isDisabled) VALUES (@maHang, @tenHang, @donViTinh, @quyCach, @isDisabled);
 GO
 
 IF OBJECT_ID('sp_HangHoa_Update', 'P') IS NOT NULL DROP PROCEDURE sp_HangHoa_Update;
 GO
-CREATE PROCEDURE sp_HangHoa_Update @maHang VARCHAR(20), @tenHang NVARCHAR(100), @donViTinh NVARCHAR(20), @quyCach NVARCHAR(50) AS
-UPDATE HangHoa SET tenHang=@tenHang, donViTinh=@donViTinh, quyCach=@quyCach WHERE maHang=@maHang;
+CREATE PROCEDURE sp_HangHoa_Update @maHang VARCHAR(20), @tenHang NVARCHAR(100), @donViTinh NVARCHAR(20), @quyCach NVARCHAR(50), @isDisabled BIT = 0 AS
+UPDATE HangHoa SET tenHang=@tenHang, donViTinh=@donViTinh, quyCach=@quyCach, isDisabled=@isDisabled WHERE maHang=@maHang;
 GO
 
 IF OBJECT_ID('sp_HangHoa_Delete', 'P') IS NOT NULL DROP PROCEDURE sp_HangHoa_Delete;
@@ -695,7 +698,7 @@ GO
 
 IF OBJECT_ID('sp_HangHoa_SelectAll', 'P') IS NOT NULL DROP PROCEDURE sp_HangHoa_SelectAll;
 GO
-CREATE PROCEDURE sp_HangHoa_SelectAll AS SELECT * FROM HangHoa;
+CREATE PROCEDURE sp_HangHoa_SelectAll AS SELECT * FROM HangHoa WHERE isDisabled = 0;
 GO
 
 IF OBJECT_ID('sp_HangHoa_SelectById', 'P') IS NOT NULL DROP PROCEDURE sp_HangHoa_SelectById;
@@ -706,14 +709,14 @@ GO
 -- 2. CRUD NHACUNGCAP
 IF OBJECT_ID('sp_NhaCungCap_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_NhaCungCap_Insert;
 GO
-CREATE PROCEDURE sp_NhaCungCap_Insert @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @maSoThue VARCHAR(50), @soNgayDuocNo INT AS
-INSERT INTO NhaCungCap(maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo) VALUES (@maDoiTuong, @tenDoiTuong, @soDienThoai, @diaChi, @maSoThue, @soNgayDuocNo);
+CREATE PROCEDURE sp_NhaCungCap_Insert @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @maSoThue VARCHAR(50), @soNgayDuocNo INT, @isDisabled BIT = 0 AS
+INSERT INTO NhaCungCap(maDoiTuong, tenDoiTuong, soDienThoai, diaChi, maSoThue, soNgayDuocNo, isDisabled) VALUES (@maDoiTuong, @tenDoiTuong, @soDienThoai, @diaChi, @maSoThue, @soNgayDuocNo, @isDisabled);
 GO
 
 IF OBJECT_ID('sp_NhaCungCap_Update', 'P') IS NOT NULL DROP PROCEDURE sp_NhaCungCap_Update;
 GO
-CREATE PROCEDURE sp_NhaCungCap_Update @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @maSoThue VARCHAR(50), @soNgayDuocNo INT AS
-UPDATE NhaCungCap SET tenDoiTuong=@tenDoiTuong, soDienThoai=@soDienThoai, diaChi=@diaChi, maSoThue=@maSoThue, soNgayDuocNo=@soNgayDuocNo WHERE maDoiTuong=@maDoiTuong;
+CREATE PROCEDURE sp_NhaCungCap_Update @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @maSoThue VARCHAR(50), @soNgayDuocNo INT, @isDisabled BIT = 0 AS
+UPDATE NhaCungCap SET tenDoiTuong=@tenDoiTuong, soDienThoai=@soDienThoai, diaChi=@diaChi, maSoThue=@maSoThue, soNgayDuocNo=@soNgayDuocNo, isDisabled=@isDisabled WHERE maDoiTuong=@maDoiTuong;
 GO
 
 IF OBJECT_ID('sp_NhaCungCap_Delete', 'P') IS NOT NULL DROP PROCEDURE sp_NhaCungCap_Delete;
@@ -723,25 +726,25 @@ GO
 
 IF OBJECT_ID('sp_NhaCungCap_SelectAll', 'P') IS NOT NULL DROP PROCEDURE sp_NhaCungCap_SelectAll;
 GO
-CREATE PROCEDURE sp_NhaCungCap_SelectAll AS SELECT * FROM NhaCungCap;
+CREATE PROCEDURE sp_NhaCungCap_SelectAll AS SELECT * FROM NhaCungCap WHERE isDisabled = 0;
 GO
 
 -- 3. CRUD KHACHHANG
 IF OBJECT_ID('sp_KhachHang_Insert', 'P') IS NOT NULL DROP PROCEDURE sp_KhachHang_Insert;
 GO
-CREATE PROCEDURE sp_KhachHang_Insert @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @aoNuoi NVARCHAR(100) AS
-INSERT INTO KhachHang(maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi) VALUES (@maDoiTuong, @tenDoiTuong, @soDienThoai, @diaChi, @aoNuoi);
+CREATE PROCEDURE sp_KhachHang_Insert @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @aoNuoi NVARCHAR(100), @isDisabled BIT = 0 AS
+INSERT INTO KhachHang(maDoiTuong, tenDoiTuong, soDienThoai, diaChi, aoNuoi, isDisabled) VALUES (@maDoiTuong, @tenDoiTuong, @soDienThoai, @diaChi, @aoNuoi, @isDisabled);
 GO
 
 IF OBJECT_ID('sp_KhachHang_Update', 'P') IS NOT NULL DROP PROCEDURE sp_KhachHang_Update;
 GO
-CREATE PROCEDURE sp_KhachHang_Update @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @aoNuoi NVARCHAR(100) AS
-UPDATE KhachHang SET tenDoiTuong=@tenDoiTuong, soDienThoai=@soDienThoai, diaChi=@diaChi, aoNuoi=@aoNuoi WHERE maDoiTuong=@maDoiTuong;
+CREATE PROCEDURE sp_KhachHang_Update @maDoiTuong VARCHAR(20), @tenDoiTuong NVARCHAR(100), @soDienThoai VARCHAR(20), @diaChi NVARCHAR(200), @aoNuoi NVARCHAR(100), @isDisabled BIT = 0 AS
+UPDATE KhachHang SET tenDoiTuong=@tenDoiTuong, soDienThoai=@soDienThoai, diaChi=@diaChi, aoNuoi=@aoNuoi, isDisabled=@isDisabled WHERE maDoiTuong=@maDoiTuong;
 GO
 
 IF OBJECT_ID('sp_KhachHang_SelectAll', 'P') IS NOT NULL DROP PROCEDURE sp_KhachHang_SelectAll;
 GO
-CREATE PROCEDURE sp_KhachHang_SelectAll AS SELECT * FROM KhachHang;
+CREATE PROCEDURE sp_KhachHang_SelectAll AS SELECT * FROM KhachHang WHERE isDisabled = 0;
 GO
 
 -- 4. CRUD KHO & CHITIETTON

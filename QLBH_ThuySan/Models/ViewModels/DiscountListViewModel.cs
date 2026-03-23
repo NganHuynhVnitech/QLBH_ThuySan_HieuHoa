@@ -26,9 +26,12 @@ namespace QLBH_ThuySan.Models.ViewModels
         public string TenDoiTuong { get; set; } = "";
         public DateOnly? TuNgay { get; set; }
         public DateOnly? DenNgay { get; set; }
-        public decimal TongTien { get; set; }
+        public decimal SoPhaiThanhToan { get; set; }
+        public decimal SoDaThanhToan { get; set; }
+        public decimal SoChuaThanhToan { get; set; }
         public string TrangThai { get; set; } = "";
         public DateTime? NgayThanhToan { get; set; }
         public string QuyTacChietKhau { get; set; } = ""; // Summary of rules
     }
 }
+

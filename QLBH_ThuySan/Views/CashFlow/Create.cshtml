@@ -47,9 +47,9 @@
                             <div id="div-customer">
                                 <select name="MaDoiTuong_Customer" id="MaDoiTuong_Customer" class="form-select">
                                     <option value="">-- Chọn Khách Hàng --</option>
-                                    @if(ViewData["Customers"] != null)
+                                    @if(ViewData["Customers"] is IEnumerable<dynamic> customers)
                                     {
-                                        foreach (var item in (IEnumerable<dynamic>)ViewData["Customers"])
+                                        foreach (var item in customers)
                                         {
                                             <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
                                         }
@@ -61,9 +61,9 @@
                             <div id="div-supplier" style="display:none;">
                                 <select name="MaDoiTuong_Supplier" id="MaDoiTuong_Supplier" class="form-select">
                                     <option value="">-- Chọn Nhà Cung Cấp --</option>
-                                    @if (ViewData["Suppliers"] != null)
+                                    @if (ViewData["Suppliers"] is IEnumerable<dynamic> suppliers)
                                     {
-                                        foreach (var item in (IEnumerable<dynamic>)ViewData["Suppliers"])
+                                        foreach (var item in suppliers)
                                         {
                                             <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
                                         }
@@ -75,9 +75,9 @@
                             <div id="div-costobject" style="display:none;">
                                 <select name="MaDoiTuong_CostObject" id="MaDoiTuong_CostObject" class="form-select">
                                     <option value="">-- Chọn Loại Chi Phí --</option>
-                                    @if (ViewData["CostObjects"] != null)
+                                    @if (ViewData["CostObjects"] is IEnumerable<dynamic> costObjects)
                                     {
-                                        foreach (var item in (IEnumerable<dynamic>)ViewData["CostObjects"])
+                                        foreach (var item in costObjects)
                                         {
                                             <option value="@item.MaDoiTuong">@item.TenDoiTuong (@item.MaDoiTuong)</option>
                                         }

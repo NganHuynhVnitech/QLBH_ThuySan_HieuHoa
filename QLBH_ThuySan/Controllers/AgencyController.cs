@@ -18,7 +18,7 @@ namespace QLBH_ThuySan.Controllers
         // GET: Agency
         public async Task<IActionResult> Index()
         {
-            return View(await _context.DaiLys.ToListAsync());
+            return View(await _context.DaiLys.Where(d => !d.IsDisabled).ToListAsync());
         }
 
         // GET: Agency/Details/5
@@ -122,7 +122,8 @@ namespace QLBH_ThuySan.Controllers
             var daiLy = await _context.DaiLys.FindAsync(id);
             if (daiLy != null)
             {
-                _context.DaiLys.Remove(daiLy);
+                daiLy.IsDisabled = true;
+                _context.Update(daiLy);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

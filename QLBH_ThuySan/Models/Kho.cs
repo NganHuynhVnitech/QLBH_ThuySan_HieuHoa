@@ -12,6 +12,7 @@ public partial class Kho
     public string? LoaiKho { get; set; }
 
     public string? MaDaiLyPhuTrach { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<ChiTietTon> ChiTietTons { get; set; } = new List<ChiTietTon>();
 

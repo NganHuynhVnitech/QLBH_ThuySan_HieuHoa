@@ -178,6 +178,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenDaiLy)
                     .HasMaxLength(100)
                     .HasColumnName("tenDaiLy");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<HangHoa>(entity =>
@@ -207,6 +211,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenHang)
                     .HasMaxLength(100)
                     .HasColumnName("tenHang");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<KhachHang>(entity =>
@@ -236,6 +244,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenDoiTuong)
                     .HasMaxLength(100)
                     .HasColumnName("tenDoiTuong");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<Kho>(entity =>
@@ -259,6 +271,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenKho)
                     .HasMaxLength(100)
                     .HasColumnName("tenKho");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
 
                 entity.HasOne(d => d.MaDaiLyPhuTrachNavigation).WithMany(p => p.Khos)
                     .HasForeignKey(d => d.MaDaiLyPhuTrach)
@@ -296,6 +312,10 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValue(0m)
                     .HasColumnType("decimal(18, 2)")
                     .HasColumnName("duNoLuyKe");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<PhieuNhap>(entity =>
@@ -330,10 +350,22 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")
                     .HasColumnName("ngayNhap");
-                entity.Property(e => e.TongTien)
+                entity.Property(e => e.SoPhaiThanhToan)
                     .HasDefaultValue(0m)
                     .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("tongTien");
+                    .HasColumnName("soPhaiThanhToan");
+                entity.Property(e => e.SoDaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soDaThanhToan");
+                entity.Property(e => e.SoChuaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soChuaThanhToan");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
 
                 entity.HasOne(d => d.IdDaiLyNhapNavigation).WithMany(p => p.PhieuNhaps)
                     .HasForeignKey(d => d.IdDaiLyNhap)
@@ -398,10 +430,18 @@ namespace QLBH_ThuySan.Models
                     .HasColumnType("datetime")
                     .HasColumnName("ngayTao");
                 entity.Property(e => e.TuNgay).HasColumnName("tuNgay");
-                entity.Property(e => e.TongTien)
+                entity.Property(e => e.SoPhaiThanhToan)
                     .HasDefaultValue(0m)
                     .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("tongTien");
+                    .HasColumnName("soPhaiThanhToan");
+                entity.Property(e => e.SoDaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soDaThanhToan");
+                entity.Property(e => e.SoChuaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soChuaThanhToan");
                 entity.Property(e => e.TrangThai)
                     .HasMaxLength(50)
                     .HasDefaultValue("Chưa thanh toán")
@@ -470,10 +510,18 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")
                     .HasColumnName("ngayXuat");
-                entity.Property(e => e.TongTien)
+                entity.Property(e => e.SoPhaiThanhToan)
                     .HasDefaultValue(0m)
                     .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("tongTien");
+                    .HasColumnName("soPhaiThanhToan");
+                entity.Property(e => e.SoDaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soDaThanhToan");
+                entity.Property(e => e.SoChuaThanhToan)
+                    .HasDefaultValue(0m)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soChuaThanhToan");
                 entity.Property(e => e.NgayThanhToan)
                     .HasColumnType("datetime")
                     .HasColumnName("ngayThanhToan");
@@ -539,6 +587,10 @@ namespace QLBH_ThuySan.Models
                 entity.Property(e => e.TenDoiTuong)
                     .HasMaxLength(100)
                     .HasColumnName("tenDoiTuong");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<SoRiengKhachHang>(entity =>

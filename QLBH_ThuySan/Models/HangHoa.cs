@@ -16,6 +16,7 @@ public partial class HangHoa
     public decimal? GiaVonHienTai { get; set; }
 
     public decimal? GiaBanHienTai { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; } = new List<ChiTietPhieuNhap>();
 

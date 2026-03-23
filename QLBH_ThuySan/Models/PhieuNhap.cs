@@ -15,11 +15,16 @@ public partial class PhieuNhap
 
     public DateTime? HanThanhToan { get; set; }
 
-    public decimal? TongTien { get; set; }
+    public decimal? SoPhaiThanhToan { get; set; }
+
+    public decimal? SoDaThanhToan { get; set; }
+
+    public decimal? SoChuaThanhToan { get; set; }
 
     public DateTime? NgayThanhToan { get; set; }
 
     public string? TrangThaiThanhToan { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; } = new List<ChiTietPhieuNhap>();
 

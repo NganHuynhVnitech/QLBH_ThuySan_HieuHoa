@@ -18,22 +18,92 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
+        <!-- Filtering Section -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-2">
+                <input type="text" id="filterMaPhieu" class="form-control" placeholder="Mã Phiếu..." onkeypress="if(event.keyCode==13) applyFilters()">
+            </div>
+            <div class="col-md-3">
+                <select id="filterDaiLy" class="form-select" asp-items="ViewBag.IdDaiLyNhap" onchange="applyFilters()">
+                    <option value="">-- Đại Lý --</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="filterNhaCungCap" class="form-select" asp-items="ViewBag.IdNhaCungCap" onchange="applyFilters()">
+                    <option value="">-- Nhà Cung Cấp --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="filterTrangThai" class="form-select" onchange="applyFilters()">
+                    <option value="">-- Trạng Thái --</option>
+                    <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                    <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check pt-2">
+                    <input class="form-check-input" type="checkbox" id="filterHanThanhToan3Ngay" onchange="applyFilters()">
+                    <label class="form-check-label text-danger fw-bold" for="filterHanThanhToan3Ngay">
+                        Hạn TT &le; 3 Ngày
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-12">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="width: 80px;">Ngày Nhập</span>
+                            <input type="date" id="filterNgayNhapTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterNgayNhapDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="width: 80px;">Hạn TT</span>
+                            <input type="date" id="filterHanThanhToanTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterHanThanhToanDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="width: 80px;">Ngày TT</span>
+                            <input type="date" id="filterNgayThanhToanTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterNgayThanhToanDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="btn-group w-100 btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="applyFilters()">
+                                <i class="bi bi-search"></i> Tìm Kiếm
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()" title="Xóa lọc" style="flex: 0 0 auto;">
+                                <i class="bi bi-x-lg"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle" id="importsTable">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Phiếu</th>
-                        <th>Ngày Nhập</th>
-                        <th>Nhà Cung Cấp</th>
-                        <th>Đại Lý Nhập</th>
+                        <th class="sort-header" data-column="MaPhieu" onclick="handleSort(this)">Mã Phiếu <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header" data-column="NgayNhap" data-order="desc" onclick="handleSort(this)">Ngày Nhập <i class="bi bi-sort-down ms-1"></i></th>
+                        <th class="sort-header" data-column="TenNhaCungCap" onclick="handleSort(this)">Nhà Cung Cấp <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header" data-column="TenDaiLy" onclick="handleSort(this)">Đại Lý Nhập <i class="bi bi-arrow-down-up ms-1"></i></th>
                         <th>Hạn Thanh Toán</th>
                         <th>Ngày Thanh Toán</th>
-                        <th>Trạng Thái</th>
-                        <th class="text-end">Tổng Tiền</th>
+                        <th class="sort-header" data-column="TrangThai" onclick="handleSort(this)">Trạng Thái <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header" data-column="SoPhaiThanhToan" onclick="handleSort(this)">Phải TT <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header" data-column="SoDaThanhToan" onclick="handleSort(this)">Đã TT <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header" data-column="SoChuaThanhToan" onclick="handleSort(this)">Còn Nợ <i class="bi bi-arrow-down-up ms-1"></i></th>
                         <th>Thao Tác</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="importsTableBody">
                     @foreach (var item in Model)
                     {
                             <tr>
@@ -66,7 +136,9 @@
                                         <span class="badge bg-warning text-dark">Chưa Thanh Toán</span>
                                     }
                                 </td>
-                                <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.TongTien)</td>
+                                <td class="text-end fw-bold text-primary">@string.Format("{0:N0}", item.SoPhaiThanhToan)</td>
+                                <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.SoDaThanhToan)</td>
+                                <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.SoChuaThanhToan)</td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info" title="Chi Tiết">
@@ -107,3 +179,141 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        let currentSortColumn = "NgayNhap";
+        let currentSortOrder = "desc";
+
+        function clearFilters() {
+            document.getElementById('filterMaPhieu').value = '';
+            document.getElementById('filterNgayNhapTu').value = '';
+            document.getElementById('filterNgayNhapDen').value = '';
+            document.getElementById('filterHanThanhToanTu').value = '';
+            document.getElementById('filterHanThanhToanDen').value = '';
+            document.getElementById('filterNgayThanhToanTu').value = '';
+            document.getElementById('filterNgayThanhToanDen').value = '';
+            document.getElementById('filterDaiLy').value = '';
+            document.getElementById('filterNhaCungCap').value = '';
+            document.getElementById('filterTrangThai').value = '';
+            document.getElementById('filterHanThanhToan3Ngay').checked = false;
+
+            currentSortColumn = "NgayNhap";
+            currentSortOrder = "desc";
+
+            document.querySelectorAll('.sort-header').forEach(h => {
+                h.removeAttribute('data-order');
+                const icon = h.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-arrow-down-up ms-1';
+                }
+            });
+
+            const defaultHeader = document.querySelector('.sort-header[data-column="NgayNhap"]');
+            if (defaultHeader) {
+                defaultHeader.setAttribute('data-order', 'desc');
+                const currentIcon = defaultHeader.querySelector('i');
+                if (currentIcon) {
+                    currentIcon.className = 'bi bi-sort-down ms-1';
+                }
+            }
+
+            applyFilters();
+        }
+
+        function handleSort(header) {
+            const column = header.getAttribute('data-column');
+            let order = header.getAttribute('data-order') || '';
+
+            // Tri-state logic: none -> desc -> asc -> none
+            if (order === '') order = 'desc';
+            else if (order === 'desc') order = 'asc';
+            else order = '';
+
+            // Reset other headers
+            document.querySelectorAll('.sort-header').forEach(h => {
+                h.removeAttribute('data-order');
+                const icon = h.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-arrow-down-up ms-1';
+                }
+            });
+
+            // Set current
+            header.setAttribute('data-order', order);
+            const currentIcon = header.querySelector('i');
+            if (currentIcon) {
+                if (order === 'desc') currentIcon.className = 'bi bi-sort-down ms-1';
+                else if (order === 'asc') currentIcon.className = 'bi bi-sort-up ms-1';
+                else currentIcon.className = 'bi bi-arrow-down-up ms-1';
+            }
+
+            currentSortColumn = order === '' ? '' : column;
+            currentSortOrder = order;
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const maPhieu = document.getElementById('filterMaPhieu').value;
+            const idDaiLy = document.getElementById('filterDaiLy').value;
+            const idNhaCungCap = document.getElementById('filterNhaCungCap').value;
+            const trangThai = document.getElementById('filterTrangThai').value;
+            const ngayNhapTu = document.getElementById('filterNgayNhapTu').value;
+            const ngayNhapDen = document.getElementById('filterNgayNhapDen').value;
+            const hanThanhToanTu = document.getElementById('filterHanThanhToanTu').value;
+            const hanThanhToanDen = document.getElementById('filterHanThanhToanDen').value;
+            const ngayThanhToanTu = document.getElementById('filterNgayThanhToanTu').value;
+            const ngayThanhToanDen = document.getElementById('filterNgayThanhToanDen').value;
+            const hanThanhToan3Ngay = document.getElementById('filterHanThanhToan3Ngay').checked;
+
+            const qs = new URLSearchParams({
+                maPhieu, idDaiLy, idNhaCungCap, trangThai,
+                ngayNhapTu, ngayNhapDen, hanThanhToanTu, hanThanhToanDen,
+                ngayThanhToanTu, ngayThanhToanDen, hanThanhToan3Ngay,
+                sortColumn: currentSortColumn, sortOrder: currentSortOrder
+            }).toString();
+
+            fetch(`/Import/SearchJson?${qs}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('importsTableBody');
+                    tbody.innerHTML = '';
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><span class="badge bg-secondary">${item.maPhieu}</span></td>
+                            <td>${item.ngayNhap}</td>
+                            <td class="fw-bold">${item.tenNhaCungCap}</td>
+                            <td>${item.tenDaiLy}</td>
+                            <td>
+                                ${item.isQuaHan 
+                                    ? `<span class="text-danger fw-bold">${item.hanThanhToan} (Quá hạn)</span>` 
+                                    : `<span>${item.hanThanhToan}</span>`}
+                            </td>
+                            <td>${item.ngayThanhToan}</td>
+                            <td>
+                                <span class="badge ${item.trangThai === 'Đã Thanh Toán' ? 'bg-success' : 'bg-warning text-dark'}">
+                                    ${item.trangThai || 'Chưa Thanh Toán'}
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">${item.soPhaiThanhToan}</td>
+                            <td class="text-end fw-bold text-success">${item.soDaThanhToan}</td>
+                            <td class="text-end fw-bold text-danger">${item.soChuaThanhToan}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="/Import/Details/${item.maPhieu}" class="btn btn-sm btn-outline-info">Chi Tiết</a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-${item.maPhieu}">Xóa</button>
+                                </div>
+
+                                <!-- Modals would need to be re-rendered or handled differently for full dynamic experience -->
+                                <!-- For now, keeping it simple; a full page refresh on delete is often used -->
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+    </script>
+}
+

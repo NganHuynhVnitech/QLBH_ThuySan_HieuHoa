@@ -16,6 +16,7 @@ public partial class KhachHang
     public string? AoNuoi { get; set; }
 
     public decimal? DuNoLuyKe { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<PhieuXuat> PhieuXuats { get; set; } = new List<PhieuXuat>();
 

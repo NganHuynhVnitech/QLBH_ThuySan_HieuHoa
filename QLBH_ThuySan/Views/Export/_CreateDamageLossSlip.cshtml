@@ -111,9 +111,11 @@
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary group-focus-within:text-surface-tint pointer-events-none transition-colors">warehouse</span>
                                 <select id="SourceWarehouseCode" class="w-full pl-12 pr-4 py-3.5 bg-surface border-2 border-outline-variant rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none font-semibold cursor-pointer">
                                     <option value="">-- Chọn kho xuất hàng --</option>
-                                    @foreach (var k in khos)
-                                    {
-                                        <option value="@k.MaKho">@k.TenKho</option>
+                                    @if (khos != null) {
+                                        @foreach (var k in khos)
+                                        {
+                                            <option value="@k.MaKho">@k.TenKho</option>
+                                        }
                                     }
                                 </select>
                                 <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>

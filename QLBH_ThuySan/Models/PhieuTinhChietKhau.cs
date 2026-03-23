@@ -17,7 +17,11 @@ public partial class PhieuTinhChietKhau
 
     public string? MaDoiTuong { get; set; }
 
-    public decimal? TongTien { get; set; }
+    public decimal? SoPhaiThanhToan { get; set; }
+
+    public decimal? SoDaThanhToan { get; set; }
+
+    public decimal? SoChuaThanhToan { get; set; }
 
     public string? TrangThai { get; set; }
 

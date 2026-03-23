@@ -10,7 +10,7 @@ namespace QLBH_ThuySan.Models.ViewModels
         public string MaDoiTuong { get; set; } = "";
         public DateTime? TuNgay { get; set; }
         public DateTime? DenNgay { get; set; }
-        public decimal TongTienChietKhau { get; set; }
+        public decimal SoPhaiThanhToanChietKhau { get; set; }
         public string TrangThai { get; set; } = "";
         public DateTime? NgayThanhToan { get; set; }
 
@@ -25,7 +25,7 @@ namespace QLBH_ThuySan.Models.ViewModels
         
         // Summary for this product (stored in ticket)
         public double TongSoLuong { get; set; }
-        public decimal TongTienChietKhau { get; set; }
+        public decimal SoPhaiThanhToanChietKhau { get; set; }
         public string QuyTacApDung { get; set; } = "";
     }
 
@@ -42,3 +42,4 @@ namespace QLBH_ThuySan.Models.ViewModels
         public decimal ThanhTienChietKhau { get; set; }
     }
 }
+

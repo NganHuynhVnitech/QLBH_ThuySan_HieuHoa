@@ -57,7 +57,7 @@ namespace QLBH_ThuySan.Controllers
             
             // Calculate Total Debt (Total Imports). 
             // Note: Does not subtract payments because PhieuThuChi is generic.
-            var totalImport = imports.Sum(i => i.TongTien ?? 0);
+            var totalImport = imports.Sum(i => i.SoPhaiThanhToan ?? 0);
             ViewBag.TotalImportValue = totalImport;
             
             // User requested fix: Sync DuNoLuyKe with calculated value if needed, or default to 0
@@ -70,3 +70,4 @@ namespace QLBH_ThuySan.Controllers
         }
     }
 }
+

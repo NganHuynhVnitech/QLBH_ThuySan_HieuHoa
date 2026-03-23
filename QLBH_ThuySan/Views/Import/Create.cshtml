@@ -94,12 +94,18 @@
     .result-item:hover {
         background-color: #f0f0f0;
     }
+
+    /* Qty Button Styles */
+    .btn-qty {
+        padding: 0 8px;
+        font-weight: bold;
+    }
 </style>
 
 <div class="container-fluid pos-container">
     <div class="row h-100">
         <!-- Left Column: Product List -->
-        <div class="col-md-7 col-lg-8 product-list-col">
+        <div class="col-md-4 col-lg-4 product-list-col">
             <div class="row mb-3">
                 <div class="col-12">
                     <div class="input-group input-group-lg">
@@ -122,7 +128,7 @@
         </div>
 
         <!-- Right Column: Import Invoice -->
-        <div class="col-md-5 col-lg-4 invoice-col shadow-sm">
+        <div class="col-md-8 col-lg-8 invoice-col shadow-sm">
             <!-- Supplier Section -->
             <div class="mb-3 position-relative">
                 <label class="form-label fw-bold">Nhà Cung Cấp</label>
@@ -186,11 +192,17 @@
                     </div>
                     <div class="mb-2">
                         <label class="small text-muted">Trạng thái</label>
-                        <select name="TrangThaiThanhToan" class="form-select form-select-sm">
+                        <select name="TrangThaiThanhToan" id="TrangThaiThanhToan" class="form-select form-select-sm" onchange="togglePartialPayment()">
                             <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
                             <option value="Đã Thanh Toán">Đã Thanh Toán</option>
                             <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
                         </select>
+                    </div>
+
+                    <div id="partialPaymentDiv" class="mb-2 d-none">
+                        <label class="small text-muted">Số tiền thanh toán</label>
+                        <input type="text" id="partialPaymentAmount" class="form-control form-control-sm fw-bold text-success" 
+                            placeholder="Nhập số tiền..." onfocus="this.select()" oninput="this.value = formatVN(parseVN(this.value))">
                     </div>
 
                     <div id="hiddenInputs"></div>
@@ -245,6 +257,20 @@
 @section Scripts {
     <script>
         var cart = [];
+        
+        function formatVN(val) {
+            if (!val && val !== 0) return '0';
+            // Format with . as thousands separator and , as decimal separator if needed
+            // For mostly integers, we can just use Intl.NumberFormat
+            return new Intl.NumberFormat('vi-VN').format(val);
+        }
+
+        function parseVN(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            // Remove dots and change comma to dot for parsing
+            return parseFloat(val.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+        }
 
         $(document).ready(function () {
             loadProducts('');
@@ -266,18 +292,20 @@
                     return;
                 }
 
-                $.get('/Supplier/SearchJson?term=' + term, function (data) {
+                $.get('@Url.Action("SearchJson", "Supplier")', { term: term }, function (data) {
                     $('#supplierResults').empty().show();
-                    if (data.length === 0) {
+                    if (!data || data.length === 0) {
                         $('#supplierResults').append('<div class="result-item text-muted">Không tìm thấy NCC</div>');
                     } else {
                         data.forEach(function (s) {
+                            // Escape single quotes in name to avoid JS syntax error
+                            var safeName = (s.tenDoiTuong || '').replace(/'/g, "\\'");
                             $('#supplierResults').append(`
-                                    <div class="result-item" onclick="selectSupplier('${s.maDoiTuong}', '${s.tenDoiTuong}')">
-                                        <strong>${s.tenDoiTuong}</strong> <br/>
-                                        <small class="text-muted">${s.soDienThoai || ''}</small>
-                                    </div>
-                                `);
+                                <div class="result-item" onclick="selectSupplier('${s.maDoiTuong}', '${safeName}')">
+                                    <strong>${s.tenDoiTuong}</strong> <br/>
+                                    <small class="text-muted">${s.soDienThoai || ''}</small>
+                                </div>
+                            `);
                         });
                     }
                 });
@@ -290,13 +318,22 @@
             });
         });
 
+        function togglePartialPayment() {
+            var status = $('#TrangThaiThanhToan').val();
+            if (status === 'Thanh Toán Một Phần') {
+                $('#partialPaymentDiv').removeClass('d-none');
+            } else {
+                $('#partialPaymentDiv').addClass('d-none');
+            }
+        }
+
         function loadProducts(term) {
             $('#loadingProducts').removeClass('d-none');
             $('#productGrid').empty();
 
-            $.get('/Product/SearchJson?term=' + term, function (data) {
+            $.get('@Url.Action("SearchJson", "Product")', { term: term }, function (data) {
                 $('#loadingProducts').addClass('d-none');
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
                     return;
                 }
@@ -304,7 +341,7 @@
                 data.forEach(function (p) {
                     var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP';
                     // Use Cost Price for Import
-                    var price = p.giaVonHienTai ? p.giaVonHienTai.toLocaleString() : '0';
+                    var price = p.giaVonHienTai ? formatVN(p.giaVonHienTai) : '0';
 
                     var cardHtml = `
                             <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
@@ -359,15 +396,19 @@
                                 <small class="text-muted">${item.id}</small>
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm text-center" 
-                                    value="${item.qty}" min="1" onchange="updateRow('${item.id}', this.value, ${item.price})">
+                                <div class="input-group input-group-sm">
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', -1)">-</button>
+                                    <input type="text" class="form-control text-center fw-bold px-1" 
+                                        value="${formatVN(item.qty)}" onchange="updateRow('${item.id}', this.value, null)" onfocus="this.select()">
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', 1)">+</button>
+                                </div>
                             </td>
                              <td>
-                                <input type="number" class="form-control form-control-sm text-end" 
-                                    value="${item.price}" onchange="updateRow('${item.id}', ${item.qty}, this.value)">
+                                <input type="text" class="form-control form-control-sm text-end fw-bold text-primary" 
+                                    value="${formatVN(item.price)}" onchange="updateRow('${item.id}', null, this.value)" onfocus="this.select()">
                             </td>
-                            <td class="text-end fw-bold">
-                                ${item.total.toLocaleString()}
+                            <td class="text-end fw-bold text-danger">
+                                ${formatVN(item.total)}
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
@@ -379,15 +420,27 @@
                 tbody.append(tr);
             });
 
-            $('#totalQty').text(totalQty);
-            $('#totalAmount').text(totalAmt.toLocaleString());
+            $('#totalQty').text(formatVN(totalQty));
+            $('#totalAmount').text(formatVN(totalAmt));
         }
 
         function updateRow(id, newQty, newPrice) {
             var item = cart.find(x => x.id === id);
             if (item) {
-                item.qty = parseFloat(newQty) || 1;
-                item.price = parseFloat(newPrice) || 0;
+                if (newQty !== null) item.qty = parseVN(newQty);
+                if (newPrice !== null) item.price = parseVN(newPrice);
+                
+                if (item.qty < 0) item.qty = 0;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function changeQty(id, delta) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                item.qty = (item.qty || 0) + delta;
+                if (item.qty < 0) item.qty = 0;
                 item.total = item.qty * item.price;
                 renderCart();
             }
@@ -411,7 +464,7 @@
             });
 
             $.ajax({
-                url: '/Supplier/QuickCreate',
+                url: '@Url.Action("QuickCreate", "Supplier")',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData),
@@ -450,6 +503,23 @@
                 $('<input>').attr({ type: 'hidden', name: 'SoLuong[]', value: item.qty }).appendTo(hiddenDiv);
                 $('<input>').attr({ type: 'hidden', name: 'DonGiaNhap[]', value: item.price }).appendTo(hiddenDiv); // DonGiaNhap for Import
             });
+
+            // Payment Calculations
+            var totalAmount = cart.reduce((sum, item) => sum + item.total, 0);
+            var status = $('#TrangThaiThanhToan').val();
+            var paidAmount = 0;
+
+            if (status === 'Đã Thanh Toán') {
+                paidAmount = totalAmount;
+            } else if (status === 'Thanh Toán Một Phần') {
+                paidAmount = parseVN($('#partialPaymentAmount').val());
+            }
+
+            var debtAmount = totalAmount - paidAmount;
+
+            $('<input>').attr({ type: 'hidden', name: 'SoPhaiThanhToan', value: totalAmount }).appendTo(hiddenDiv);
+            $('<input>').attr({ type: 'hidden', name: 'SoDaThanhToan', value: paidAmount }).appendTo(hiddenDiv);
+            $('<input>').attr({ type: 'hidden', name: 'SoChuaThanhToan', value: debtAmount }).appendTo(hiddenDiv);
 
             form.submit();
         }

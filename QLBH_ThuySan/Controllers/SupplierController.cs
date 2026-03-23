@@ -16,9 +16,70 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Supplier
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchMa, string? searchTen, string? searchSdt, string? searchDiaChi, bool searchCoNo = false, string? sortOrder = null)
         {
-            return View(await _context.NhaCungCaps.ToListAsync());
+            var query = _context.NhaCungCaps.Where(s => !s.IsDisabled);
+
+            if (!string.IsNullOrEmpty(searchMa))
+            {
+                query = query.Where(s => s.MaDoiTuong != null && s.MaDoiTuong.Contains(searchMa));
+            }
+
+            if (!string.IsNullOrEmpty(searchTen))
+            {
+                query = query.Where(s => s.TenDoiTuong != null && s.TenDoiTuong.Contains(searchTen));
+            }
+
+            if (!string.IsNullOrEmpty(searchSdt))
+            {
+                query = query.Where(s => s.SoDienThoai != null && s.SoDienThoai.Contains(searchSdt));
+            }
+
+            if (!string.IsNullOrEmpty(searchDiaChi))
+            {
+                query = query.Where(s => s.DiaChi != null && s.DiaChi.Contains(searchDiaChi));
+            }
+
+            if (searchCoNo)
+            {
+                query = query.Where(s => s.DuNoLuyKe > 0);
+            }
+
+            ViewData["searchMa"] = searchMa;
+            ViewData["searchTen"] = searchTen;
+            ViewData["searchSdt"] = searchSdt;
+            ViewData["searchDiaChi"] = searchDiaChi;
+            ViewData["searchCoNo"] = searchCoNo;
+
+            // Sorting Parameters
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["MaSortParm"] = String.IsNullOrEmpty(sortOrder) ? "ma_desc" : "";
+            ViewData["TenSortParm"] = sortOrder == "name_asc" ? "name_desc" : "name_asc";
+            ViewData["SdtSortParm"] = sortOrder == "sdt_asc" ? "sdt_desc" : "sdt_asc";
+            ViewData["DiaChiSortParm"] = sortOrder == "addr_asc" ? "addr_desc" : "addr_asc";
+            ViewData["TaxSortParm"] = sortOrder == "tax_asc" ? "tax_desc" : "tax_asc";
+            ViewData["DaySortParm"] = sortOrder == "day_asc" ? "day_desc" : "day_asc";
+            ViewData["DebtSortParm"] = sortOrder == "debt_asc" ? "debt_desc" : "debt_asc";
+
+            query = sortOrder switch
+            {
+                "ma_desc" => query.OrderByDescending(s => s.MaDoiTuong),
+                "name_asc" => query.OrderBy(s => s.TenDoiTuong),
+                "name_desc" => query.OrderByDescending(s => s.TenDoiTuong),
+                "sdt_asc" => query.OrderBy(s => s.SoDienThoai),
+                "sdt_desc" => query.OrderByDescending(s => s.SoDienThoai),
+                "addr_asc" => query.OrderBy(s => s.DiaChi),
+                "addr_desc" => query.OrderByDescending(s => s.DiaChi),
+                "tax_asc" => query.OrderBy(s => s.MaSoThue),
+                "tax_desc" => query.OrderByDescending(s => s.MaSoThue),
+                "day_asc" => query.OrderBy(s => s.SoNgayDuocNo),
+                "day_desc" => query.OrderByDescending(s => s.SoNgayDuocNo),
+                "debt_asc" => query.OrderBy(s => s.DuNoLuyKe),
+                "debt_desc" => query.OrderByDescending(s => s.DuNoLuyKe),
+                _ => query.OrderBy(s => s.MaDoiTuong),
+            };
+
+            return View(await query.ToListAsync());
         }
 
         // GET: Supplier/Details/5
@@ -123,7 +184,8 @@ namespace QLBH_ThuySan.Controllers
             var nhaCungCap = await _context.NhaCungCaps.FindAsync(id);
             if (nhaCungCap != null)
             {
-                _context.NhaCungCaps.Remove(nhaCungCap);
+                nhaCungCap.IsDisabled = true;
+                _context.Update(nhaCungCap);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
@@ -138,7 +200,11 @@ namespace QLBH_ThuySan.Controllers
             }
 
             var suppliers = await _context.NhaCungCaps
-                .Where(s => s.TenDoiTuong.Contains(term) || s.MaDoiTuong.Contains(term) || s.SoDienThoai.Contains(term))
+                .Where(s => !s.IsDisabled && (
+                    (s.TenDoiTuong != null && s.TenDoiTuong.Contains(term)) || 
+                    (s.MaDoiTuong != null && s.MaDoiTuong.Contains(term)) || 
+                    (s.SoDienThoai != null && s.SoDienThoai.Contains(term))
+                ))
                 .Take(20)
                 .Select(s => new
                 {

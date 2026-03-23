@@ -16,18 +16,82 @@
     </div>
 </div>
 
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end" id="searchForm">
+            <div class="col-md-4">
+                <label for="searchMa" class="form-label">Mã Hàng</label>
+                <input type="text" name="searchMa" id="searchMa" class="form-control" placeholder="Tìm theo mã hàng..." value="@ViewData["searchMa"]" />
+            </div>
+            <div class="col-md-5">
+                <label for="searchTen" class="form-label">Tên Hàng Hóa</label>
+                <input type="text" name="searchTen" id="searchTen" class="form-control" placeholder="Tìm theo tên hàng hóa..." value="@ViewData["searchTen"]" />
+            </div>
+            <div class="col-md-3 text-end">
+                <div class="btn-group w-100">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-search"></i> Tìm Kiếm
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary" title="Xóa lọc">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Hàng</th>
-                        <th>Tên Hàng Hóa</th>
-                        <th>ĐVT</th>
-                        <th>Quy Cách</th>
-                        <th class="text-end">Giá Vốn</th>
-                        <th class="text-end">Giá Bán</th>
+                        @{
+                            var currentSort = ViewData["CurrentSort"] as string;
+                            var searchParams = new Dictionary<string, string>
+                            {
+                                { "searchMa", ViewData["searchMa"]?.ToString() ?? "" },
+                                { "searchTen", ViewData["searchTen"]?.ToString() ?? "" }
+                            };
+
+                            string GetSortIcon(string? sortOrder, string ascTarget, string descTarget)
+                            {
+                                if (sortOrder == ascTarget) return "<i class='bi bi-sort-up'></i>";
+                                if (sortOrder == descTarget) return "<i class='bi bi-sort-down'></i>";
+                                return "<i class='bi bi-arrow-down-up text-muted small'></i>";
+                            }
+                        }
+                        <th>
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["MaSortParm"]" class="text-decoration-none text-dark">
+                                Mã Hàng @Html.Raw(GetSortIcon(currentSort, "", "ma_desc"))
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["TenSortParm"]" class="text-decoration-none text-dark">
+                                Tên Hàng Hóa @Html.Raw(GetSortIcon(currentSort, "name_asc", "name_desc"))
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DvtSortParm"]" class="text-decoration-none text-dark">
+                                ĐVT @Html.Raw(GetSortIcon(currentSort, "unit_asc", "unit_desc"))
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["QcSortParm"]" class="text-decoration-none text-dark">
+                                Quy Cách @Html.Raw(GetSortIcon(currentSort, "qc_asc", "qc_desc"))
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["VonSortParm"]" class="text-decoration-none text-dark">
+                                @Html.Raw(GetSortIcon(currentSort, "cost_asc", "cost_desc")) Giá Vốn
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["BanSortParm"]" class="text-decoration-none text-dark">
+                                @Html.Raw(GetSortIcon(currentSort, "price_asc", "price_desc")) Giá Bán
+                            </a>
+                        </th>
                         <th>Thao Tác</th>
                     </tr>
                 </thead>

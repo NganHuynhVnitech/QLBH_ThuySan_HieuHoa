@@ -162,8 +162,8 @@ namespace QLBH_ThuySan.Controllers
                 foreach (var row in rows)
                 {
                     rowNum++;
-                    string maHang = row.MaHang?.ToString();
-                    string maKho = row.MaKho?.ToString();
+                    string? maHang = row.MaHang?.ToString();
+                    string? maKho = row.MaKho?.ToString();
                     
                     if (string.IsNullOrEmpty(maHang) || string.IsNullOrEmpty(maKho)) continue;
 
@@ -268,7 +268,7 @@ namespace QLBH_ThuySan.Controllers
                         IdNhaCungCap = "SYS_OPENING_STOCK",
                         // IdDaiLyNhap maps to DaiLy, we can optionally map this if Kho has a MaDaiLyPhuTrach
                         TrangThaiThanhToan = "Đã Thanh Toán", // Opening stock so shouldn't affect debt
-                        TongTien = group.Sum(x => (decimal)x.SoLuong * x.GiaVon)
+                        SoPhaiThanhToan = group.Sum(x => (decimal)x.SoLuong * x.GiaVon)
                     };
 
                     // Try to map DaiLyNhap if possible (fallback)
@@ -355,8 +355,7 @@ namespace QLBH_ThuySan.Controllers
             {
                 var filePath = Path.Combine(_env.ContentRootPath, "appsettings.json");
                 var json = System.IO.File.ReadAllText(filePath);
-                var jObject = JsonNode.Parse(json) as JsonObject;
-                if (jObject != null)
+                if (JsonNode.Parse(json) is JsonObject jObject)
                 {
                     jObject["IsOpeningStockFinalized"] = true;
                     // Format output
@@ -371,3 +370,4 @@ namespace QLBH_ThuySan.Controllers
         }
     }
 }
+

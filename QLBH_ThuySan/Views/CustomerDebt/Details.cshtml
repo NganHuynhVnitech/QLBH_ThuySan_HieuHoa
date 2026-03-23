@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Chi Tiết Công Nợ Khách Hàng";
     var entries = ViewBag.Entries as IEnumerable<QLBH_ThuySan.Models.SoRiengKhachHang>;
+    var phieuXuats = ViewBag.PhieuXuats as IEnumerable<QLBH_ThuySan.Models.PhieuXuat>;
 }
 
 <h2>Chi Tiết Công Nợ Khách Hàng - @Model.TenDoiTuong</h2>
@@ -30,47 +31,97 @@
                 <strong class="@((Model.DuNoLuyKe ?? 0) > 0 ? "text-danger" : "text-success") fs-4">
                     @((Model.DuNoLuyKe ?? 0).ToString("N0")) VNĐ
                 </strong>
+                @if ((Model.DuNoLuyKe ?? 0) < 0)
+                {
+                    <span class="text-muted ms-2">(Khách hàng thanh toán thừa, cần thối lại)</span>
+                }
             </dd>
         </dl>
     </div>
 </div>
 
 <h3>Lịch Sử Giao Dịch</h3>
-<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addEntryModal">
-    Thêm Giao Dịch
-</button>
+<div class="mb-3" id="filterEntries">
+    <div class="card card-body bg-light text-[13px]">
+        <form method="get" class="row g-2">
+            <!-- Hidden inputs to preserve other table's state could be complex, let's just use one form for everything? 
+                 Actually, just include the ID and the specific filters. -->
+            <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Từ ngày</label>
+                <input type="date" name="entryFromDate" class="form-control form-control-sm" value="@ViewData["entryFromDate"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Đến ngày</label>
+                <input type="date" name="entryToDate" class="form-control form-control-sm" value="@ViewData["entryToDate"]" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Loại</label>
+                <select name="entryLoai" class="form-select form-select-sm">
+                    <option value="">-- Tất cả --</option>
+                    <option value="MUA_HANG" selected="@(ViewData["entryLoai"]?.ToString() == "MUA_HANG")">Mua Hàng</option>
+                    <option value="THANH_TOAN" selected="@(ViewData["entryLoai"]?.ToString() == "THANH_TOAN")">Thanh Toán</option>
+                    <option value="CAN_TRU" selected="@(ViewData["entryLoai"]?.ToString() == "CAN_TRU")">Cấn Trừ</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Diễn giải</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="entryDienGiai" class="form-control" placeholder="Tìm diễn giải..." value="@ViewData["entryDienGiai"]" />
+                    <button class="btn btn-primary" type="submit">Lọc</button>
+                    <a asp-action="Details" asp-route-id="@Model.MaDoiTuong" class="btn btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
-<table class="table table-striped">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+        Thêm Giao Dịch
+    </button>
+    <button type="button" class="btn btn-outline-success" onclick="printSelected()">
+        <i class="bi bi-printer"></i> In các dòng đã chọn
+    </button>
+</div>
+
+<table class="table table-striped table-sm text-[13px]" id="tableEntries">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Ngày Giao Dịch</th>
-            <th>Loại</th>
-            <th>Số Tiền</th>
-            <th>Diễn Giải</th>
+            <th style="width: 30px;"><input type="checkbox" id="checkAllEntries" /></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-entrySortOrder="@ViewData["EntrySort_Id"]" class="text-decoration-none text-dark">ID <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-entrySortOrder="@ViewData["EntrySort_Date"]" class="text-decoration-none text-dark">Ngày Giao Dịch <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-entrySortOrder="@ViewData["EntrySort_Type"]" class="text-decoration-none text-dark">Loại <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-entrySortOrder="@ViewData["EntrySort_Amount"]" class="text-decoration-none text-dark">Số Tiền <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-entrySortOrder="@ViewData["EntrySort_Desc"]" class="text-decoration-none text-dark">Diễn Giải <i class="bi bi-arrow-down-up"></i></a></th>
         </tr>
     </thead>
     <tbody>
         @foreach (var entry in entries ?? Enumerable.Empty<QLBH_ThuySan.Models.SoRiengKhachHang>())
         {
             <tr>
+                <td><input type="checkbox" class="entry-checkbox" value="@entry.Id" /></td>
                 <td>@entry.Id</td>
                 <td>@(entry.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
                 <td>
-                    @if (entry.LoaiGiaoDich == "No")
+                    @if (entry.LoaiGiaoDich == "MUA_HANG")
                     {
-                        <span class="badge bg-danger">Ghi Nợ</span>
+                        <span class="badge bg-danger">Ghi Nợ (Mua)</span>
                     }
-                    else if (entry.LoaiGiaoDich == "Thu")
+                    else if (entry.LoaiGiaoDich == "THANH_TOAN")
                     {
-                        <span class="badge bg-success">Thu Tiền</span>
+                        <span class="badge bg-success">Thu Tiền (Thanh Toán)</span>
+                    }
+                    else if (entry.LoaiGiaoDich == "CAN_TRU")
+                    {
+                        <span class="badge bg-info">Cấn Trừ</span>
                     }
                     else
                     {
                         <span class="badge bg-secondary">@entry.LoaiGiaoDich</span>
                     }
                 </td>
-                <td class="@(entry.LoaiGiaoDich == "No" ? "text-danger" : "text-success")">
+                <td class="@(entry.LoaiGiaoDich == "MUA_HANG" ? "text-danger" : "text-success") fw-bold text-end pe-4">
                     @((entry.SoTienPhatSinh ?? 0).ToString("N0")) VNĐ
                 </td>
                 <td>@entry.DienGiai</td>
@@ -93,8 +144,9 @@
                     <div class="mb-3">
                         <label class="form-label">Loại Giao Dịch</label>
                         <select class="form-select" name="loaiGiaoDich" required>
-                            <option value="No">Ghi Nợ</option>
-                            <option value="Thu">Thu Tiền</option>
+                            <option value="MUA_HANG">Ghi Nợ (Mua Hàng)</option>
+                            <option value="THANH_TOAN">Thu Tiền (Thanh Toán)</option>
+                            <option value="CAN_TRU">Cấn Trừ</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -115,6 +167,273 @@
     </div>
 </div>
 
-<div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="h3 m-0">Lịch Sử Mua Hàng</div>
+    <button type="button" class="btn btn-outline-success" onclick="printSelected()">
+        <i class="bi bi-printer"></i> In các dòng đã chọn
+    </button>
+</div>
+<div class="mb-3" id="filterInvoices">
+    <div class="card card-body bg-light text-[13px]">
+        <form method="get" class="row g-2">
+            <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Mã phiếu</label>
+                <input type="text" name="pxMaPhieu" class="form-control form-control-sm" placeholder="PX..." value="@ViewData["pxMaPhieu"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Từ ngày</label>
+                <input type="date" name="pxFromDate" class="form-control form-control-sm" value="@ViewData["pxFromDate"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Đến ngày</label>
+                <input type="date" name="pxToDate" class="form-control form-control-sm" value="@ViewData["pxToDate"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Trạng thái</label>
+                <div class="input-group input-group-sm">
+                    <select name="pxTrangThai" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="Đã Thanh Toán" selected="@(ViewData["pxTrangThai"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
+                        <option value="Chưa Thanh Toán" selected="@(ViewData["pxTrangThai"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán</option>
+                        <option value="Thanh Toán Một Phần" selected="@(ViewData["pxTrangThai"]?.ToString() == "Thanh Toán Một Phần")">Thanh Toán Một Phần</option>
+                    </select>
+                    <button class="btn btn-info text-white" type="submit">Lọc</button>
+                    <a asp-action="Details" asp-route-id="@Model.MaDoiTuong" class="btn btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped table-hover align-middle table-sm text-[13px]" id="tableBills">
+    <thead class="table-light">
+        <tr>
+            <th style="width: 30px;"><input type="checkbox" id="checkAllBills" /></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Ma"]" class="text-decoration-none text-dark">Mã Phiếu <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Date"]" class="text-decoration-none text-dark">Ngày Xuất <i class="bi bi-arrow-down-up"></i></a></th>
+            <th>Loại Xuất</th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Status"]" class="text-decoration-none text-dark">Trạng Thái <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Total"]" class="text-decoration-none text-dark">Phải TT <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Paid"]" class="text-decoration-none text-dark">Đã TT <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-pxSortOrder="@ViewData["PXSort_Debt"]" class="text-decoration-none text-dark">Còn Nợ <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-center">Hành Động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var px in phieuXuats ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuXuat>())
+        {
+            <tr>
+                <td><input type="checkbox" class="bill-checkbox" value="@px.MaPhieu" /></td>
+                <td class="fw-bold">@px.MaPhieu</td>
+                <td>@(px.NgayXuat?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
+                <td>
+                    @if (px.LoaiXuat == "SALES")
+                    {
+                        <span class="badge bg-primary">Bán Hàng</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@px.LoaiXuat</span>
+                    }
+                </td>
+                <td>
+                    @if (px.TrangThaiThanhToan == "Đã Thanh Toán")
+                    {
+                        <span class="badge bg-success">@px.TrangThaiThanhToan</span>
+                    }
+                    else if (px.TrangThaiThanhToan == "Chưa Thanh Toán")
+                    {
+                        <span class="badge bg-danger">@px.TrangThaiThanhToan</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">@px.TrangThaiThanhToan</span>
+                    }
+                </td>
+                <td class="text-end text-primary fw-bold">
+                    @((px.SoPhaiThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-end text-success fw-bold">
+                    @((px.SoDaThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-end text-danger fw-bold">
+                    @((px.SoChuaThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modal-@px.MaPhieu">
+                            <i class="bi bi-list-ul"></i> Chi Tiết
+                        </button>
+                        @if ((px.SoChuaThanhToan ?? 0) > 0)
+                        {
+                            <button type="button" class="btn btn-sm btn-success px-3" 
+                                    onclick="openPayModal('@px.MaPhieu', @(px.SoChuaThanhToan ?? 0))">
+                                <i class="bi bi-currency-dollar"></i> Thanh Toán
+                            </button>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modals for Details -->
+@foreach (var px in phieuXuats ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuXuat>())
+{
+    <div class="modal fade" id="modal-@px.MaPhieu" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chi Tiết Phiếu @px.MaPhieu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Mã Hàng</th>
+                                <th>Tên Hàng</th>
+                                <th class="text-center">Số Lượng</th>
+                                <th class="text-end">Đơn Giá</th>
+                                <th class="text-end">Thành Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ct in px.ChiTietPhieuXuats)
+                            {
+                                <tr>
+                                    <td>@ct.MaHang</td>
+                                    <td>@(ct.MaHangNavigation?.TenHang ?? "N/A")</td>
+                                    <td class="text-center">@((ct.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((ct.GiaBan ?? 0).ToString("N0"))</td>
+                                    <td class="text-end fw-bold">
+                                        @(((decimal)(ct.SoLuong ?? 0) * (ct.GiaBan ?? 0)).ToString("N0"))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="fw-bold">Số Phải TT: <span class="text-primary fs-5">@((px.SoPhaiThanhToan ?? 0).ToString("N0")) VNĐ</span> | Đã TT: <span class="text-success fs-5">@((px.SoDaThanhToan ?? 0).ToString("N0")) VNĐ</span> | Còn Nợ: <span class="text-danger fs-5">@((px.SoChuaThanhToan ?? 0).ToString("N0")) VNĐ</span></div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Thanh Toán -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="PayBill" method="post">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Thanh Toán Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maKhachHang" value="@Model.MaDoiTuong" />
+                    <input type="hidden" id="payMaPhieu" name="maPhieu" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền còn nợ:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thanh toán:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-success fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text">Mặc định là thanh toán toàn bộ phiếu.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success">Xác nhận thanh toán</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
     <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
 </div>
+
+@section Scripts {
+    <script>
+        // Check All functionality
+        document.getElementById('checkAllEntries')?.addEventListener('change', function() {
+            document.querySelectorAll('.entry-checkbox').forEach(cb => cb.checked = this.checked);
+        });
+        document.getElementById('checkAllBills')?.addEventListener('change', function() {
+            document.querySelectorAll('.bill-checkbox').forEach(cb => cb.checked = this.checked);
+        });
+
+        function printSelected() {
+            var selectedEntries = Array.from(document.querySelectorAll('.entry-checkbox:checked')).map(cb => cb.value);
+            var selectedBills = Array.from(document.querySelectorAll('.bill-checkbox:checked')).map(cb => cb.value);
+
+            if (selectedEntries.length === 0 && selectedBills.length === 0) {
+                alert('Vui lòng chọn ít nhất một dòng để in.');
+                return;
+            }
+
+            var url = '/PrivateLedger/Print?id=@Model.MaDoiTuong';
+            selectedEntries.forEach(id => url += '&selectedEntries=' + id);
+            selectedBills.forEach(ma => url += '&selectedBills=' + ma);
+
+            window.open(url, '_blank');
+        }
+
+        function formatNumber(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(maPhieu, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payMaPhieu').value = maPhieu;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            // Set initial values
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = remaining.toLocaleString('vi-VN').replace(/,/g, ''); // Ensure dot format if possible or just use toLocaleString
+            // Actually, for simplicity in Vietnamese:
+            amountDisplay.value = formatNumber(remaining.toString());
+
+            document.getElementById('payDienGiai').value = 'Thanh toán cho phiếu ' + maPhieu;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        // Auto-format current input
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumber(value);
+            document.getElementById('payAmount').value = value;
+        });
+    </script>
+}
+

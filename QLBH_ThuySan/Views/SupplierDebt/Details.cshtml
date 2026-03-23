@@ -8,7 +8,7 @@
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Công Nợ Khách Hàng - @Model.TenDoiTuong</h2>
+        <h2>Công Nợ Nhà Cung Cấp - @Model.TenDoiTuong</h2>
         <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
     </div>
 
@@ -23,9 +23,9 @@
                      <p><strong>Điện Thoại:</strong> @Model.SoDienThoai</p>
                 </div>
                 <div class="col-md-6 text-end">
-                     <h5>Tổng Giá Trị Nhập Hàng</h5>
-                     <h2 class="text-danger fw-bold">@string.Format("{0:N0}", totalImport) VNĐ</h2>
-                     <small class="text-muted text-warning">Lưu ý: Chưa trừ các khoản chi trả</small>
+                     <h5>Dư Nợ Hiện Tại (Tính Nhập)</h5>
+                     <h2 class="text-danger fw-bold">@string.Format("{0:N0}", Model.DuNoLuyKe ?? 0) VNĐ</h2>
+                     <small class="text-muted">Lưu ý: Tổng nợ từ tất cả các phiếu nhập chưa thanh toán hết</small>
                 </div>
             </div>
         </div>
@@ -39,7 +39,9 @@
                     <th>Mã Phiếu</th>
                     <th>Ngày Nhập</th>
                     <th>Hạn Thanh Toán</th>
-                    <th class="text-end">Tiền Hàng</th>
+                    <th class="text-end">Phải TT</th>
+                    <th class="text-end">Đã TT</th>
+                    <th class="text-end">Còn Nợ</th>
                     <th>Chi Tiết</th>
                 </tr>
             </thead>
@@ -59,7 +61,9 @@
                                 <span>@item.HanThanhToan?.ToString("dd/MM/yyyy")</span>
                             }
                         </td>
-                        <td class="text-end fw-bold">@string.Format("{0:N0}", item.TongTien)</td>
+                        <td class="text-end fw-bold text-primary">@string.Format("{0:N0}", item.SoPhaiThanhToan)</td>
+                        <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.SoDaThanhToan)</td>
+                        <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.SoChuaThanhToan)</td>
                         <td class="text-center">
                             <a asp-controller="Import" asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-info text-white">
                                 <i class="bi bi-eye"></i>
@@ -71,3 +75,4 @@
         </table>
     </div>
 </div>
+

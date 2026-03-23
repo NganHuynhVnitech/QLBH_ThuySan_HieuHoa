@@ -13,7 +13,11 @@ public partial class PhieuXuat
 
     public string? IdKhachHang { get; set; }
 
-    public decimal? TongTien { get; set; }
+    public decimal? SoPhaiThanhToan { get; set; }
+
+    public decimal? SoDaThanhToan { get; set; }
+
+    public decimal? SoChuaThanhToan { get; set; }
 
     public DateTime? NgayThanhToan { get; set; }
 

@@ -10,6 +10,7 @@ public partial class DaiLy
     public string? TenDaiLy { get; set; }
 
     public string? LoaiDaiLy { get; set; }
+    public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<Kho> Khos { get; set; } = new List<Kho>();
 

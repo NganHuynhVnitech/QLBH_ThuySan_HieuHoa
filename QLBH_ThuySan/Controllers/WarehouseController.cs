@@ -24,6 +24,7 @@ namespace QLBH_ThuySan.Controllers
         {
             var warehouses = await _context.Khos
                 .Include(k => k.MaDaiLyPhuTrachNavigation)
+                .Where(k => !k.IsDisabled)
                 .ToListAsync();
             return View(warehouses);
         }
@@ -135,7 +136,8 @@ namespace QLBH_ThuySan.Controllers
             var kho = await _context.Khos.FindAsync(id);
             if (kho != null)
             {
-                _context.Khos.Remove(kho);
+                kho.IsDisabled = true;
+                _context.Update(kho);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
@@ -156,7 +158,7 @@ namespace QLBH_ThuySan.Controllers
 
             var warehouse = await _context.Khos
                 .Include(k => k.MaDaiLyPhuTrachNavigation)
-                .FirstOrDefaultAsync(m => m.MaKho == id);
+                .FirstOrDefaultAsync(m => m.MaKho == id && !m.IsDisabled);
 
             if (warehouse == null)
             {

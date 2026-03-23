@@ -103,7 +103,9 @@
                         <th>Đối Tượng</th>
                         <th>Quy Tắc (Tóm Tắt)</th>
                         <th>Ngày Thanh Toán</th>
-                        <th class="text-end">Tổng Tiền CK</th>
+                        <th class="text-end">Phải TT</th>
+                        <th class="text-end">Đã TT</th>
+                        <th class="text-end">Còn Nợ</th>
                         <th class="text-center">Trạng Thái</th>
                         <th class="text-center">Thao Tác</th>
                     </tr>
@@ -137,8 +139,14 @@
                             <td>
                                 @item.NgayThanhToan?.ToString("dd/MM/yyyy")
                             </td>
+                            <td class="text-end fw-bold text-primary">
+                                @string.Format("{0:N0}", item.SoPhaiThanhToan)
+                            </td>
                             <td class="text-end fw-bold text-success">
-                                @string.Format("{0:N0}", item.TongTien)
+                                @string.Format("{0:N0}", item.SoDaThanhToan)
+                            </td>
+                            <td class="text-end fw-bold text-danger">
+                                @string.Format("{0:N0}", item.SoChuaThanhToan)
                             </td>
                             <td class="text-center">
                                 @if (item.TrangThai == "Đã thanh toán")
@@ -165,3 +173,4 @@
         </div>
     </div>
 </div>
+
