@@ -147,6 +147,17 @@ namespace QLBH_ThuySan.Controllers
                 .FirstOrDefaultAsync(m => m.MaPhieu == id);
 
             if (phieuXuat == null) return NotFound();
+            
+            // Check if there are older unpaid bills for this customer
+            ViewBag.HasOlderUnpaid = false;
+            if (phieuXuat.LoaiXuat == "SALES" && !string.IsNullOrEmpty(phieuXuat.IdKhachHang))
+            {
+                ViewBag.HasOlderUnpaid = await _context.PhieuXuats
+                    .AnyAsync(p => p.IdKhachHang == phieuXuat.IdKhachHang 
+                              && p.NgayXuat < phieuXuat.NgayXuat 
+                              && p.SoChuaThanhToan > 0
+                              && p.TrangThaiThanhToan != "Đã Thanh Toán");
+            }
 
             return View(phieuXuat);
         }
@@ -451,10 +462,106 @@ namespace QLBH_ThuySan.Controllers
                 soPhaiThanhToan = p.SoPhaiThanhToan.HasValue ? p.SoPhaiThanhToan.Value.ToString("N0") : "0",
                 soDaThanhToan = p.SoDaThanhToan.HasValue ? p.SoDaThanhToan.Value.ToString("N0") : "0",
                 soChuaThanhToan = p.SoChuaThanhToan.HasValue ? p.SoChuaThanhToan.Value.ToString("N0") : "0",
+                soChuaThanhToanRaw = p.SoChuaThanhToan ?? 0,
                 trangThaiThanhToan = p.TrangThaiThanhToan
             }).ToListAsync();
 
             return Json(result);
+        }
+
+        // POST: Export/Pay
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Pay(string id, decimal amount, string dienGiai)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            var phieuXuat = await _context.PhieuXuats
+                .Include(p => p.IdKhachHangNavigation)
+                .FirstOrDefaultAsync(p => p.MaPhieu == id);
+
+            if (phieuXuat == null) return NotFound();
+            var customerId = phieuXuat.IdKhachHang;
+
+            if (amount <= 0)
+            {
+                TempData["ErrorMessage"] = "Số tiền thanh toán không hợp lệ.";
+                return RedirectToAction(nameof(Details), new { id = phieuXuat.MaPhieu });
+            }
+
+            // 1. Create a ledger entry for the payment (SoRiengKhachHang)
+            if (!string.IsNullOrEmpty(customerId))
+            {
+                var ledgerEntry = new SoRiengKhachHang
+                {
+                    MaKhachHang = customerId,
+                    NgayGiaoDich = DateTime.Now,
+                    LoaiGiaoDich = "THANH_TOAN",
+                    SoTienPhatSinh = amount,
+                    DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Thanh toán cho phiếu {phieuXuat.MaPhieu}" : dienGiai
+                };
+                _context.SoRiengKhachHangs.Add(ledgerEntry);
+
+                // 2. Update customer cumulative debt
+                if (phieuXuat.IdKhachHangNavigation != null)
+                {
+                    phieuXuat.IdKhachHangNavigation.DuNoLuyKe = (phieuXuat.IdKhachHangNavigation.DuNoLuyKe ?? 0) - amount;
+                    _context.Update(phieuXuat.IdKhachHangNavigation);
+                }
+            }
+
+            // 3. Create Payment Voucher (THU)
+            var paymentVoucher = new PhieuThuChi
+            {
+                MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                LoaiPhieu = "THU",
+                NgayLap = DateTime.Now,
+                SoTien = amount,
+                LyDo = string.IsNullOrEmpty(dienGiai) ? ("Thu tiền thanh toán phiếu " + phieuXuat.MaPhieu) : dienGiai,
+                MaDoiTuong = customerId
+            };
+            _context.PhieuThuChis.Add(paymentVoucher);
+
+            // 4. Distribute payment to unpaid PhieuXuats using FIFO logic
+            var unpaidInvoices = await _context.PhieuXuats
+                .Where(p => p.IdKhachHang == customerId && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
+                .OrderBy(p => p.NgayXuat)
+                .ToListAsync();
+            
+            decimal remainingPayment = amount;
+            var settledBills = new List<string>();
+            foreach(var inv in unpaidInvoices)
+            {
+                if (remainingPayment <= 0) break;
+                
+                var debt = inv.SoChuaThanhToan ?? 0;
+                if (remainingPayment >= debt)
+                {
+                    remainingPayment -= debt;
+                    inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                    inv.SoChuaThanhToan = 0;
+                    inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                    inv.NgayThanhToan = DateTime.Now;
+                    settledBills.Add(inv.MaPhieu);
+                }
+                else
+                {
+                    inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                    inv.SoChuaThanhToan -= remainingPayment;
+                    remainingPayment = 0;
+                    if (inv.SoChuaThanhToan > 0)
+                    {
+                        inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                    }
+                    settledBills.Add(inv.MaPhieu + " (một phần)");
+                }
+                _context.Update(inv);
+            }
+
+            await _context.SaveChangesAsync();
+            string billList = string.Join(", ", settledBills);
+            TempData["SuccessMessage"] = $"Đã xác nhận thu {amount:N0} VNĐ. Tiền được phân bổ cho: {billList}.";
+            return RedirectToAction(nameof(Details), new { id = phieuXuat.MaPhieu });
         }
     }
 }

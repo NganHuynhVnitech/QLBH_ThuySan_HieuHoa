@@ -10,6 +10,12 @@
             <h1>Chi Tiết Phiếu Xuất: <span class="text-primary">@Model.MaPhieu</span></h1>
         </div>
         <div class="col-md-4 text-end align-self-center">
+            @if (Model.LoaiXuat == "SALES" && Model.TrangThaiThanhToan != "Đã Thanh Toán")
+            {
+                <button type="button" class="btn btn-primary me-2" onclick="openPayModal('@Model.MaPhieu', @(Model.SoChuaThanhToan ?? 0))">
+                    <i class="bi bi-cash-coin"></i> Thanh Toán
+                </button>
+            }
             <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
              <button onclick="window.print()" class="btn btn-outline-dark"><i class="bi bi-printer"></i> In Phiếu</button>
         </div>
@@ -83,5 +89,96 @@
             </table>
         </div>
     </div>
+
+    <!-- Modal Thanh Toán -->
+    <div class="modal fade" id="payBillModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="Pay" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Thu Tiền Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="payMaPhieu" name="id" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Khách hàng còn nợ:</label>
+                            <div class="input-group">
+                                <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Số tiền thu:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control border-primary fw-bold" id="payAmountDisplay" required />
+                                <input type="hidden" id="payAmount" name="amount" />
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                            <div class="form-text">Mặc định là thu toàn bộ phiếu. <strong>Lưu ý:</strong> Hệ thống áp dụng quy tắc FIFO (thu các phiếu cũ nhất trước). Nếu đây không phải phiếu cũ nhất, tiền sẽ được phân bổ cho các phiếu cũ hơn trước.</div>
+                        </div>
+                        <div id="fifoWarning" class="alert alert-warning py-2 small d-none">
+                            <i class="bi bi-exclamation-triangle"></i> Khách hàng này vẫn còn các phiếu cũ hơn chưa thanh toán. Tiền thu sẽ được ưu tiên trừ cho các phiếu đó trước.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Diễn Giải</label>
+                            <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận thu tiền</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        function formatNumberJS(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(maPhieu, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payMaPhieu').value = maPhieu;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumberJS(remaining.toString());
+
+            document.getElementById('payDienGiai').value = 'Thu tiền thanh toán for phiếu ' + maPhieu;
+            
+            // FIFO Warning
+            var hasOlder = '@(ViewBag.HasOlderUnpaid ?? false)'.toLowerCase() === 'true';
+            if (hasOlder) {
+                document.getElementById('fifoWarning').classList.remove('d-none');
+            } else {
+                document.getElementById('fifoWarning').classList.add('d-none');
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumberJS(value);
+            document.getElementById('payAmount').value = value;
+        });
+    </script>
+}
 

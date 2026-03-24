@@ -112,10 +112,101 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-info">Chi Tiết</a>
+                    <div class="btn-group" role="group">
+                        <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-info text-white">
+                            <i class="bi bi-eye"></i> Chi Tiết
+                        </a>
+                        @if ((item.DuNoLuyKe ?? 0) > 0)
+                        {
+                            <button type="button" class="btn btn-sm btn-success" onclick="openPayModal('@item.MaDoiTuong', @(item.DuNoLuyKe ?? 0))">
+                                <i class="bi bi-cash-coin"></i> Thanh Toán
+                            </button>
+                        }
+                    </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 </div>
+
+<!-- Modal Thanh Toán -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/PrivateLedger/AddEntry" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Thu Tiền Khách Hàng <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payMaKhachHang" name="maKhachHang" />
+                    <input type="hidden" name="loaiGiaoDich" value="THANH_TOAN" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Khách hàng còn nợ:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thu:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-success fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="soTienPhatSinh" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text">Hệ thống sẽ tự động trừ dần các phiếu nợ cũ nhất.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success">Xác nhận thu tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatNumberJS(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(id, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = id;
+            document.getElementById('payMaKhachHang').value = id;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumberJS(remaining.toString());
+
+            document.getElementById('payDienGiai').value = 'Thu tiền thanh toán nợ cho khách hàng ' + id;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumberJS(value);
+            document.getElementById('payAmount').value = value;
+        });
+    </script>
+}

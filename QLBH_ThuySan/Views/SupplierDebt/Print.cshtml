@@ -1,0 +1,155 @@
+@model QLBH_ThuySan.Models.NhaCungCap
+
+@{
+    Layout = null;
+    var entries = ViewBag.Entries as List<QLBH_ThuySan.Models.SoRiengNhaCungCap>;
+    var imports = ViewBag.Imports as List<QLBH_ThuySan.Models.PhieuNhap>;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>In Chi Tiết Công Nợ NCC - @Model.TenDoiTuong</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: black; background: white; }
+        .print-container { width: 210mm; margin: 0 auto; padding: 10mm; }
+        .header-title { text-align: center; text-transform: uppercase; font-weight: bold; font-size: 20px; margin-bottom: 20px; }
+        .supplier-info { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .section-title { font-weight: bold; text-decoration: underline; margin-top: 20px; margin-bottom: 10px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        .footer { margin-top: 30px; text-align: right; font-style: italic; }
+        @@media print {
+            .no-print { display: none; }
+            body { margin: 0; padding: 0; }
+            .print-container { width: 100%; margin: 0; padding: 5mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <div class="no-print mb-3">
+            <button onclick="window.print()" class="btn btn-primary">Xác nhận In bản kê</button>
+            <button onclick="window.close()" class="btn btn-secondary">Đóng</button>
+        </div>
+
+        <div class="header-title">BẢN CHI TIẾT GIAO DỊCH VÀ CÔNG NỢ NHÀ CUNG CẤP</div>
+
+        <div class="supplier-info">
+            <div class="row">
+                <div class="col-6">
+                    <strong>Nhà cung cấp:</strong> @Model.TenDoiTuong<br />
+                    <strong>Mã NCC:</strong> @Model.MaDoiTuong<br />
+                    <strong>Địa chỉ:</strong> @Model.DiaChi
+                </div>
+                <div class="col-6 text-end">
+                    <strong>Điện thoại:</strong> @Model.SoDienThoai<br />
+                    <strong>Ngày in:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")<br />
+                    <strong>Dư nợ hiện tại:</strong> <span class="fs-5 fw-bold">@((Model.DuNoLuyKe ?? 0).ToString("N0")) VNĐ</span>
+                </div>
+            </div>
+        </div>
+
+        @if (entries != null && entries.Any())
+        {
+            <div class="section-title">Lịch sử giao dịch sổ riêng đã chọn:</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%">STT</th>
+                        <th style="width: 20%">Ngày Giao Dịch</th>
+                        <th style="width: 20%">Loại GĐ</th>
+                        <th style="width: 20%" class="text-end">Số Tiền (VNĐ)</th>
+                        <th style="width: 35%">Diễn giải</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int i = 1; }
+                    @foreach (var entry in entries)
+                    {
+                        <tr>
+                            <td class="text-center">@(i++)</td>
+                            <td>@entry.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (entry.LoaiGiaoDich == "MUA_HANG") { <span>Nhập Hàng (Nợ NCC)</span> }
+                                else if (entry.LoaiGiaoDich == "THANH_TOAN") { <span>Thanh Toán (Chi Tiền)</span> }
+                                else if (entry.LoaiGiaoDich == "CAN_TRU") { <span>Cấn Trừ Công Nợ</span> }
+                                else { <span>@entry.LoaiGiaoDich</span> }
+                            </td>
+                            <td class="text-end fw-bold">@((entry.SoTienPhatSinh ?? 0).ToString("N0"))</td>
+                            <td class="small">@entry.DienGiai</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (imports != null && imports.Any())
+        {
+            <div class="section-title">Chi tiết các phiếu nhập hàng liên quan:</div>
+            @foreach (var pn in imports)
+            {
+                <div style="margin-top: 15px; border: 1px dotted #333; padding: 10px; border-radius: 5px;">
+                    <div class="row fw-bold mb-2">
+                        <div class="col-6">Phiếu: @pn.MaPhieu - Ngày nhập: @pn.NgayNhap?.ToString("dd/MM/yyyy")</div>
+                        <div class="col-6 text-end">Trạng thái: @pn.TrangThaiThanhToan</div>
+                    </div>
+                    <table class="table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã hàng - Tên hàng hóa sản phẩm</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ct in pn.ChiTietPhieuNhaps)
+                            {
+                                <tr>
+                                    <td>@ct.MaHang - @(ct.MaHangNavigation?.TenHang ?? "")</td>
+                                    <td class="text-center">@((ct.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((ct.DonGiaNhap ?? 0).ToString("N0"))</td>
+                                    <td class="text-end fw-bold">@(((decimal)(ct.SoLuong ?? 0) * (ct.DonGiaNhap ?? 0)).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="fw-bold bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end">Tổng giá trị phiếu nhập:</td>
+                                <td class="text-end text-primary">@((pn.SoPhaiThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Đã thanh toán cho phiếu:</td>
+                                <td class="text-end text-success">@((pn.SoDaThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Còn nợ phiếu này:</td>
+                                <td class="text-end text-danger">@((pn.SoChuaThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        }
+
+        <div class="footer d-flex justify-content-between">
+            <div style="width: 40%; text-align: center;">
+                <strong>Người lập bản kê</strong><br />
+                <br /><br /><br />
+                ...........................................
+            </div>
+            <div style="width: 40%; text-align: center;">
+                <strong>Xác nhận từ NCC</strong><br />
+                <br /><br /><br />
+                ...........................................
+            </div>
+        </div>
+    </div>
+</body>
+</html>

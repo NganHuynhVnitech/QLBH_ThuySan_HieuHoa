@@ -21,4 +21,5 @@ public partial class NhaCungCap
     public bool IsDisabled { get; set; } = false;
 
     public virtual ICollection<PhieuNhap> PhieuNhaps { get; set; } = new List<PhieuNhap>();
+    public virtual ICollection<SoRiengNhaCungCap> SoRiengNhaCungCaps { get; set; } = new List<SoRiengNhaCungCap>();
 }

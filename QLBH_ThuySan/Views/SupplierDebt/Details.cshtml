@@ -1,78 +1,588 @@
 @model QLBH_ThuySan.Models.NhaCungCap
 
 @{
-    ViewData["Title"] = "Chi Tiết Công Nợ NCC";
+    ViewData["Title"] = "Chi Tiết Công Nợ Nhà Cung Cấp";
+    var entries = ViewBag.Entries as IEnumerable<QLBH_ThuySan.Models.SoRiengNhaCungCap>;
     var imports = ViewBag.Imports as IEnumerable<QLBH_ThuySan.Models.PhieuNhap>;
-    decimal totalImport = ViewBag.TotalImportValue ?? 0;
+    var discounts = ViewBag.Discounts as IEnumerable<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
 }
 
-<div class="container">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Công Nợ Nhà Cung Cấp - @Model.TenDoiTuong</h2>
-        <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">Quay Lại</a>
+        </div>
     </div>
 
-    <div class="card mb-4 border-danger">
-        <div class="card-header bg-danger text-white">
-             <h5 class="mb-0">Tổng Hợp</h5>
+    <!-- Summary Card -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white d-flex justify-content-between">
+            <h5 class="mb-0">Tổng Hợp Công Nợ</h5>
+            <span class="badge bg-light text-primary">ID: @Model.MaDoiTuong</span>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-6">
-                     <p><strong>Mã NCC:</strong> @Model.MaDoiTuong</p>
-                     <p><strong>Điện Thoại:</strong> @Model.SoDienThoai</p>
+                <div class="col-md-6 border-end">
+                    <p class="mb-1"><strong>Tên NCC:</strong> @Model.TenDoiTuong</p>
+                    <p class="mb-1"><strong>Điện Thoại:</strong> @Model.SoDienThoai</p>
+                    <p class="mb-1"><strong>Địa Chỉ:</strong> @Model.DiaChi</p>
                 </div>
                 <div class="col-md-6 text-end">
-                     <h5>Dư Nợ Hiện Tại (Tính Nhập)</h5>
-                     <h2 class="text-danger fw-bold">@string.Format("{0:N0}", Model.DuNoLuyKe ?? 0) VNĐ</h2>
-                     <small class="text-muted">Lưu ý: Tổng nợ từ tất cả các phiếu nhập chưa thanh toán hết</small>
+                    <h5 class="text-muted mb-1">Dư Nợ Hiện Tại (Số tiền mình nợ NCC)</h5>
+                    <h2 class="@((Model.DuNoLuyKe ?? 0) > 0 ? "text-danger" : "text-success") fw-bold">
+                        @((Model.DuNoLuyKe ?? 0).ToString("N0")) VNĐ
+                    </h2>
+                    @if ((Model.DuNoLuyKe ?? 0) < 0)
+                    {
+                        <small class="text-success">(NCC đang nợ ngược lại mình / Mình trả thừa)</small>
+                    }
                 </div>
             </div>
         </div>
     </div>
 
-    <h3>Lịch Sử Phiếu Nhập</h3>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-             <thead class="table-dark">
-                <tr>
-                    <th>Mã Phiếu</th>
-                    <th>Ngày Nhập</th>
-                    <th>Hạn Thanh Toán</th>
-                    <th class="text-end">Phải TT</th>
-                    <th class="text-end">Đã TT</th>
-                    <th class="text-end">Còn Nợ</th>
-                    <th>Chi Tiết</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach(var item in imports ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuNhap>())
-                {
-                    <tr>
-                        <td>@item.MaPhieu</td>
-                        <td>@item.NgayNhap?.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>
-                             @if(item.HanThanhToan < DateTime.Now)
-                            {
-                                <span class="text-danger fw-bold">@item.HanThanhToan?.ToString("dd/MM/yyyy") (Quá hạn)</span>
-                            }
-                            else
-                            {
-                                <span>@item.HanThanhToan?.ToString("dd/MM/yyyy")</span>
-                            }
-                        </td>
-                        <td class="text-end fw-bold text-primary">@string.Format("{0:N0}", item.SoPhaiThanhToan)</td>
-                        <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.SoDaThanhToan)</td>
-                        <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.SoChuaThanhToan)</td>
-                        <td class="text-center">
-                            <a asp-controller="Import" asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-info text-white">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <!-- Section 1: Lịch Sử Giao Dịch -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="bi bi-clock-history"></i> Lịch Sử Giao Dịch & Sổ Riêng</h3>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+                    <i class="bi bi-plus-circle"></i> Thêm Giao Dịch
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-light ms-2" onclick="printSelected()">
+                    <i class="bi bi-printer"></i> In các dòng đã chọn
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form method="get" class="row g-2 mb-3 bg-light p-2 rounded">
+                <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Từ ngày</label>
+                    <input type="date" name="entryFromDate" class="form-control form-control-sm" value="@ViewData["entryFromDate"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Đến ngày</label>
+                    <input type="date" name="entryToDate" class="form-control form-control-sm" value="@ViewData["entryToDate"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Loại GĐ</label>
+                    <select name="entryLoai" class="form-select form-select-sm">
+                        <option value="">-- Tất cả --</option>
+                        <option value="MUA_HANG" selected="@(ViewData["entryLoai"]?.ToString() == "MUA_HANG")">Mua Hàng</option>
+                        <option value="THANH_TOAN" selected="@(ViewData["entryLoai"]?.ToString() == "THANH_TOAN")">Thanh Toán</option>
+                        <option value="CAN_TRU" selected="@(ViewData["entryLoai"]?.ToString() == "CAN_TRU")">Cấn Trừ</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Diễn giải</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="entryDienGiai" class="form-control" placeholder="Tìm kiếm diễn giải..." value="@ViewData["entryDienGiai"]" />
+                        <button class="btn btn-primary" type="submit">Lọc</button>
+                        <a href="/SupplierDebt/Details/@Model.MaDoiTuong" class="btn btn-outline-secondary">Xóa Lọc</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="tableEntries">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th style="width: 30px;"><input type="checkbox" id="checkAllEntries" /></th>
+                            <th><a href="?id=@Model.MaDoiTuong&entrySortOrder=@ViewData["EntrySort_Id"]" class="text-decoration-none text-dark">ID <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&entrySortOrder=@ViewData["EntrySort_Date"]" class="text-decoration-none text-dark">Ngày Giao Dịch <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&entrySortOrder=@ViewData["EntrySort_Type"]" class="text-decoration-none text-dark">Loại <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-4"><a href="?id=@Model.MaDoiTuong&entrySortOrder=@ViewData["EntrySort_Amount"]" class="text-decoration-none text-dark">Số Tiền <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&entrySortOrder=@ViewData["EntrySort_Desc"]" class="text-decoration-none text-dark">Diễn Giải <i class="bi bi-arrow-down-up"></i></a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in entries ?? Enumerable.Empty<QLBH_ThuySan.Models.SoRiengNhaCungCap>())
+                        {
+                            <tr>
+                                <td><input type="checkbox" class="entry-checkbox" value="@entry.Id" /></td>
+                                <td>@entry.Id</td>
+                                <td>@(entry.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
+                                <td>
+                                    @if (entry.LoaiGiaoDich == "MUA_HANG")
+                                    {
+                                        <span class="badge bg-danger">Ghi Nợ (Mua Hàng)</span>
+                                    }
+                                    else if (entry.LoaiGiaoDich == "THANH_TOAN")
+                                    {
+                                        <span class="badge bg-success">Thanh Toán (Chi Tiền)</span>
+                                    }
+                                    else if (entry.LoaiGiaoDich == "CAN_TRU")
+                                    {
+                                        <span class="badge bg-info">Cấn Trừ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@entry.LoaiGiaoDich</span>
+                                    }
+                                </td>
+                                <td class="@(entry.LoaiGiaoDich == "MUA_HANG" ? "text-danger" : "text-success") fw-bold text-end pe-4">
+                                    @((entry.SoTienPhatSinh ?? 0).ToString("N0")) VNĐ
+                                </td>
+                                <td>@entry.DienGiai</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Lịch Sử Chiết Khấu -->
+    <div class="card mb-5 shadow-sm border-warning">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="bi bi-percent"></i> Lịch Sử Chiết Khấu Nhận Được</h3>
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form method="get" class="row g-2 mb-3 bg-light p-2 rounded">
+                <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Mã phiếu</label>
+                    <input type="text" name="dsMaPhieu" class="form-control form-control-sm" placeholder="CK..." value="@ViewData["dsMaPhieu"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Từ ngày</label>
+                    <input type="date" name="dsFromDate" class="form-control form-control-sm" value="@ViewData["dsFromDate"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Đến ngày</label>
+                    <input type="date" name="dsToDate" class="form-control form-control-sm" value="@ViewData["dsToDate"]" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Trạng thái</label>
+                    <div class="input-group input-group-sm">
+                        <select name="dsStatus" class="form-select">
+                            <option value="">-- Tất cả --</option>
+                            <option value="Đã Thanh Toán" selected="@(ViewData["dsStatus"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
+                            <option value="Chưa Thanh Toán" selected="@(ViewData["dsStatus"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần" selected="@(ViewData["dsStatus"]?.ToString() == "Thanh Toán Một Phần")">Thanh Toán Một Phần</option>
+                        </select>
+                        <button class="btn btn-warning" type="submit">Lọc</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Ma"]" class="text-decoration-none text-dark">Mã Phiếu <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th>Kỳ Chiết Khấu</th>
+                            <th><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Date"]" class="text-decoration-none text-dark">Ngày Tính <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Status"]" class="text-decoration-none text-dark">Trạng Thái <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-4"><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Total"]" class="text-decoration-none text-dark">Số Tiền <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-4"><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Paid"]" class="text-decoration-none text-dark">Đã Thu <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-4"><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Debt"]" class="text-decoration-none text-dark">Còn Nợ <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-center">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ds in discounts ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuTinhChietKhau>())
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">@ds.MaPhieuTinh</td>
+                                <td class="small">@(ds.TuNgay?.ToString("dd/MM") ?? "-") - @(ds.DenNgay?.ToString("dd/MM/yy") ?? "-")</td>
+                                <td>@(ds.NgayTao?.ToString("dd/MM/yy HH:mm") ?? "")</td>
+                                <td>
+                                    @if (ds.TrangThai == "Đã Thanh Toán")
+                                    {
+                                        <span class="badge bg-success">@ds.TrangThai</span>
+                                    }
+                                    else if (ds.TrangThai == "Chưa Thanh Toán")
+                                    {
+                                        <span class="badge bg-danger">@ds.TrangThai</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">@ds.TrangThai</span>
+                                    }
+                                </td>
+                                <td class="text-end text-primary fw-bold">@((ds.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-end text-success fw-bold">@((ds.SoDaThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-end text-danger fw-bold">@((ds.SoChuaThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <a href="/DiscountCalculation/Details/@ds.MaPhieuTinh" class="btn btn-sm btn-outline-info" target="_blank" title="Chi Tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if ((ds.SoChuaThanhToan ?? 0) > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-warning" 
+                                                    onclick="openPayDiscountModal('@ds.MaPhieuTinh', @(ds.SoChuaThanhToan ?? 0))" title="Thu Tiền">
+                                                <i class="bi bi-cash-stack"></i> Thu Tiền
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Lịch Sử Nhập Hàng -->
+    <div class="card mb-5 shadow-sm border-info">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="bi bi-cart-check"></i> Lịch Sử Nhập Hàng</h3>
+            <button type="button" class="btn btn-sm btn-outline-light" onclick="printSelectedImports()">
+                <i class="bi bi-printer"></i> In Phiếu Đã Chọn
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form method="get" class="row g-2 mb-3 bg-light p-2 rounded">
+                <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Mã phiếu</label>
+                    <input type="text" name="pnMaPhieu" class="form-control form-control-sm" placeholder="PN..." value="@ViewData["pnMaPhieu"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Từ ngày</label>
+                    <input type="date" name="pnFromDate" class="form-control form-control-sm" value="@ViewData["pnFromDate"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Đến ngày</label>
+                    <input type="date" name="pnToDate" class="form-control form-control-sm" value="@ViewData["pnToDate"]" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Trạng thái</label>
+                    <div class="input-group input-group-sm">
+                        <select name="pnStatus" class="form-select">
+                            <option value="">-- Tất cả --</option>
+                            <option value="Đã Thanh Toán" selected="@(ViewData["pnStatus"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
+                            <option value="Chưa Thanh Toán" selected="@(ViewData["pnStatus"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần" selected="@(ViewData["pnStatus"]?.ToString() == "Thanh Toán Một Phần")">Thanh Toán Một Phần</option>
+                        </select>
+                        <button class="btn btn-info text-white" type="submit">Lọc</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="tableImports">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 30px;"><input type="checkbox" id="checkAllImports" /></th>
+                            <th><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Ma"]" class="text-decoration-none text-dark">Mã Phiếu <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Date"]" class="text-decoration-none text-dark">Ngày Nhập <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Status"]" class="text-decoration-none text-dark">Trạng Thái <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-3"><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Total"]" class="text-decoration-none text-dark">Phải TT <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-3"><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Paid"]" class="text-decoration-none text-dark">Đã TT <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-end pe-3"><a href="?id=@Model.MaDoiTuong&pnSortOrder=@ViewData["PNSort_Debt"]" class="text-decoration-none text-dark">Còn Nợ <i class="bi bi-arrow-down-up"></i></a></th>
+                            <th class="text-center">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pn in imports ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuNhap>())
+                        {
+                            <tr>
+                                <td><input type="checkbox" class="import-checkbox" value="@pn.MaPhieu" /></td>
+                                <td class="fw-bold">@pn.MaPhieu</td>
+                                <td class="small">@(pn.NgayNhap?.ToString("dd/MM/yy HH:mm") ?? "")</td>
+                                <td>
+                                    @if (pn.TrangThaiThanhToan == "Đã Thanh Toán")
+                                    {
+                                        <span class="badge bg-success">@pn.TrangThaiThanhToan</span>
+                                    }
+                                    else if (pn.TrangThaiThanhToan == "Chưa Thanh Toán")
+                                    {
+                                        <span class="badge bg-danger">@pn.TrangThaiThanhToan</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">@pn.TrangThaiThanhToan</span>
+                                    }
+                                </td>
+                                <td class="text-end text-primary fw-bold">@((pn.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-end text-success fw-bold">@((pn.SoDaThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-end text-danger fw-bold">@((pn.SoChuaThanhToan ?? 0).ToString("N0"))</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modal-pn-@pn.MaPhieu">
+                                            <i class="bi bi-eye"></i> Chi Tiết
+                                        </button>
+                                        @if ((pn.SoChuaThanhToan ?? 0) > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-success" 
+                                                    onclick="openPayBillModal('@pn.MaPhieu', @(pn.SoChuaThanhToan ?? 0))">
+                                                <i class="bi bi-cash"></i> Thanh Toán
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Modal: Thêm Giao Dịch -->
+<div class="modal fade" id="addEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/SupplierDebt/AddEntry" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Thêm Giao Dịch Nhà Cung Cấp</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maNhaCungCap" value="@Model.MaDoiTuong" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Loại Giao Dịch</label>
+                        <select class="form-select border-primary" name="loaiGiaoDich" required>
+                            <option value="MUA_HANG">Mua Hàng (Ghi Nợ NCC)</option>
+                            <option value="THANH_TOAN">Thanh Toán (Chi Tiền cho NCC)</option>
+                            <option value="CAN_TRU">Cấn Trừ Công Nợ</option>
+                        </select>
+                        <div class="form-text">Lưu ý: "Thanh Toán" sẽ tự động tạo một phiếu <strong>CHI</strong>.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số Tiền (VNĐ)</label>
+                        <input type="text" class="form-control fw-bold text-danger number-format" id="entryAmountDisplay" required placeholder="0" />
+                        <input type="hidden" name="soTienPhatSinh" id="entryAmount" value="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" name="dienGiai" rows="3" placeholder="Ghi chú nội dung giao dịch..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4">Lưu Giao Dịch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Chi Tiết Phiếu Nhập -->
+@foreach (var pn in imports ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuNhap>())
+{
+    <div class="modal fade" id="modal-pn-@pn.MaPhieu" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Chi Tiết Phiếu Nhập @pn.MaPhieu</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Mã Hàng</th>
+                                <th>Tên Hàng</th>
+                                <th class="text-center">Số Lượng</th>
+                                <th class="text-end">Đơn Giá</th>
+                                <th class="text-end">Thành Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ct in pn.ChiTietPhieuNhaps)
+                            {
+                                <tr>
+                                    <td>@ct.MaHang</td>
+                                    <td>@(ct.MaHangNavigation?.TenHang ?? "N/A")</td>
+                                    <td class="text-center">@((ct.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((ct.DonGiaNhap ?? 0).ToString("N0"))</td>
+                                    <td class="text-end fw-bold">
+                                        @(((decimal)(ct.SoLuong ?? 0) * (ct.DonGiaNhap ?? 0)).ToString("N0"))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="fw-bold small">
+                        Phải TT: <span class="text-primary fs-6">@((pn.SoPhaiThanhToan ?? 0).ToString("N0"))</span> | 
+                        Đã TT: <span class="text-success fs-6">@((pn.SoDaThanhToan ?? 0).ToString("N0"))</span> | 
+                        Còn Nợ: <span class="text-danger fs-6">@((pn.SoChuaThanhToan ?? 0).ToString("N0"))</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal: Thanh Toán Phiếu Nhập (CHI) -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/SupplierDebt/PayBill" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Thanh Toán Phiếu Nhập <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payMaPhieu" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền còn nợ phiếu:</label>
+                        <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền chi trả:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-success fw-bold number-format" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                    <div class="alert alert-warning py-2 small mb-0">
+                        <i class="bi bi-info-circle"></i> Giao dịch này sẽ được ghi nhận là một phiếu <strong>CHI</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success">Xác nhận Chi Tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Thu Tiền Chiết Khấu (THU) -->
+<div class="modal fade" id="payDiscountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/SupplierDebt/PayDiscount" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Thu Tiền Chiết Khấu - Phiếu <span id="payDsMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maNhaCungCap" value="@Model.MaDoiTuong" />
+                    <input type="hidden" id="payDsMaPhieu" name="maPhieuTinh" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền NCC còn nợ:</label>
+                        <input type="text" id="payDsRemainingDisplay" class="form-control bg-light" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thu về:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-warning fw-bold number-format" id="payDsAmountDisplay" required />
+                            <input type="hidden" id="payDsAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDsDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="bi bi-info-circle"></i> Giao dịch này sẽ được ghi nhận là một phiếu <strong>THU</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning px-4">Xác nhận Thu Tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Number Formatting utility
+        function formatNumber(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        document.querySelectorAll('.number-format').forEach(input => {
+            input.addEventListener('input', function(e) {
+                var value = e.target.value.replace(/\./g, '');
+                var hiddenInputId = e.target.id.replace('Display', '');
+                var hiddenInput = document.getElementById(hiddenInputId);
+                
+                if (value === "") {
+                    if(hiddenInput) hiddenInput.value = 0;
+                    return;
+                }
+                e.target.value = formatNumber(value);
+                if(hiddenInput) hiddenInput.value = value;
+            });
+        });
+
+        // Check All setup
+        document.getElementById('checkAllEntries')?.addEventListener('change', function() {
+            document.querySelectorAll('.entry-checkbox').forEach(cb => cb.checked = this.checked);
+        });
+        document.getElementById('checkAllImports')?.addEventListener('change', function() {
+            document.querySelectorAll('.import-checkbox').forEach(cb => cb.checked = this.checked);
+        });
+
+        // Printing
+        function printSelected() {
+            var selectedEntries = Array.from(document.querySelectorAll('.entry-checkbox:checked')).map(cb => cb.value);
+            var selectedImports = Array.from(document.querySelectorAll('.import-checkbox:checked')).map(cb => cb.value);
+
+            if (selectedEntries.length === 0 && selectedImports.length === 0) {
+                alert('Vui lòng chọn ít nhất một dòng giao dịch hoặc nhập hàng để in.');
+                return;
+            }
+
+            var url = '/SupplierDebt/Print?id=@Model.MaDoiTuong';
+            selectedEntries.forEach(id => url += '&selectedEntries=' + id);
+            selectedImports.forEach(ma => url += '&selectedImports=' + ma);
+
+            window.open(url, '_blank');
+        }
+
+        function printSelectedImports() {
+            var selectedImports = Array.from(document.querySelectorAll('.import-checkbox:checked')).map(cb => cb.value);
+            if (selectedImports.length === 0) {
+                alert('Vui lòng chọn ít nhất một phiếu nhập để in.');
+                return;
+            }
+            var url = '/SupplierDebt/Print?id=@Model.MaDoiTuong';
+            selectedImports.forEach(ma => url += '&selectedImports=' + ma);
+            window.open(url, '_blank');
+        }
+
+        // Modals opening
+        function openPayBillModal(maPhieu, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payMaPhieu').value = maPhieu;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN') + ' VNĐ';
+            
+            document.getElementById('payAmount').value = remaining;
+            document.getElementById('payAmountDisplay').value = formatNumber(remaining.toString());
+            document.getElementById('payDienGiai').value = 'Thanh toán phiếu nhập ' + maPhieu;
+            
+            new bootstrap.Modal(document.getElementById('payBillModal')).show();
+        }
+
+        function openPayDiscountModal(maPhieu, remaining) {
+            document.getElementById('payDsMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payDsMaPhieu').value = maPhieu;
+            document.getElementById('payDsRemainingDisplay').value = remaining.toLocaleString('vi-VN') + ' VNĐ';
+            
+            document.getElementById('payDsAmount').value = remaining;
+            document.getElementById('payDsAmountDisplay').value = formatNumber(remaining.toString());
+            document.getElementById('payDsDienGiai').value = 'Thu tiền chiết khấu từ phiếu ' + maPhieu;
+            
+            new bootstrap.Modal(document.getElementById('payDiscountModal')).show();
+        }
+    </script>
+}

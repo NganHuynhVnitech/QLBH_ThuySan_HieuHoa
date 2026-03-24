@@ -30,6 +30,7 @@ namespace QLBH_ThuySan.Models
         public virtual DbSet<PhieuTinhChietKhau> PhieuTinhChietKhaus { get; set; } = null!;
         public virtual DbSet<PhieuXuat> PhieuXuats { get; set; } = null!;
         public virtual DbSet<SoRiengKhachHang> SoRiengKhachHangs { get; set; } = null!;
+        public virtual DbSet<SoRiengNhaCungCap> SoRiengNhaCungCaps { get; set; } = null!;
         public virtual DbSet<NguoiDung> NguoiDungs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -621,6 +622,36 @@ namespace QLBH_ThuySan.Models
                 entity.HasOne(d => d.MaKhachHangNavigation).WithMany(p => p.SoRiengKhachHangs)
                     .HasForeignKey(d => d.MaKhachHang)
                     .HasConstraintName("FK__SoRiengKh__maKha__57A801BA");
+            });
+
+            modelBuilder.Entity<SoRiengNhaCungCap>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_SoRiengNhaCungCap");
+
+                entity.ToTable("SoRiengNhaCungCap");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.DienGiai)
+                    .HasMaxLength(200)
+                    .HasColumnName("dienGiai");
+                entity.Property(e => e.LoaiGiaoDich)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("loaiGiaoDich");
+                entity.Property(e => e.MaNhaCungCap)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("maNhaCungCap");
+                entity.Property(e => e.NgayGiaoDich)
+                    .HasColumnType("datetime")
+                    .HasColumnName("ngayGiaoDich");
+                entity.Property(e => e.SoTienPhatSinh)
+                    .HasColumnType("decimal(18, 2)")
+                    .HasColumnName("soTienPhatSinh");
+
+                entity.HasOne(d => d.MaNhaCungCapNavigation).WithMany(p => p.SoRiengNhaCungCaps)
+                    .HasForeignKey(d => d.MaNhaCungCap)
+                    .HasConstraintName("FK_SoRiengNhaCungCap_NCC");
             });
 
             modelBuilder.Entity<NguoiDung>(entity =>

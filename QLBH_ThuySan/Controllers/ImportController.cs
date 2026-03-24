@@ -52,6 +52,14 @@ namespace QLBH_ThuySan.Controllers
                 return NotFound();
             }
 
+            // Check if there are older unpaid bills for this supplier
+            ViewBag.HasOlderUnpaid = await _context.PhieuNhaps
+                .AnyAsync(p => p.IdNhaCungCap == phieuNhap.IdNhaCungCap 
+                          && p.NgayNhap < phieuNhap.NgayNhap 
+                          && p.SoChuaThanhToan > 0
+                          && p.TrangThaiThanhToan != "Đã Thanh Toán"
+                          && !p.IsDisabled);
+
             return View(phieuNhap);
         }
 
@@ -131,53 +139,96 @@ namespace QLBH_ThuySan.Controllers
             return View(phieuNhap);
         }
 
-        // POST: Import/Pay/5
-        [HttpPost]
+        // POST:         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Pay(string id)
+        public async Task<IActionResult> Pay(string id, decimal amount, string dienGiai)
         {
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            string contractorId = "";
+            PhieuNhap? firstPhieu = null;
+
+            if (id.StartsWith("PN")) // Payment for a specific bill (and others via FIFO)
             {
-                return NotFound();
+                firstPhieu = await _context.PhieuNhaps
+                    .Include(p => p.IdNhaCungCapNavigation)
+                    .FirstOrDefaultAsync(p => p.MaPhieu == id);
+                if (firstPhieu == null) return NotFound();
+                contractorId = firstPhieu.IdNhaCungCap;
+            }
+            else // Payment for a supplier directly
+            {
+                contractorId = id;
             }
 
-            var phieuNhap = await _context.PhieuNhaps.FirstOrDefaultAsync(p => p.MaPhieu == id);
-
-            if (phieuNhap == null)
+            if (amount <= 0)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Số tiền thanh toán không hợp lệ.";
+                return (firstPhieu != null) ? RedirectToAction("Details", new { id = firstPhieu.MaPhieu }) : RedirectToAction("Details", "SupplierDebt", new { id = contractorId });
             }
 
-            if (phieuNhap.TrangThaiThanhToan == "Đã Thanh Toán")
-            {
-                TempData["ErrorMessage"] = "Phiếu nhập này đã được thanh toán.";
-                return RedirectToAction(nameof(Details), new { id = phieuNhap.MaPhieu });
-            }
-
-            // Update PhieuNhap status
-            phieuNhap.TrangThaiThanhToan = "Đã Thanh Toán";
-            phieuNhap.NgayThanhToan = DateTime.Now;
-            phieuNhap.SoDaThanhToan = phieuNhap.SoPhaiThanhToan;
-            phieuNhap.SoChuaThanhToan = 0;
-
-            // Create corresponding PhieuThuChi (Payment Voucher)
+            // 1. Create Payment Voucher (CHI)
             var paymentVoucher = new PhieuThuChi
             {
-                MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                LoaiPhieu = "NHAP",
+                MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                LoaiPhieu = "CHI",
                 NgayLap = DateTime.Now,
-                SoTien = phieuNhap.SoPhaiThanhToan,
-                LyDo = "Thanh toán phiếu nhập " + phieuNhap.MaPhieu,
-                MaDoiTuong = phieuNhap.IdNhaCungCap
+                SoTien = amount,
+                LyDo = string.IsNullOrEmpty(dienGiai) ? (firstPhieu != null ? "Chi tiền thanh toán phiếu " + firstPhieu.MaPhieu : "Chi tiền trả nợ nhà cung cấp") : dienGiai,
+                MaDoiTuong = contractorId
             };
-
             _context.PhieuThuChis.Add(paymentVoucher);
-            _context.Update(phieuNhap);
-            
-            await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Thanh toán thành công và đã tạo phiếu chi.";
-            return RedirectToAction(nameof(Details), new { id = phieuNhap.MaPhieu });
+            // 2. Update supplier cumulative debt
+            var ncc = await _context.NhaCungCaps.FindAsync(contractorId);
+            if (ncc != null)
+            {
+                ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) - amount;
+                _context.Update(ncc);
+            }
+
+            // 3. FIFO distribution to unpaid PhieuNhaps
+            var unpaidInvoices = await _context.PhieuNhaps
+                .Where(p => p.IdNhaCungCap == contractorId && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán" && !p.IsDisabled)
+                .OrderBy(p => p.NgayNhap)
+                .ToListAsync();
+
+            decimal remainingPayment = amount;
+            var settledBills = new List<string>();
+            foreach (var inv in unpaidInvoices)
+            {
+                if (remainingPayment <= 0) break;
+
+                var debt = inv.SoChuaThanhToan ?? 0;
+                if (remainingPayment >= debt)
+                {
+                    remainingPayment -= debt;
+                    inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + debt;
+                    inv.SoChuaThanhToan = 0;
+                    inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                    inv.NgayThanhToan = DateTime.Now;
+                    settledBills.Add(inv.MaPhieu);
+                }
+                else
+                {
+                    inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
+                    inv.SoChuaThanhToan -= remainingPayment;
+                    remainingPayment = 0;
+                    if (inv.SoChuaThanhToan > 0)
+                    {
+                        inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                    }
+                    settledBills.Add(inv.MaPhieu + " (một phần)");
+                }
+                _context.Update(inv);
+            }
+
+            await _context.SaveChangesAsync();
+            string billList = string.Join(", ", settledBills);
+            TempData["SuccessMessage"] = $"Đã xác nhận chi {amount:N0} VNĐ cho {ncc?.TenDoiTuong}. Tiền được phân bổ cho: {billList}.";
+            
+            if (firstPhieu != null) return RedirectToAction("Details", new { id = firstPhieu.MaPhieu });
+            return RedirectToAction("Details", "SupplierDebt", new { id = contractorId });
         }
 
         // POST: Import/Delete/5
@@ -221,7 +272,11 @@ namespace QLBH_ThuySan.Controllers
             {
                 if (trangThai == "Chưa Thanh Toán")
                 {
-                    query = query.Where(p => p.TrangThaiThanhToan == "Chưa Thanh Toán" || p.TrangThaiThanhToan == "Thanh Toán Một Phần");
+                    query = query.Where(p => p.SoChuaThanhToan > 0);
+                }
+                else if (trangThai == "Đã Thanh Toán")
+                {
+                    query = query.Where(p => p.SoChuaThanhToan <= 0);
                 }
                 else
                 {
@@ -308,6 +363,7 @@ namespace QLBH_ThuySan.Controllers
                 soPhaiThanhToan = p.SoPhaiThanhToan.HasValue ? p.SoPhaiThanhToan.Value.ToString("N0") : "0",
                 soDaThanhToan = p.SoDaThanhToan.HasValue ? p.SoDaThanhToan.Value.ToString("N0") : "0",
                 soChuaThanhToan = p.SoChuaThanhToan.HasValue ? p.SoChuaThanhToan.Value.ToString("N0") : "0",
+                soChuaThanhToanRaw = p.SoChuaThanhToan ?? 0,
                 trangThai = p.TrangThaiThanhToan
             }).ToListAsync();
 

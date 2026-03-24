@@ -171,13 +171,65 @@
                         }
                     </td>
                     <td class="text-center">
-                        <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info">Chi
-                            tiết</a>
+                        <div class="btn-group" role="group">
+                            <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                            @if (item.LoaiXuat == "SALES" && item.TrangThaiThanhToan != "Đã Thanh Toán")
+                            {
+                                <button type="button" class="btn btn-sm btn-success" onclick="openPayModal('@item.MaPhieu', @(item.SoChuaThanhToan ?? 0))">
+                                    $ Thanh Toán
+                                </button>
+                            }
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+</div>
+
+<!-- Modal Thanh Toán -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Pay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thu Tiền Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payMaPhieu" name="id" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Khách hàng còn nợ:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thu:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-primary fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text">Mặc định là thu toàn bộ phiếu.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Xác nhận thu tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -238,6 +290,37 @@
             applyFilters();
         }
 
+        function openPayModal(maPhieu, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payMaPhieu').value = maPhieu;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumberJS(remaining.toString());
+
+            document.getElementById('payDienGiai').value = 'Thu tiền thanh toán cho phiếu ' + maPhieu;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        function formatNumberJS(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumberJS(value);
+            document.getElementById('payAmount').value = value;
+        });
+
         function applyFilters() {
             const type = document.getElementById('filterType').value;
             const paymentStatus = document.getElementById('filterPaymentStatus').value;
@@ -275,7 +358,12 @@
                             <td class="text-end fw-bold text-danger">${item.soChuaThanhToan}</td>
                             <td><span class="badge ${item.trangThaiThanhToan === 'Đã Thanh Toán' || item.trangThaiThanhToan === 'Hoàn Tất' ? 'bg-success' : 'bg-secondary'}">${item.trangThaiThanhToan}</span></td>
                             <td class="text-center">
-                                <a href="/Export/Details/${item.maPhieu}" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                                <div class="btn-group" role="group">
+                                    <a href="/Export/Details/${item.maPhieu}" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                                    ${item.loaiXuat === 'SALES' && item.trangThaiThanhToan !== 'Đã Thanh Toán' && item.trangThaiThanhToan !== 'Hoàn Tất' ? 
+                                        `<button type="button" class="btn btn-sm btn-success" onclick="openPayModal('${item.maPhieu}', ${item.soChuaThanhToanRaw})">$ Thanh Toán</button>` 
+                                        : ''}
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(tr);

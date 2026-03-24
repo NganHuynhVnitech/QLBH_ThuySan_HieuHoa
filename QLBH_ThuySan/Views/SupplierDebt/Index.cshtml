@@ -7,23 +7,72 @@
 <h2>Theo Dõi Công Nợ Đầu Vào (Nhà Cung Cấp)</h2>
 
 <div class="row mb-3">
-    <div class="col-12">
-        <div class="alert alert-info">
-             <i class="bi bi-info-circle"></i> Quản lý công nợ với các Nhà cung cấp dựa trên các Phiếu Nhập hàng.
-        </div>
+    <div class="col-md-12">
+        <form asp-action="Index" method="get" class="card card-body bg-light shadow-sm border-0">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <input type="text" name="searchMaNcc" value="@ViewData["searchMaNcc"]" class="form-control" placeholder="Mã NCC" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="searchTenNcc" value="@ViewData["searchTenNcc"]" class="form-control" placeholder="Tên Nhà Cung Cấp" />
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="searchSdt" value="@ViewData["searchSdt"]" class="form-control" placeholder="SĐT" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="searchDiaChi" value="@ViewData["searchDiaChi"]" class="form-control" placeholder="Địa Chỉ" />
+                </div>
+                <div class="col-md-2 d-flex align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="filterDuNo" id="filterDuNo" value="true" @(Convert.ToBoolean(ViewData["filterDuNo"]) ? "checked" : "") />
+                        <label class="form-check-label" for="filterDuNo">Còn nợ (>0)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-md-12 text-end">
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Đặt lại</a>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-light">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
             <tr>
-                <th>Mã NCC</th>
-                <th>Tên Nhà Cung Cấp</th>
-                <th>Số Điện Thoại</th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["MaSortParm"]" 
+                       asp-route-searchMaNcc="@ViewData["searchMaNcc"]" asp-route-searchTenNcc="@ViewData["searchTenNcc"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-white">Mã NCC <i class="bi bi-arrow-down-up small opacity-50"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["TenSortParm"]" 
+                       asp-route-searchMaNcc="@ViewData["searchMaNcc"]" asp-route-searchTenNcc="@ViewData["searchTenNcc"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-white">Tên Nhà Cung Cấp <i class="bi bi-arrow-down-up small opacity-50"></i></a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["SdtSortParm"]" 
+                       asp-route-searchMaNcc="@ViewData["searchMaNcc"]" asp-route-searchTenNcc="@ViewData["searchTenNcc"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-white">Số Điện Thoại <i class="bi bi-arrow-down-up small opacity-50"></i></a>
+                </th>
                 <th>Điều Khoản Nợ</th>
-                <th>Dư Nợ Hiện Tại (Tính Nhập)</th>
-                <th>Thao Tác</th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["DuNoSortParm"]" 
+                       asp-route-searchMaNcc="@ViewData["searchMaNcc"]" asp-route-searchTenNcc="@ViewData["searchTenNcc"]"
+                       asp-route-searchSdt="@ViewData["searchSdt"]" asp-route-searchDiaChi="@ViewData["searchDiaChi"]"
+                       asp-route-filterDuNo="@ViewData["filterDuNo"]"
+                       class="text-decoration-none text-white">Dư Nợ Hiện Tại <i class="bi bi-arrow-down-up small opacity-50"></i></a>
+                </th>
+                <th class="text-center">Thao Tác</th>
             </tr>
         </thead>
         <tbody>
@@ -42,14 +91,115 @@
                             <span class="badge bg-secondary">Thanh toán ngay</span>
                         }
                     </td>
-                    <td class="text-danger fw-bold">@string.Format("{0:N0}", item.DuNoLuyKe ?? 0) đ</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary">
-                            Xem Chi Tiết Nhập
-                        </a>
+                    <td class="@((item.DuNoLuyKe ?? 0) > 0 ? "text-danger" : "text-success") fw-bold">
+                        @string.Format("{0:N0}", item.DuNoLuyKe ?? 0) đ
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary">
+                                Chi Tiết Nhập
+                            </a>
+                            @{
+                                decimal currentDebtIdx = item.DuNoLuyKe ?? 0;
+                            }
+                            @if (currentDebtIdx > 0)
+                            {
+                                <button type="button" class="btn btn-sm btn-success" onclick="openPayModal('@item.MaDoiTuong', @currentDebtIdx)">
+                                    <i class="bi bi-cash-coin"></i> Thanh Toán
+                                </button>
+                            }
+                            else if (currentDebtIdx < 0)
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-info-circle"></i> Đang dư trả</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted"><i class="bi bi-check-circle"></i> Hết nợ</span>
+                            }
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
+
+<!-- Modal Thanh Toán -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Import" asp-action="Pay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thanh Toán Cho <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payMaPhieu" name="id" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền còn nợ:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thanh toán:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-primary fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text">Mặc định là thanh toán toàn bộ số nợ. Hệ thống sẽ tự động trừ dần các phiếu nợ cũ nhất.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Xác nhận thanh toán</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatNumberJS(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(id, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = id;
+            document.getElementById('payMaPhieu').value = id;
+            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumberJS(remaining.toString());
+
+            document.getElementById('payDienGiai').value = 'Thanh toán công nợ cho nhà cung cấp ' + id;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumberJS(value);
+            document.getElementById('payAmount').value = value;
+        });
+    </script>
+}

@@ -4,6 +4,7 @@
     ViewData["Title"] = "Chi Tiết Công Nợ Khách Hàng";
     var entries = ViewBag.Entries as IEnumerable<QLBH_ThuySan.Models.SoRiengKhachHang>;
     var phieuXuats = ViewBag.PhieuXuats as IEnumerable<QLBH_ThuySan.Models.PhieuXuat>;
+    var discounts = ViewBag.Discounts as IEnumerable<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
 }
 
 <h2>Chi Tiết Công Nợ Khách Hàng - @Model.TenDoiTuong</h2>
@@ -125,6 +126,107 @@
                     @((entry.SoTienPhatSinh ?? 0).ToString("N0")) VNĐ
                 </td>
                 <td>@entry.DienGiai</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+    <div class="h3 m-0">Lịch Sử Chiết Khấu</div>
+</div>
+<div class="mb-3" id="filterDiscounts">
+    <div class="card card-body bg-light text-[13px]">
+        <form method="get" class="row g-2">
+            <input type="hidden" name="id" value="@Model.MaDoiTuong" />
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Mã phiếu</label>
+                <input type="text" name="dsMaPhieu" class="form-control form-control-sm" placeholder="CK..." value="@ViewData["dsMaPhieu"]" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Từ ngày</label>
+                <input type="date" name="dsFromDate" class="form-control form-control-sm" value="@ViewData["dsFromDate"]" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Đến ngày</label>
+                <input type="date" name="dsToDate" class="form-control form-control-sm" value="@ViewData["dsToDate"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Trạng thái</label>
+                <div class="input-group input-group-sm">
+                    <select name="dsStatus" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="Đã Thanh Toán" selected="@(ViewData["dsStatus"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
+                        <option value="Chưa Thanh Toán" selected="@(ViewData["dsStatus"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán</option>
+                        <option value="Thanh Toán Một Phần" selected="@(ViewData["dsStatus"]?.ToString() == "Thanh Toán Một Phần")">Thanh Toán Một Phần</option>
+                    </select>
+                    <button class="btn btn-warning text-dark" type="submit">Lọc</button>
+                    <a asp-action="Details" asp-route-id="@Model.MaDoiTuong" class="btn btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped table-hover align-middle table-sm text-[13px]" id="tableDiscounts">
+    <thead class="table-light">
+        <tr>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Ma"]" class="text-decoration-none text-dark">Mã Phiếu <i class="bi bi-arrow-down-up"></i></a></th>
+            <th>Kỳ Chiết Khấu</th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Date"]" class="text-decoration-none text-dark">Ngày Tính <i class="bi bi-arrow-down-up"></i></a></th>
+            <th><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Status"]" class="text-decoration-none text-dark">Trạng Thái <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Total"]" class="text-decoration-none text-dark">Số Tiền <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Paid"]" class="text-decoration-none text-dark">Đã Chi <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-end pe-4"><a asp-action="Details" asp-route-id="@Model.MaDoiTuong" asp-route-dsSortOrder="@ViewData["DSSort_Debt"]" class="text-decoration-none text-dark">Còn Nợ <i class="bi bi-arrow-down-up"></i></a></th>
+            <th class="text-center">Hành Động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var ds in discounts ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuTinhChietKhau>())
+        {
+            <tr>
+                <td class="fw-bold text-warning">@ds.MaPhieuTinh</td>
+                <td>@(ds.TuNgay?.ToString("dd/MM/yyyy") ?? "-") - @(ds.DenNgay?.ToString("dd/MM/yyyy") ?? "-")</td>
+                <td>@(ds.NgayTao?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
+                <td>
+                    @if (ds.TrangThai == "Đã Thanh Toán")
+                    {
+                        <span class="badge bg-success">@ds.TrangThai</span>
+                    }
+                    else if (ds.TrangThai == "Chưa Thanh Toán")
+                    {
+                        <span class="badge bg-danger">@ds.TrangThai</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">@ds.TrangThai</span>
+                    }
+                </td>
+                <td class="text-end text-primary fw-bold">
+                    @((ds.SoPhaiThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-end text-success fw-bold">
+                    @((ds.SoDaThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-end text-danger fw-bold">
+                    @((ds.SoChuaThanhToan ?? 0).ToString("N0")) VNĐ
+                </td>
+                <td class="text-center">
+                    <div class="btn-group">
+                        <a href="/DiscountCalculation/Details/@ds.MaPhieuTinh" class="btn btn-sm btn-outline-info" target="_blank">
+                            <i class="bi bi-list-ul"></i> Chi Tiết
+                        </a>
+                        <a href="/DiscountCalculation/Print/@ds.MaPhieuTinh" class="btn btn-sm btn-outline-secondary" target="_blank">
+                             <i class="bi bi-printer"></i> In
+                        </a>
+                        @if ((ds.SoChuaThanhToan ?? 0) > 0)
+                        {
+                            <button type="button" class="btn btn-sm btn-warning px-3" 
+                                    onclick="openPayDiscountModal('@ds.MaPhieuTinh', @(ds.SoChuaThanhToan ?? 0))">
+                                <i class="bi bi-cash"></i> Thanh Toán
+                            </button>
+                        }
+                    </div>
+                </td>
             </tr>
         }
     </tbody>
@@ -370,6 +472,53 @@
     </div>
 </div>
 
+<!-- Modal Thanh Toán Chiết Khấu (CHI) -->
+<div class="modal fade" id="payDiscountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="PayDiscount" method="post">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Chi Tiền Chiết Khấu - Phiếu <span id="payDsMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maKhachHang" value="@Model.MaDoiTuong" />
+                    <input type="hidden" id="payDsMaPhieu" name="maPhieuTinh" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền còn nợ khách:</label>
+                        <div class="input-group">
+                            <input type="text" id="payDsRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền chi (trả khách):</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-warning fw-bold" id="payDsAmountDisplay" required />
+                            <input type="hidden" id="payDsAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDsDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle"></i> Ghi chú: Giao dịch này sẽ được ghi nhận là một phiếu <strong>CHI</strong> trong hệ thống.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning">Xác nhận chi tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="mt-4">
     <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
 </div>
@@ -433,6 +582,32 @@
             }
             e.target.value = formatNumber(value);
             document.getElementById('payAmount').value = value;
+        });
+        function openPayDiscountModal(maPhieu, remaining) {
+            document.getElementById('payDsMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payDsMaPhieu').value = maPhieu;
+            document.getElementById('payDsRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            
+            var amountDisplay = document.getElementById('payDsAmountDisplay');
+            var amountHidden = document.getElementById('payDsAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumber(remaining.toString());
+
+            document.getElementById('payDsDienGiai').value = 'Chi trả chiết khấu cho phiếu ' + maPhieu;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payDiscountModal'));
+            modal.show();
+        }
+
+        document.getElementById('payDsAmountDisplay')?.addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payDsAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumber(value);
+            document.getElementById('payDsAmount').value = value;
         });
     </script>
 }

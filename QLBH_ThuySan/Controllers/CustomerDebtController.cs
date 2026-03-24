@@ -184,7 +184,8 @@ namespace QLBH_ThuySan.Controllers
         public async Task<IActionResult> Details(
             string? id,
             string? pxMaPhieu, DateTime? pxFromDate, DateTime? pxToDate, string? pxTrangThai, string? pxSortOrder,
-            DateTime? entryFromDate, DateTime? entryToDate, string? entryLoai, string? entryDienGiai, string? entrySortOrder)
+            DateTime? entryFromDate, DateTime? entryToDate, string? entryLoai, string? entryDienGiai, string? entrySortOrder,
+            string? dsMaPhieu, DateTime? dsFromDate, DateTime? dsToDate, string? dsStatus, string? dsSortOrder)
         {
             if (id == null)
             {
@@ -349,6 +350,41 @@ namespace QLBH_ThuySan.Controllers
                 _ => entries.OrderByDescending(e => e.NgayGiaoDich).ToList()
             };
 
+            // 5. Apply Filters and Sorting to Discounts (PhieuTinhChietKhau)
+            var discounts = await _context.PhieuTinhChietKhaus
+                .Include(p => p.ChiTietPhieuTinhs)
+                    .ThenInclude(c => c.MaHangNavigation)
+                .Where(p => p.MaDoiTuong == id && p.LoaiDoiTuong == "KHACH")
+                .ToListAsync();
+
+            if (!string.IsNullOrEmpty(dsMaPhieu)) discounts = discounts.Where(d => d.MaPhieuTinh != null && d.MaPhieuTinh.Contains(dsMaPhieu)).ToList();
+            if (dsFromDate.HasValue) discounts = discounts.Where(d => d.NgayTao?.Date >= dsFromDate.Value.Date).ToList();
+            if (dsToDate.HasValue) discounts = discounts.Where(d => d.NgayTao?.Date <= dsToDate.Value.Date).ToList();
+            if (!string.IsNullOrEmpty(dsStatus)) discounts = discounts.Where(d => d.TrangThai == dsStatus).ToList();
+
+            ViewData["DSSort_Ma"] = dsSortOrder == "ma_asc" ? "ma_desc" : "ma_asc";
+            ViewData["DSSort_Date"] = string.IsNullOrEmpty(dsSortOrder) || dsSortOrder == "date_desc" ? "date_asc" : "date_desc";
+            ViewData["DSSort_Status"] = dsSortOrder == "status_asc" ? "status_desc" : "status_asc";
+            ViewData["DSSort_Total"] = dsSortOrder == "total_asc" ? "total_desc" : "total_asc";
+            ViewData["DSSort_Paid"] = dsSortOrder == "paid_asc" ? "paid_desc" : "paid_asc";
+            ViewData["DSSort_Debt"] = dsSortOrder == "debt_asc" ? "debt_desc" : "debt_asc";
+
+            discounts = dsSortOrder switch {
+                "ma_asc" => discounts.OrderBy(d => d.MaPhieuTinh).ToList(),
+                "ma_desc" => discounts.OrderByDescending(d => d.MaPhieuTinh).ToList(),
+                "date_asc" => discounts.OrderBy(d => d.NgayTao).ToList(),
+                "date_desc" => discounts.OrderByDescending(d => d.NgayTao).ToList(),
+                "status_asc" => discounts.OrderBy(d => d.TrangThai).ToList(),
+                "status_desc" => discounts.OrderByDescending(d => d.TrangThai).ToList(),
+                "total_asc" => discounts.OrderBy(d => d.SoPhaiThanhToan).ToList(),
+                "total_desc" => discounts.OrderByDescending(d => d.SoPhaiThanhToan).ToList(),
+                "paid_asc" => discounts.OrderBy(d => d.SoDaThanhToan).ToList(),
+                "paid_desc" => discounts.OrderByDescending(d => d.SoDaThanhToan).ToList(),
+                "debt_asc" => discounts.OrderBy(d => d.SoChuaThanhToan).ToList(),
+                "debt_desc" => discounts.OrderByDescending(d => d.SoChuaThanhToan).ToList(),
+                _ => discounts.OrderByDescending(d => d.NgayTao).ToList()
+            };
+
             ViewData["pxMaPhieu"] = pxMaPhieu;
             ViewData["pxFromDate"] = pxFromDate?.ToString("yyyy-MM-dd");
             ViewData["pxToDate"] = pxToDate?.ToString("yyyy-MM-dd");
@@ -361,9 +397,61 @@ namespace QLBH_ThuySan.Controllers
             ViewData["entryDienGiai"] = entryDienGiai;
             ViewData["entrySortOrder"] = entrySortOrder;
 
+            ViewData["dsMaPhieu"] = dsMaPhieu;
+            ViewData["dsFromDate"] = dsFromDate?.ToString("yyyy-MM-dd");
+            ViewData["dsToDate"] = dsToDate?.ToString("yyyy-MM-dd");
+            ViewData["dsStatus"] = dsStatus;
+            ViewData["dsSortOrder"] = dsSortOrder;
+
             ViewBag.Entries = entries;
             ViewBag.PhieuXuats = phieuXuats;
+            ViewBag.Discounts = discounts;
             return View(customer);
+        }
+
+        // POST: PrivateLedger/PayDiscount - Pay for a discount voucher (CHI)
+        [HttpPost("/PrivateLedger/PayDiscount")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayDiscount(string maKhachHang, string maPhieuTinh, decimal amount, string? dienGiai)
+        {
+            if (amount <= 0)
+            {
+                return RedirectToAction(nameof(Details), new { id = maKhachHang });
+            }
+
+            var phieu = await _context.PhieuTinhChietKhaus.FindAsync(maPhieuTinh);
+            if (phieu == null) return NotFound();
+
+            // 1. Create PhieuThuChi (CHI)
+            var paymentVoucher = new PhieuThuChi
+            {
+                MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                LoaiPhieu = "CHI",
+                NgayLap = DateTime.Now,
+                SoTien = amount,
+                LyDo = string.IsNullOrEmpty(dienGiai) ? $"Chi tiền chiết khấu cho phiếu {maPhieuTinh}" : dienGiai,
+                MaDoiTuong = maKhachHang
+            };
+            _context.PhieuThuChis.Add(paymentVoucher);
+
+            // 2. Update Discount Voucher
+            phieu.SoDaThanhToan = (phieu.SoDaThanhToan ?? 0) + amount;
+            phieu.SoChuaThanhToan = (phieu.SoPhaiThanhToan ?? 0) - phieu.SoDaThanhToan;
+            phieu.NgayThanhToan = DateTime.Now;
+
+            if (phieu.SoChuaThanhToan <= 0)
+            {
+                phieu.TrangThai = "Đã Thanh Toán";
+                phieu.SoChuaThanhToan = 0;
+            }
+            else
+            {
+                phieu.TrangThai = "Thanh Toán Một Phần";
+            }
+            _context.Update(phieu);
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Details), new { id = maKhachHang });
         }
 
         // GET: PrivateLedger/Create
@@ -420,6 +508,21 @@ namespace QLBH_ThuySan.Controllers
                 {
                     customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - soTienPhatSinh;
 
+                    // Create PhieuThuChi (THU) if it's a payment
+                    if (loaiGiaoDich == "THANH_TOAN")
+                    {
+                        var paymentVoucher = new PhieuThuChi
+                        {
+                            MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                            LoaiPhieu = "THU",
+                            NgayLap = DateTime.Now,
+                            SoTien = soTienPhatSinh,
+                            LyDo = string.IsNullOrEmpty(dienGiai) ? "Thu tiền thanh toán từ khách hàng " + maKhachHang : dienGiai,
+                            MaDoiTuong = maKhachHang
+                        };
+                        _context.PhieuThuChis.Add(paymentVoucher);
+                    }
+
                     // Distribute payment to unpaid PhieuXuats
                     var unpaidInvoices = await _context.PhieuXuats
                         .Where(p => p.IdKhachHang == maKhachHang && p.SoChuaThanhToan > 0 && p.TrangThaiThanhToan != "Đã Thanh Toán")
@@ -445,6 +548,10 @@ namespace QLBH_ThuySan.Controllers
                             inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
                             inv.SoChuaThanhToan -= remainingPayment;
                             remainingPayment = 0;
+                            if (inv.SoChuaThanhToan > 0)
+                            {
+                                inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                            }
                         }
                         _context.Update(inv);
                     }
@@ -482,6 +589,18 @@ namespace QLBH_ThuySan.Controllers
             {
                 customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - amount;
                 _context.Update(customer);
+
+                // 2b. Create PhieuThuChi (THU) for cash flow
+                var paymentVoucher = new PhieuThuChi
+                {
+                    MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                    LoaiPhieu = "THU",
+                    NgayLap = DateTime.Now,
+                    SoTien = amount,
+                    LyDo = string.IsNullOrEmpty(dienGiai) ? $"Thu tiền thanh toán cho phiếu {maPhieu}" : dienGiai,
+                    MaDoiTuong = maKhachHang
+                };
+                _context.PhieuThuChis.Add(paymentVoucher);
 
                 // 3. Distribute payment to unpaid PhieuXuats using FIFO logic
                 // This maintains system consistency as requested in previous logic requirements.
