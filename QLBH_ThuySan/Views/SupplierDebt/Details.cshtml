@@ -74,6 +74,7 @@
                         <option value="MUA_HANG" selected="@(ViewData["entryLoai"]?.ToString() == "MUA_HANG")">Mua Hàng</option>
                         <option value="THANH_TOAN" selected="@(ViewData["entryLoai"]?.ToString() == "THANH_TOAN")">Thanh Toán</option>
                         <option value="CAN_TRU" selected="@(ViewData["entryLoai"]?.ToString() == "CAN_TRU")">Cấn Trừ</option>
+                        <option value="THU_CK" selected="@(ViewData["entryLoai"]?.ToString() == "THU_CK")">Thu Chiết Khấu</option>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -117,6 +118,10 @@
                                     else if (entry.LoaiGiaoDich == "CAN_TRU")
                                     {
                                         <span class="badge bg-info">Cấn Trừ</span>
+                                    }
+                                    else if (entry.LoaiGiaoDich == "THU_CK")
+                                    {
+                                        <span class="badge bg-warning text-dark">Thu Chiết Khấu</span>
                                     }
                                     else
                                     {

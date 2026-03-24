@@ -13,7 +13,7 @@ namespace QLBH_ThuySan.Models
 
         // DbSets
         // DbSets
-        public virtual DbSet<ChiTietPhieuTinh> ChiTietPhieuTinhs { get; set; } = null!;
+        public virtual DbSet<ChiTietChietKhau> ChiTietChietKhaus { get; set; } = null!;
         public virtual DbSet<CauHinhChietKhau> CauHinhChietKhaus { get; set; } = null!;
         public virtual DbSet<ChiTietPhieuNhap> ChiTietPhieuNhaps { get; set; } = null!;
         public virtual DbSet<ChiTietPhieuXuat> ChiTietPhieuXuats { get; set; } = null!;
@@ -448,16 +448,24 @@ namespace QLBH_ThuySan.Models
                     .HasDefaultValue("Chưa thanh toán")
                     .HasColumnName("trangThai");
 
+                entity.Property(e => e.TenPhieu)
+                    .HasMaxLength(200)
+                    .HasColumnName("TenPhieu");
+
                 entity.Property(e => e.NgayThanhToan)
                     .HasColumnType("datetime")
                     .HasColumnName("ngayThanhToan");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
-            modelBuilder.Entity<ChiTietPhieuTinh>(entity =>
+            modelBuilder.Entity<ChiTietChietKhau>(entity =>
             {
                 entity.HasKey(e => e.Id).HasName("PK_ChiTietPhieuTinh");
 
-                entity.ToTable("ChiTietPhieuTinh");
+                entity.ToTable("ChiTietChietKhau");
 
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.MaPhieuTinh)
@@ -469,9 +477,9 @@ namespace QLBH_ThuySan.Models
                     .IsUnicode(false)
                     .HasColumnName("maHang");
                 entity.Property(e => e.SoLuong).HasColumnName("soLuong");
-                entity.Property(e => e.SoTienChietKhau)
+                entity.Property(e => e.GiaChietKhau)
                     .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("soTienChietKhau");
+                    .HasColumnName("giaChietKhau");
                 entity.Property(e => e.ThanhTien)
                     .HasColumnType("decimal(18, 2)")
                     .HasColumnName("thanhTien");
@@ -483,7 +491,7 @@ namespace QLBH_ThuySan.Models
                     .HasForeignKey(d => d.MaHang)
                     .HasConstraintName("FK_ChiTietPhieuTinh_HangHoa");
 
-                entity.HasOne(d => d.MaPhieuTinhNavigation).WithMany(p => p.ChiTietPhieuTinhs)
+                entity.HasOne(d => d.MaPhieuTinhNavigation).WithMany(p => p.ChiTietChietKhaus)
                     .HasForeignKey(d => d.MaPhieuTinh)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_ChiTietPhieuTinh_PhieuTinh");

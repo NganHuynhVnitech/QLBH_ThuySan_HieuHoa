@@ -4,17 +4,18 @@
     ViewData["Title"] = "Quản Lý Chiết Khấu";
 }
 
-<div class="row mb-3">
-    <div class="col-md-8">
-        <h1>Quản Lý Chiết Khấu</h1>
-        <p class="text-muted">Theo dõi và quản lý các phiếu tính chiết khấu cho Khách Hàng và Nhà Cung Cấp.</p>
+<div class="container-fluid px-4">
+    <div class="row pt-4 mb-3">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">Quản Lý Chiết Khấu</h1>
+            <p class="text-muted">Theo dõi và quản lý các phiếu tính chiết khấu cho Khách Hàng và Nhà Cung Cấp.</p>
+        </div>
+        <div class="col-md-4 text-end align-self-center">
+            <a asp-action="Create" class="btn btn-primary px-4 py-2">
+                <i class="bi bi-plus-lg"></i> Lập Phiếu Mới
+            </a>
+        </div>
     </div>
-    <div class="col-md-4 text-end align-self-center">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Lập Phiếu Mới
-        </a>
-    </div>
-</div>
 
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-light">
@@ -26,7 +27,8 @@
                 <!-- Row 1 -->
                 <div class="col-md-3">
                     <label class="form-label">Từ Ngày (Tạo)</label>
-                    <input type="date" name="fromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd")">
+                    <input type="date" name="fromDate" class="form-control"
+                        value="@Model.FromDate?.ToString("yyyy-MM-dd")">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Đến Ngày (Tạo)</label>
@@ -44,46 +46,61 @@
                     <label class="form-label">Trạng Thái</label>
                     <select name="status" class="form-select" asp-for="Status">
                         <option value="">-- Tất Cả --</option>
-                        <option value="Chưa thanh toán">Chưa thanh toán</option>
-                        <option value="Đã thanh toán">Đã thanh toán</option>
+                        <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                        <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                        <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
                     </select>
                 </div>
 
                 <!-- Row 2 -->
                 <div class="col-md-3">
                     <label class="form-label">Kỳ Tính (Từ)</label>
-                    <input type="date" name="periodFrom" class="form-control" value="@Model.PeriodFrom?.ToString("yyyy-MM-dd")">
+                    <input type="date" name="periodFrom" class="form-control"
+                        value="@Model.PeriodFrom?.ToString("yyyy-MM-dd")">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Kỳ Tính (Đến)</label>
-                    <input type="date" name="periodTo" class="form-control" value="@Model.PeriodTo?.ToString("yyyy-MM-dd")">
+                    <input type="date" name="periodTo" class="form-control"
+                        value="@Model.PeriodTo?.ToString("yyyy-MM-dd")">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Quy Tắc Chiết Khấu</label>
-                    <input type="text" name="ruleSearch" class="form-control" placeholder="Tìm nội dung quy tắc..." value="@Model.RuleSearch">
+                    <input type="text" name="ruleSearch" class="form-control" placeholder="Tìm nội dung quy tắc..."
+                        value="@Model.RuleSearch">
                 </div>
 
                 <!-- Row 3 -->
                 <div class="col-md-3">
                     <label class="form-label">Ngày Thanh Toán (Từ)</label>
-                    <input type="date" name="paymentFrom" class="form-control" value="@Model.PaymentFrom?.ToString("yyyy-MM-dd")">
+                    <input type="date" name="paymentFrom" class="form-control"
+                        value="@Model.PaymentFrom?.ToString("yyyy-MM-dd")">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Ngày Thanh Toán (Đến)</label>
-                    <input type="date" name="paymentTo" class="form-control" value="@Model.PaymentTo?.ToString("yyyy-MM-dd")">
+                    <input type="date" name="paymentTo" class="form-control"
+                        value="@Model.PaymentTo?.ToString("yyyy-MM-dd")">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Đối Tượng (Tên/Mã)</label>
                     <div class="input-group">
-                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                         <input type="text" name="searchTerm" class="form-control" placeholder="Tên hoặc Mã..." value="@Model.SearchTerm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="searchTerm" class="form-control" placeholder="Tên hoặc Mã..."
+                            value="@Model.SearchTerm">
                     </div>
                 </div>
 
                 <!-- Actions -->
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100 me-2"><i class="bi bi-search"></i> Tìm Kiếm</button>
-                    <a asp-action="Index" class="btn btn-secondary">Đặt Lại</a>
+                <div class="col-md-3 d-flex align-items-end mb-1">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center">
+                            <i class="bi bi-search me-1"></i> Tìm Kiếm
+                        </button>
+                        <a asp-action="Index"
+                            class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                            title="Đặt lại bộ lọc" style="flex: 0 0 auto; width: 35%;">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa Lọc
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -97,6 +114,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Mã Phiếu</th>
+                        <th>Tên Phiếu</th>
                         <th>Ngày Tạo</th>
                         <th>Kỳ Tính Toán</th>
                         <th>Loại</th>
@@ -113,12 +131,16 @@
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="9" class="text-center py-4 text-muted">Không tìm thấy dữ liệu phù hợp.</td></tr>
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">Không tìm thấy dữ liệu phù hợp.</td>
+                        </tr>
                     }
                     @foreach (var item in Model.Items)
                     {
                         <tr>
-                            <td><a asp-action="Details" asp-route-id="@item.MaPhieuTinh" class="fw-bold text-decoration-none">@item.MaPhieuTinh</a></td>
+                            <td><a asp-action="Details" asp-route-id="@item.MaPhieuTinh"
+                                    class="fw-bold text-decoration-none">@item.MaPhieuTinh</a></td>
+                            <td>@item.TenPhieu</td>
                             <td>@item.NgayTao.ToString("dd/MM/yyyy")</td>
                             <td>
                                 <small class="text-muted d-block">
@@ -126,14 +148,22 @@
                                 </small>
                             </td>
                             <td>
-                                @if(item.LoaiDoiTuong == "NCC") { <span class="badge bg-info text-dark">Nhập</span> }
-                                else { <span class="badge bg-warning text-dark">Xuất</span> }
+                                @if (item.LoaiDoiTuong == "NCC")
+                                {
+                                    <span class="badge bg-info text-dark">Nhập</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Xuất</span>
+                                }
                             </td>
                             <td>
                                 <div class="fw-bold">@item.TenDoiTuong</div>
                                 <small class="text-muted">@item.MaDoiTuong</small>
                             </td>
-                            <td class="text-muted fst-italic" style="max-width: 250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@item.QuyTacChietKhau">
+                            <td class="text-muted fst-italic"
+                                style="max-width: 250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                                title="@item.QuyTacChietKhau">
                                 @item.QuyTacChietKhau
                             </td>
                             <td>
@@ -149,9 +179,13 @@
                                 @string.Format("{0:N0}", item.SoChuaThanhToan)
                             </td>
                             <td class="text-center">
-                                @if (item.TrangThai == "Đã thanh toán")
+                                @if (item.TrangThai?.Equals("Đã Thanh Toán", StringComparison.OrdinalIgnoreCase) == true)
                                 {
                                     <span class="badge bg-success">@item.TrangThai</span>
+                                }
+                                else if (item.TrangThai?.Equals("Thanh Toán Một Phần", StringComparison.OrdinalIgnoreCase) == true)
+                                {
+                                    <span class="badge bg-warning text-dark">@item.TrangThai</span>
                                 }
                                 else
                                 {
@@ -159,12 +193,27 @@
                                 }
                             </td>
                             <td class="text-center">
-                                <a asp-action="Details" asp-route-id="@item.MaPhieuTinh" class="btn btn-sm btn-outline-primary" title="Xem Chi Tiết">
+                                @if (item.SoChuaThanhToan > 0)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-success" title="Thanh Toán"
+                                        onclick="openPayModal('@item.MaPhieuTinh', @(item.SoChuaThanhToan))">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </button>
+                                }
+                                <a asp-action="Details" asp-route-id="@item.MaPhieuTinh"
+                                    class="btn btn-sm btn-outline-primary" title="Xem Chi Tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a asp-action="Print" asp-route-id="@item.MaPhieuTinh" class="btn btn-sm btn-outline-secondary" title="In Phiếu" target="_blank">
+                                <a asp-action="Print" asp-route-id="@item.MaPhieuTinh"
+                                    class="btn btn-sm btn-outline-secondary" title="In Phiếu" target="_blank">
                                     <i class="bi bi-printer"></i>
                                 </a>
+                                <form asp-action="Delete" asp-route-id="@item.MaPhieuTinh" method="post" 
+                                      style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phiếu này?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa Phiếu">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     }
@@ -173,4 +222,111 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Thanh Toán (Reused from Details) -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-dark">
+            <form id="payForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Thanh Toán Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <input type="hidden" id="payMaPhieu" name="id" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền chưa thanh toán:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thanh toán:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-success fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text mt-2 text-muted">
+                            <i class="bi bi-info-circle"></i> Mặc định là thanh toán toàn bộ phần còn lại.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" id="btnConfirmPay" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle"></i> Xác nhận thanh toán
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatNumber(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(id, remaining) {
+            $('#payMaPhieuDisplay').text(id);
+            $('#payMaPhieu').val(id);
+            $('#payRemainingDisplay').val(remaining.toLocaleString('vi-VN'));
+            
+            $('#payAmount').val(remaining);
+            $('#payAmountDisplay').val(formatNumber(remaining.toString()));
+            $('#payDienGiai').val('Thanh toán chiết khấu phiếu ' + id);
+
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        $('#payAmountDisplay').on('input', function() {
+            var value = $(this).val().replace(/\./g, '');
+            if (value === "") {
+                $('#payAmount').val(0);
+                return;
+            }
+            $(this).val(formatNumber(value));
+            $('#payAmount').val(value);
+        });
+
+        $('#payForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const id = $('#payMaPhieu').val();
+            const amount = $('#payAmount').val();
+            const dienGiai = $('#payDienGiai').val();
+
+            if (parseFloat(amount) <= 0) {
+                alert('Vui lòng nhập số tiền hợp lệ.');
+                return;
+            }
+
+            $('#btnConfirmPay').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
+
+            $.post('/DiscountCalculation/Pay', { id: id, amount: amount, dienGiai: dienGiai }, function(res) {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + res.message);
+                    $('#btnConfirmPay').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Xác nhận thanh toán');
+                }
+            }).fail(function(err) {
+                alert('Lỗi hệ thống khi thanh toán.');
+                $('#btnConfirmPay').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Xác nhận thanh toán');
+            });
+        });
+    </script>
+}
 

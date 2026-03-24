@@ -104,7 +104,7 @@ namespace QLBH_ThuySan.Controllers
                     {
                         if (entry.LoaiGiaoDich == "MUA_HANG" || entry.LoaiGiaoDich == "Mua Hàng")
                             calculatedDebt += entry.SoTienPhatSinh ?? 0;
-                        else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU")
+                        else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU" || entry.LoaiGiaoDich == "CHI_CK")
                             calculatedDebt -= entry.SoTienPhatSinh ?? 0;
                     }
                     
@@ -273,7 +273,7 @@ namespace QLBH_ThuySan.Controllers
                 {
                     if (entry.LoaiGiaoDich == "MUA_HANG")
                         calculatedDebt += entry.SoTienPhatSinh ?? 0;
-                    else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU")
+                    else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU" || entry.LoaiGiaoDich == "CHI_CK")
                         calculatedDebt -= entry.SoTienPhatSinh ?? 0;
                 }
                 
@@ -352,7 +352,7 @@ namespace QLBH_ThuySan.Controllers
 
             // 5. Apply Filters and Sorting to Discounts (PhieuTinhChietKhau)
             var discounts = await _context.PhieuTinhChietKhaus
-                .Include(p => p.ChiTietPhieuTinhs)
+                .Include(p => p.ChiTietChietKhaus)
                     .ThenInclude(c => c.MaHangNavigation)
                 .Where(p => p.MaDoiTuong == id && p.LoaiDoiTuong == "KHACH")
                 .ToListAsync();
@@ -449,6 +449,25 @@ namespace QLBH_ThuySan.Controllers
                 phieu.TrangThai = "Thanh Toán Một Phần";
             }
             _context.Update(phieu);
+            
+            // 3. Add to Customer Ledger (SoRiengKhachHang) - This reduces debt
+            var ledgerEntry = new SoRiengKhachHang
+            {
+                MaKhachHang = maKhachHang,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = "CHI_CK",
+                SoTienPhatSinh = amount,
+                DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Chi trả chiết khấu cho phiếu {maPhieuTinh}" : dienGiai
+            };
+            _context.SoRiengKhachHangs.Add(ledgerEntry);
+
+            // 4. Update Customer Cumulative Debt
+            var customer = await _context.KhachHangs.FindAsync(maKhachHang);
+            if (customer != null)
+            {
+                customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - amount;
+                _context.Update(customer);
+            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = maKhachHang });
@@ -504,7 +523,7 @@ namespace QLBH_ThuySan.Controllers
                 {
                     customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) + soTienPhatSinh;
                 }
-                else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU")
+                else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU" || loaiGiaoDich == "CHI_CK")
                 {
                     customer.DuNoLuyKe = (customer.DuNoLuyKe ?? 0) - soTienPhatSinh;
 

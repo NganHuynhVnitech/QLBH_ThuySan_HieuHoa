@@ -20,7 +20,8 @@ namespace QLBH_ThuySan.Controllers
         public async Task<IActionResult> Index(string? searchTerm, string? status, string? type, DateTime? fromDate, DateTime? toDate, string? ruleSearch, DateTime? periodFrom, DateTime? periodTo, DateTime? paymentFrom, DateTime? paymentTo)
         {
             var query = _context.PhieuTinhChietKhaus
-                .Include(p => p.ChiTietPhieuTinhs)
+                .Include(p => p.ChiTietChietKhaus)
+                .Where(p => !p.IsDisabled)
                 .AsQueryable();
 
             // 1. Basic Filters
@@ -49,7 +50,7 @@ namespace QLBH_ThuySan.Controllers
                 query = query.Where(p => p.NgayThanhToan <= paymentTo.Value);
             
             if (!string.IsNullOrEmpty(ruleSearch))
-                query = query.Where(p => p.ChiTietPhieuTinhs.Any(c => c.NoiDung != null && c.NoiDung.Contains(ruleSearch)));
+                query = query.Where(p => p.ChiTietChietKhaus.Any(c => c.NoiDung != null && c.NoiDung.Contains(ruleSearch)));
 
             // Execute Query first (needed for in-memory name resolution)
             var list = await query.OrderByDescending(p => p.NgayTao).ToListAsync();
@@ -68,7 +69,7 @@ namespace QLBH_ThuySan.Controllers
                 else if (p.LoaiDoiTuong == "KHACH" && khNames.ContainsKey(p.MaDoiTuong!)) name = khNames[p.MaDoiTuong!];
                 
                 // Rule Summary: Get unique rules from details
-                var rules = string.Join("; ", p.ChiTietPhieuTinhs.Select(c => c.NoiDung).Distinct());
+                var rules = string.Join("; ", p.ChiTietChietKhaus.Select(c => c.NoiDung).Distinct());
 
                 return new QLBH_ThuySan.Models.ViewModels.DiscountListItem
                 {
@@ -119,7 +120,7 @@ namespace QLBH_ThuySan.Controllers
             if (id == null) return NotFound();
 
             var phieu = await _context.PhieuTinhChietKhaus
-                .Include(p => p.ChiTietPhieuTinhs)
+                .Include(p => p.ChiTietChietKhaus)
                 .ThenInclude(c => c.MaHangNavigation)
                 .FirstOrDefaultAsync(m => m.MaPhieuTinh == id);
 
@@ -226,71 +227,47 @@ namespace QLBH_ThuySan.Controllers
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                // 1. Create Header
-                var phieu = new PhieuTinhChietKhau
-                {
-                    MaPhieuTinh = "CK" + DateTime.Now.ToString("yyMMddHHmm"),
-                    LoaiDoiTuong = request.Type,
-                    MaDoiTuong = request.PartnerId,
-                    TuNgay = DateOnly.FromDateTime(DateTime.Parse(request.FromDate)),
-                    DenNgay = DateOnly.FromDateTime(DateTime.Parse(request.ToDate)),
-                    NgayTao = DateTime.Now,
-                    TrangThai = "Chưa thanh toán",
-                    SoPhaiThanhToan = 0 // Will sum below
-                };
-                
-                _context.PhieuTinhChietKhaus.Add(phieu);
-                await _context.SaveChangesAsync(); // Save to get valid state
+                string maPhieuTinh = "CK" + DateTime.Now.ToString("yyMMddHHmm");
+                decimal totalAmount = request.Items.Sum(i => i.CalculatedAmount);
 
-                // 2. Create Details
-                decimal totalAmount = 0;
+                // 1. Insert Header via SP
+                // SP Params: @maPhieuTinh, @tenPhieu, @loaiDoiTuong, @maDoiTuong, @tuNgay, @denNgay, @soPhaiThanhToan, @trangThai
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC sp_PhieuTinhChietKhau_Insert {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}",
+                    maPhieuTinh, 
+                    request.TenPhieu ?? "Phiếu chiết khấu", 
+                    request.Type, 
+                    request.PartnerId, 
+                    DateTime.Parse(request.FromDate), 
+                    DateTime.Parse(request.ToDate), 
+                    totalAmount, 
+                    "Chưa Thanh Toán"
+                );
+
+                // 2. Insert Details via SP
                 foreach (var item in request.Items)
                 {
-                    if (item.IsSelected)
+                    decimal giaCK = item.FixedRate > 0 ? item.FixedRate : (item.TotalQty > 0 ? Math.Round(item.CalculatedAmount / (decimal)item.TotalQty, 2) : 0);
+                    // SP Params: @maPhieuTinh, @maHang, @soLuong, @giaChietKhau, @thanhTien, @noiDung
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "EXEC sp_ChiTietChietKhau_Insert {0}, {1}, {2}, {3}, {4}, {5}",
+                        maPhieuTinh, item.MaHang, item.TotalQty, giaCK, item.CalculatedAmount, item.RuleDescription ?? ""
+                    );
+                }
+
+                // 3. Handle Immediate Payment
+                if (request.PayNow)
+                {
+                    // Reload the newly created slip to ensure EF tracker has it properly
+                    var phieu = await _context.PhieuTinhChietKhaus.FirstOrDefaultAsync(p => p.MaPhieuTinh == maPhieuTinh);
+                    if (phieu != null) 
                     {
-                        decimal discountAmt = 0;
-                        string note = "";
-
-                        // Rule Logic
-                        if (item.RuleType == "Fixed")
-                        {
-                            discountAmt = (decimal)item.TotalQty * item.FixedRate;
-                            note = $"Cố định: {item.FixedRate:N0}/đơn vị";
-                        }
-                        else if (item.RuleType == "Tiered")
-                        {
-                            // Parse Tier ranges (Simple example: Tier 1 > 0, Rate 1)
-                            // In real app, this would interpret the complex Tier string.
-                            // For Demo: simplified logic or trust the frontend calculated amount if complex
-                            // Here we trust the calculated math mostly, but re-verify basic math.
-                            // Let's assume frontend sends the calculated Amount for flexibility in this demo.
-                            discountAmt = item.CalculatedAmount; 
-                            note = item.RuleDescription;
-                        }
-
-                        var detail = new ChiTietPhieuTinh
-                        {
-                            MaPhieuTinh = phieu.MaPhieuTinh,
-                            MaHang = item.MaHang,
-                            SoLuong = item.TotalQty,
-                            SoTienChietKhau = item.FixedRate > 0 ? item.FixedRate : 0, // Rate or 0 if tiered
-                            ThanhTien = discountAmt,
-                            NoiDung = note
-                        };
-                        _context.ChiTietPhieuTinhs.Add(detail);
-                        totalAmount += discountAmt;
+                        await PerformPaymentInternal(phieu);
                     }
                 }
 
-                // 3. Update Header Total
-                phieu.SoPhaiThanhToan = totalAmount;
-                phieu.SoDaThanhToan = 0;
-                phieu.SoChuaThanhToan = totalAmount;
-                _context.Update(phieu);
-                await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
-                return Json(new { success = true, id = phieu.MaPhieuTinh });
+                return Json(new { success = true, id = maPhieuTinh });
             }
             catch (Exception ex)
             {
@@ -305,7 +282,7 @@ namespace QLBH_ThuySan.Controllers
             if (id == null) return NotFound();
 
             var phieu = await _context.PhieuTinhChietKhaus
-                .Include(p => p.ChiTietPhieuTinhs)
+                .Include(p => p.ChiTietChietKhaus)
                 .ThenInclude(c => c.MaHangNavigation)
                 .FirstOrDefaultAsync(m => m.MaPhieuTinh == id);
 
@@ -339,7 +316,7 @@ namespace QLBH_ThuySan.Controllers
             };
 
             // Fetch Details for each Product
-            foreach (var item in phieu.ChiTietPhieuTinhs)
+            foreach (var item in phieu.ChiTietChietKhaus)
             {
                 var productItem = new QLBH_ThuySan.Models.ViewModels.DiscountPrintProductItem
                 {
@@ -406,12 +383,12 @@ namespace QLBH_ThuySan.Controllers
                 }
 
                 // Distribute Discount (Pro-rata or Fixed logic)
-                // If Item.SoTienChietKhau > 0 (Fixed Rate stored), use it.
+                // If Item.GiaChietKhau > 0 (Fixed Rate stored), use it.
                 // Else calculate average rate.
                 decimal appliedRate = 0;
-                if (item.SoTienChietKhau > 0) 
+                if (item.GiaChietKhau > 0) 
                 {
-                    appliedRate = item.SoTienChietKhau.Value;
+                    appliedRate = item.GiaChietKhau.Value;
                 }
                 else if (item.SoLuong > 0)
                 {
@@ -441,10 +418,12 @@ namespace QLBH_ThuySan.Controllers
 
     public class DiscountSaveRequest 
     {
+        public string TenPhieu { get; set; } = "";
         public string Type { get; set; } = ""; // NCC / KHACH
         public string PartnerId { get; set; } = "";
         public string FromDate { get; set; } = "";
         public string ToDate { get; set; } = "";
+        public bool PayNow { get; set; }
         public List<DiscountSaveItem> Items { get; set; } = new();
     }
 
@@ -459,7 +438,139 @@ namespace QLBH_ThuySan.Controllers
         public decimal CalculatedAmount { get; set; }
         public string RuleDescription { get; set; } = "";
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Pay(string id, decimal amount, string? dienGiai)
+    {
+        if (string.IsNullOrEmpty(id)) return BadRequest("Mã phiếu không hợp lệ");
+
+        var phieu = await _context.PhieuTinhChietKhaus.FirstOrDefaultAsync(p => p.MaPhieuTinh == id);
+        if (phieu == null) return NotFound("Không tìm thấy phiếu chiết khấu");
+        if (phieu.TrangThai == "Đã thanh toán") return BadRequest("Phiếu này đã được thanh toán");
+
+        if (amount <= 0) return BadRequest("Số tiền không hợp lệ");
+
+        using var transaction = _context.Database.BeginTransaction();
+        try
+        {
+            await PerformPaymentInternal(phieu, amount, dienGiai);
+            await transaction.CommitAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return BadRequest("Lỗi khi thanh toán: " + ex.Message);
+        }
+    }
+
+    private async Task PerformPaymentInternal(PhieuTinhChietKhau phieu, decimal? customAmount = null, string? customDienGiai = null)
+    {
+        decimal amount = customAmount ?? (phieu.SoChuaThanhToan ?? phieu.SoPhaiThanhToan ?? 0);
+        if (amount <= 0)
+        {
+            if ((phieu.SoChuaThanhToan ?? 0) <= 0)
+            {
+                phieu.TrangThai = "Đã thanh toán";
+                phieu.NgayThanhToan = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+            return;
+        }
+
+        // 1. Create PhieuThuChi
+        string loaiPhieu = phieu.LoaiDoiTuong == "NCC" ? "THU" : "CHI";
+        string prefix = loaiPhieu == "THU" ? "PT" : "PC";
+        string maPhieuTC = prefix + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString();
+        if (maPhieuTC.Length > 20) maPhieuTC = maPhieuTC.Substring(0, 20);
+
+        string description = customDienGiai ?? (phieu.LoaiDoiTuong == "NCC"
+            ? $"Thu tiền chiết khấu từ NCC cho phiếu {phieu.MaPhieuTinh}"
+            : $"Chi trả chiết khấu cho khách hàng cho phiếu {phieu.MaPhieuTinh}");
+
+        var ptc = new PhieuThuChi
+        {
+            MaPhieu = maPhieuTC,
+            LoaiPhieu = loaiPhieu,
+            NgayLap = DateTime.Now,
+            SoTien = amount,
+            LyDo = description,
+            MaDoiTuong = phieu.MaDoiTuong
+        };
+        _context.PhieuThuChis.Add(ptc);
+
+        // 2. Update Ledger (SoRieng) and Debt
+        if (phieu.LoaiDoiTuong == "NCC")
+        {
+            var sr = new SoRiengNhaCungCap
+            {
+                MaNhaCungCap = phieu.MaDoiTuong,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = "THU_CK",
+                SoTienPhatSinh = amount,
+                DienGiai = description.Length > 200 ? description.Substring(0, 200) : description
+            };
+            _context.SoRiengNhaCungCaps.Add(sr);
+
+            var ncc = await _context.NhaCungCaps.FindAsync(phieu.MaDoiTuong);
+            if (ncc != null)
+            {
+                ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) - amount;
+                _context.Update(ncc);
+            }
+        }
+        else
+        {
+            var sr = new SoRiengKhachHang
+            {
+                MaKhachHang = phieu.MaDoiTuong,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = "CHI_CK",
+                SoTienPhatSinh = amount,
+                DienGiai = description.Length > 200 ? description.Substring(0, 200) : description
+            };
+            _context.SoRiengKhachHangs.Add(sr);
+
+            var kh = await _context.KhachHangs.FindAsync(phieu.MaDoiTuong);
+            if (kh != null)
+            {
+                kh.DuNoLuyKe = (kh.DuNoLuyKe ?? 0) - amount;
+                _context.Update(kh);
+            }
+        }
+
+        // 3. Update Discount Slip
+        phieu.SoDaThanhToan = (phieu.SoDaThanhToan ?? 0) + amount;
+        phieu.SoChuaThanhToan = (phieu.SoPhaiThanhToan ?? 0) - phieu.SoDaThanhToan;
+        phieu.NgayThanhToan = DateTime.Now;
+
+        if (phieu.SoChuaThanhToan <= 0)
+        {
+            phieu.TrangThai = "Đã Thanh Toán";
+            phieu.SoChuaThanhToan = 0;
+        }
+        else
+        {
+            phieu.TrangThai = "Thanh Toán Một Phần";
+        }
+        _context.Update(phieu);
+
+        await _context.SaveChangesAsync();
+    }
+
+    // POST: DiscountCalculation/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(string id)
+    {
+        var phieu = await _context.PhieuTinhChietKhaus.FindAsync(id);
+        if (phieu != null)
+        {
+            phieu.IsDisabled = true;
+            _context.Update(phieu);
+            await _context.SaveChangesAsync();
+        }
+        return RedirectToAction(nameof(Index));
     }
 }
-
-
+}

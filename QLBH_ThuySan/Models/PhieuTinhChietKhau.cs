@@ -15,6 +15,7 @@ public partial class PhieuTinhChietKhau
 
     public DateTime? NgayTao { get; set; }
 
+    public string? TenPhieu { get; set; }
     public string? MaDoiTuong { get; set; }
 
     public decimal? SoPhaiThanhToan { get; set; }
@@ -24,8 +25,9 @@ public partial class PhieuTinhChietKhau
     public decimal? SoChuaThanhToan { get; set; }
 
     public string? TrangThai { get; set; }
+    public bool IsDisabled { get; set; }
 
     public DateTime? NgayThanhToan { get; set; }
 
-    public virtual ICollection<ChiTietPhieuTinh> ChiTietPhieuTinhs { get; set; } = new List<ChiTietPhieuTinh>();
+    public virtual ICollection<ChiTietChietKhau> ChiTietChietKhaus { get; set; } = new List<ChiTietChietKhau>();
 }

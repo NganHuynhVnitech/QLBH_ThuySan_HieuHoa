@@ -20,6 +20,7 @@ namespace QLBH_ThuySan.Models.ViewModels
     public class DiscountListItem
     {
         public string MaPhieuTinh { get; set; } = "";
+        public string TenPhieu { get; set; } = "";
         public DateTime NgayTao { get; set; }
         public string LoaiDoiTuong { get; set; } = "";
         public string MaDoiTuong { get; set; } = "";

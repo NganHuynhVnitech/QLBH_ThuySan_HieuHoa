@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QLBH_ThuySan.Models
 {
-    public partial class ChiTietPhieuTinh
+    public partial class ChiTietChietKhau
     {
         [Key]
         public int Id { get; set; }
@@ -16,7 +16,7 @@ namespace QLBH_ThuySan.Models
 
         public double? SoLuong { get; set; }
 
-        public decimal? SoTienChietKhau { get; set; }
+        public decimal? GiaChietKhau { get; set; }
 
         public decimal? ThanhTien { get; set; }
 

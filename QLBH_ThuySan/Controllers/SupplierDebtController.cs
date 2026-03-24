@@ -163,7 +163,7 @@ namespace QLBH_ThuySan.Controllers
                 {
                     if (entry.LoaiGiaoDich == "MUA_HANG")
                         calculatedDebt += entry.SoTienPhatSinh ?? 0;
-                    else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU")
+                    else if (entry.LoaiGiaoDich == "THANH_TOAN" || entry.LoaiGiaoDich == "CAN_TRU" || entry.LoaiGiaoDich == "THU_CK")
                         calculatedDebt -= entry.SoTienPhatSinh ?? 0;
                 }
                 
@@ -242,7 +242,7 @@ namespace QLBH_ThuySan.Controllers
 
             // 5. Apply Filters and Sorting to Discounts (PhieuTinhChietKhau)
             var discounts = await _context.PhieuTinhChietKhaus
-                .Include(p => p.ChiTietPhieuTinhs)
+                .Include(p => p.ChiTietChietKhaus)
                     .ThenInclude(c => c.MaHangNavigation)
                 .Where(p => p.MaDoiTuong == id && p.LoaiDoiTuong == "NCC")
                 .ToListAsync();
@@ -332,7 +332,7 @@ namespace QLBH_ThuySan.Controllers
                 {
                     supplier.DuNoLuyKe = (supplier.DuNoLuyKe ?? 0) + soTienPhatSinh;
                 }
-                else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU")
+                else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU" || loaiGiaoDich == "THU_CK")
                 {
                     supplier.DuNoLuyKe = (supplier.DuNoLuyKe ?? 0) - soTienPhatSinh;
 
@@ -424,6 +424,25 @@ namespace QLBH_ThuySan.Controllers
                 phieu.TrangThai = "Thanh Toán Một Phần";
             }
             _context.Update(phieu);
+
+            // 3. Create Ledger Entry (THU_CK)
+            var ledgerEntry = new SoRiengNhaCungCap
+            {
+                MaNhaCungCap = maNhaCungCap,
+                NgayGiaoDich = DateTime.Now,
+                LoaiGiaoDich = "THU_CK",
+                SoTienPhatSinh = amount,
+                DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Thu tiền chiết khấu từ phiếu {maPhieuTinh}" : dienGiai
+            };
+            _context.SoRiengNhaCungCaps.Add(ledgerEntry);
+
+            // 4. Update NCC DuNoLuyKe (Receipt from NCC reduces what we owe)
+            var ncc = await _context.NhaCungCaps.FindAsync(maNhaCungCap);
+            if (ncc != null)
+            {
+                ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) - amount;
+                _context.Update(ncc);
+            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = maNhaCungCap });
