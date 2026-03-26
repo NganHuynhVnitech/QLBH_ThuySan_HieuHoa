@@ -1,157 +1,221 @@
-﻿@{
+@{
     ViewData["Title"] = "Trang Chủ";
 }
-
-<div class="text-center mb-5">
-    <h1 class="display-4">Hệ Thống Quản Lý Bán Hàng</h1>
-    <p class="lead">Quản lý toàn diện hoạt động kinh doanh thủy sản</p>
+<div class="mb-5 py-4 bg-light rounded-3 text-center border shadow-sm">
+    <h1 class="display-4 fw-bold text-primary">VNITech Solution</h1>
+    <p class="lead">Hệ Thống Quản Lý Bán Hàng & Công Nợ Thủy Sản</p>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-box-seam"></i> Quản Lý Kho
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    3 kho vật lý + 1 kho tổng ảo với tính năng tự động tính giá vốn bình quân gia quyền liên hoàn.
-                </p>
-                <a asp-controller="Warehouse" asp-action="Index" class="btn btn-primary">
-                    Xem Kho
-                </a>
+@if (ViewBag.PaymentWarnings != null && ((IEnumerable<QLBH_ThuySan.Models.PhieuNhap>)ViewBag.PaymentWarnings).Any())
+{
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-danger shadow-sm">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-2">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Cảnh Báo Hạn Thanh Toán (Nhập Hàng)</h5>
+                    <span class="badge bg-white text-danger">@(((IEnumerable<QLBH_ThuySan.Models.PhieuNhap>)ViewBag.PaymentWarnings).Count()) Phiếu</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light small text-uppercase fw-bold">
+                                <tr>
+                                    <th>Mã Phiếu</th>
+                                    <th>Nhà Cung Cấp</th>
+                                    <th>Hạn Thanh Toán</th>
+                                    <th class="text-end">Số Tiền Còn Nợ</th>
+                                    <th class="text-center">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var warning in (IEnumerable<QLBH_ThuySan.Models.PhieuNhap>)ViewBag.PaymentWarnings)
+                                {
+                                    var isOverdue = warning.HanThanhToan < DateTime.Today;
+                                    <tr class="@(isOverdue ? "table-danger" : "table-warning") align-middle">
+                                        <td><strong>@warning.MaPhieu</strong></td>
+                                        <td>@(warning.IdNhaCungCapNavigation?.TenDoiTuong ?? warning.IdNhaCungCap)</td>
+                                        <td>
+                                            <span class="fw-bold @(isOverdue ? "text-danger" : "")">
+                                                @warning.HanThanhToan?.ToString("dd/MM/yyyy")
+                                            </span>
+                                            @if (isOverdue)
+                                            {
+                                                <small class="d-block text-danger">(Quá hạn @((DateTime.Today - warning.HanThanhToan!.Value).Days) ngày)</small>
+                                            }
+                                        </td>
+                                        <td class="text-end fw-bold text-dark">
+                                            @((warning.SoChuaThanhToan ?? 0).ToString("N0")) đ
+                                        </td>
+                                        <td class="text-center">
+                                            <a asp-controller="Import" asp-action="Details" asp-route-id="@warning.MaPhieu" class="btn btn-sm btn-outline-dark">
+                                                <i class="bi bi-eye"></i> Xem & TT
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+}
 
-    <div class="col-md-6 mb-4">
-        <div class="card border-info">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-journal-text"></i> Công Nợ Khách Hàng
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Theo dõi dư nợ, ghi nợ tích lũy và thanh toán của khách hàng.
-                </p>
-                <a asp-controller="CustomerDebt" asp-action="Index" class="btn btn-info text-white">
-                    Xem Công Nợ KH
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="bi bi-journal-arrow-down"></i> Công Nợ Đầu Vào
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Theo dõi công nợ nhập hàng và thời hạn thanh toán với Nhà cung cấp.
-                </p>
-                <a asp-controller="SupplierDebt" asp-action="Index" class="btn btn-warning text-dark">
-                    Xem Công Nợ NCC
-                </a>
+<!-- Section 1: Giao Dịch & Dòng Tiền (Core Operations) -->
+<h2 class="mb-3 ps-2 border-start border-4 border-success text-success fw-bold">
+    <i class="bi bi-currency-exchange me-2"></i>Giao Dịch & Dòng Tiền
+</h2>
+<div class="row mb-5">
+    <!-- Nhập Kho -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-top border-4 border-success shadow-sm hover-lift">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center mb-3 text-success">
+                    <i class="bi bi-box-arrow-in-down fs-1 me-3"></i>
+                    <h5 class="card-title mb-0 fw-bold text-dark">Nhập Kho</h5>
+                </div>
+                <p class="text-muted small">Tạo và quản lý các phiếu nhập hàng từ nhà cung cấp.</p>
+                <a asp-controller="Import" asp-action="Index" class="btn btn-success w-100">Bắt đầu Nhập</a>
             </div>
         </div>
     </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card border-info">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-people"></i> Quản Lý Khách Hàng
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Quản lý danh sách khách hàng, thông tin liên hệ và ao nuôi.
-                </p>
-                <a asp-controller="Customer" asp-action="Index" class="btn btn-info text-white">
-                    Xem Khách Hàng
-                </a>
+    <!-- Xuất Kho -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-top border-4 border-primary shadow-sm hover-lift">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center mb-3 text-primary">
+                    <i class="bi bi-cart-check fs-1 me-3"></i>
+                    <h5 class="card-title mb-0 fw-bold text-dark">Xuất Kho (Bán)</h5>
+                </div>
+                <p class="text-muted small">Xuất hàng bán cho khách hàng hoặc chuyển kho nội bộ.</p>
+                <a asp-controller="Export" asp-action="Index" class="btn btn-primary w-100">Bắt đầu Xuất</a>
             </div>
         </div>
     </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card border-secondary">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-truck"></i> Quản Lý Nhà Cung Cấp
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Quản lý danh sách nhà cung cấp, đối tác nhập hàng và công nợ.
-                </p>
-                <a asp-controller="Supplier" asp-action="Index" class="btn btn-secondary">
-                    Xem Nhà Cung Cấp
-                </a>
+    <!-- Thu Chi -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-top border-4 border-info shadow-sm hover-lift">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center mb-3 text-info">
+                    <i class="bi bi-wallet2 fs-1 me-3"></i>
+                    <h5 class="card-title mb-0 fw-bold text-dark">Quản Lý Thu Chi</h5>
+                </div>
+                <p class="text-muted small">Ghi nhận các phiếu thu/chi tiền mặt, ngân hàng, dòng tiền.</p>
+                <a asp-controller="CashFlow" asp-action="Index" class="btn btn-info text-white w-100">Dòng Tiền</a>
             </div>
         </div>
     </div>
-
+    <!-- Công Nợ NCC -->
     <div class="col-md-6 mb-4">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="bi bi-graph-up-arrow"></i> Báo Cáo Tài Chính
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Báo cáo P&L: Doanh thu - Giá vốn + Thu chiết khấu - Chi chiết khấu - Chi phí vận hành.
-                </p>
-                <a asp-controller="Financial" asp-action="ProfitLoss" class="btn btn-warning text-dark">
-                    Xem Báo Cáo
-                </a>
+        <div class="card h-100 border-top border-4 border-warning shadow-sm hover-lift">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center mb-3 text-warning">
+                    <i class="bi bi-journal-arrow-down fs-2 me-3"></i>
+                    <h5 class="card-title mb-0 fw-bold text-dark">Công Nợ Đầu Vào (NCC)</h5>
+                </div>
+                <p class="text-muted small">Quản lý các khoản nợ phải trả cho nhà cung cấp, lịch sử giao dịch.</p>
+                <a asp-controller="SupplierDebt" asp-action="Index" class="btn btn-warning text-dark w-100">Công Nợ NCC</a>
             </div>
         </div>
     </div>
+    <!-- Công Nợ Khách Hàng -->
     <div class="col-md-6 mb-4">
-        <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-cart-check"></i> Quản Lý Bán Hàng
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Tạo phiếu xuất kho bán hàng cho khách, quản lý doanh thu và công nợ phải thu.
-                </p>
-                <a asp-controller="Export" asp-action="Index" class="btn btn-primary">
-                    Bán Hàng Ngay
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card border-success">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-box-arrow-in-down"></i> Quản Lý Nhập Hàng
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Tạo phiếu nhập kho từ nhà cung cấp, quản lý chi phí hàng hóa và công nợ phải trả.
-                </p>
-                <a asp-controller="Import" asp-action="Index" class="btn btn-success">
-                    Nhập Hàng Ngay
-                </a>
+        <div class="card h-100 border-top border-4 border-info shadow-sm hover-lift">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center mb-3 text-info">
+                    <i class="bi bi-journal-text fs-2 me-3"></i>
+                    <h5 class="card-title mb-0 fw-bold text-dark">Công Nợ Khách Hàng</h5>
+                </div>
+                <p class="text-muted small">Theo dõi công nợ của khách hàng và đối tác thu mua lẻ.</p>
+                <a asp-controller="CustomerDebt" asp-action="Index" class="btn btn-info text-white w-100">Công Nợ KH</a>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Section 2: Báo Cáo & Phân Tích -->
+<h2 class="mb-3 ps-2 border-start border-4 border-danger text-danger fw-bold">
+    <i class="bi bi-graph-up me-2"></i>Báo Cáo & Phân Tích
+</h2>
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body border-start border-4 border-danger rounded-end">
+                <h6 class="text-danger fw-bold"><i class="bi bi-funnel"></i> Phân Tích P&L</h6>
+                <p class="small text-muted mb-2">Lợi nhuận gộp, doanh thu và chi phí vận hành.</p>
+                <a asp-controller="Financial" asp-action="ProfitLoss" class="stretched-link text-decoration-none text-dark fw-bold small">Xem Chi Tiết &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body border-start border-4 border-info rounded-end">
+                <h6 class="text-info fw-bold"><i class="bi bi-layout-text-window-reverse"></i> Xuất Nhập Tồn</h6>
+                <p class="small text-muted mb-2">Kiểm soát kho hàng tháng, báo cáo luân chuyển.</p>
+                <a asp-controller="InventoryReport" asp-action="Index" class="stretched-link text-decoration-none text-dark fw-bold small">Xem Chi Tiết &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body border-start border-4 border-warning rounded-end">
+                <h6 class="text-warning fw-bold"><i class="bi bi-percent"></i> Quản Lý Chiết Khấu</h6>
+                <p class="small text-muted mb-2">Tính toán chiết khấu cuối vụ, rebate khách hàng.</p>
+                <a asp-controller="DiscountCalculation" asp-action="Index" class="stretched-link text-decoration-none text-dark fw-bold small">Xem Chi Tiết &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Hệ Thống & Danh Mục -->
+<h2 class="mb-3 ps-2 border-start border-4 border-dark text-dark fw-bold">
+    <i class="bi bi-gear me-2"></i>Hệ Thống & Danh Mục
+</h2>
+<div class="row mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <i class="bi bi-boxes fs-2 mb-2 text-primary"></i>
+            <h6 class="mb-2">Sản Phẩm</h6>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-sm btn-outline-primary mx-3">Quản Lý</a>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <i class="bi bi-buildings fs-2 mb-2 text-dark"></i>
+            <h6 class="mb-2">Kho Hàng</h6>
+            <a asp-controller="Warehouse" asp-action="Index" class="btn btn-sm btn-outline-dark mx-3">Quản Lý</a>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <i class="bi bi-people fs-2 mb-2 text-dark"></i>
+            <h6 class="mb-2">Đối Tác</h6>
+            <div class="px-2">
+                <a asp-controller="Customer" asp-action="Index" class="badge bg-light text-dark border text-decoration-none me-1">KH</a>
+                <a asp-controller="Supplier" asp-action="Index" class="badge bg-light text-dark border text-decoration-none me-1">NCC</a>
+                <a asp-controller="Agency" asp-action="Index" class="badge bg-light text-dark border text-decoration-none">Đại Lý</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <i class="bi bi-database-fill-gear fs-2 mb-2 text-secondary"></i>
+            <h6 class="mb-2">Cấu Hình Tồn</h6>
+            <a asp-controller="OpeningStock" asp-action="Index" class="btn btn-sm btn-outline-secondary mx-3">Thiết Lập</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.15) !important;
+    }
+</style>
 <div class="card bg-light mt-4">
     <div class="card-body">
         <h5 class="card-title">Công Nghệ Sử Dụng:</h5>
@@ -163,4 +227,3 @@
         </ul>
     </div>
 </div>
-

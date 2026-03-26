@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
@@ -30,6 +32,7 @@ namespace QLBH_ThuySan.Controllers
                 .Include(p => p.IdKhachHangNavigation)
                 .Include(p => p.IdNhaCungCapNavigation)
                 .Include(p => p.MaKhoNhanNavigation)
+                .Where(p => !p.IsDisabled)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(type))
@@ -398,6 +401,7 @@ namespace QLBH_ThuySan.Controllers
                 .Include(p => p.IdKhachHangNavigation)
                 .Include(p => p.IdNhaCungCapNavigation)
                 .Include(p => p.MaKhoNhanNavigation)
+                .Where(p => !p.IsDisabled)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(type))
@@ -514,11 +518,12 @@ namespace QLBH_ThuySan.Controllers
             var paymentVoucher = new PhieuThuChi
             {
                 MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                LoaiPhieu = "THU",
+                LoaiPhieu = phieuXuat.LoaiXuat == "RETURN_VENDOR" ? "THU XUAT TRA NCC" : "THU BAN HANG",
                 NgayLap = DateTime.Now,
                 SoTien = amount,
                 LyDo = string.IsNullOrEmpty(dienGiai) ? ("Thu tiền thanh toán phiếu " + phieuXuat.MaPhieu) : dienGiai,
-                MaDoiTuong = customerId
+                MaDoiTuong = customerId,
+                LoaiDoiTuong = phieuXuat.LoaiXuat == "RETURN_VENDOR" ? "NCC" : "KH"
             };
             _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -562,6 +567,107 @@ namespace QLBH_ThuySan.Controllers
             string billList = string.Join(", ", settledBills);
             TempData["SuccessMessage"] = $"Đã xác nhận thu {amount:N0} VNĐ. Tiền được phân bổ cho: {billList}.";
             return RedirectToAction(nameof(Details), new { id = phieuXuat.MaPhieu });
+        }
+
+        // POST: Export/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(string id)
+        {
+            var phieuXuat = await _context.PhieuXuats.FindAsync(id);
+            if (phieuXuat != null)
+            {
+                phieuXuat.IsDisabled = true;
+                _context.Update(phieuXuat);
+
+                // Reverse Debt Impact
+                if (phieuXuat.LoaiXuat == "SALES" && !string.IsNullOrEmpty(phieuXuat.IdKhachHang))
+                {
+                    var kh = await _context.KhachHangs.FindAsync(phieuXuat.IdKhachHang);
+                    if (kh != null)
+                    {
+                        // Sales originally increased debt by SoPhai. Deleting it decreases debt by SoPhai.
+                        kh.DuNoLuyKe = (kh.DuNoLuyKe ?? 0) - (phieuXuat.SoPhaiThanhToan ?? 0);
+                        _context.Update(kh);
+                    }
+                }
+                else if (phieuXuat.LoaiXuat == "RETURN_VENDOR" && !string.IsNullOrEmpty(phieuXuat.IdNhaCungCap))
+                {
+                    var ncc = await _context.NhaCungCaps.FindAsync(phieuXuat.IdNhaCungCap);
+                    if (ncc != null)
+                    {
+                        // Return originally reduced debt by SoPhai. Deleting it increases debt by SoPhai.
+                        ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) + (phieuXuat.SoPhaiThanhToan ?? 0);
+                        _context.Update(ncc);
+                    }
+                }
+
+                // Find and disable associated PhieuThuChi (vouchers)
+                var associatedVouchers = await _context.PhieuThuChis
+                    .Where(v => v.LyDo != null && v.LyDo.Contains(phieuXuat.MaPhieu) && !v.IsDisabled)
+                    .ToListAsync();
+
+                foreach (var v in associatedVouchers)
+                {
+                    v.IsDisabled = true;
+                    _context.Update(v);
+
+                    // Reverse Debt part from the Voucher
+                    decimal amount = v.SoTien ?? 0;
+                    if (v.LoaiPhieu != null && (v.LoaiDoiTuong == "KH" || v.LoaiPhieu.Contains("KHACH HANG")) && !string.IsNullOrEmpty(v.MaDoiTuong))
+                    {
+                        var kh = await _context.KhachHangs.FindAsync(v.MaDoiTuong);
+                        if (kh != null)
+                        {
+                            // If Receipt, deleting it INCREASES debt (Customer owes back)
+                            if (v.LoaiPhieu != null && v.LoaiPhieu.StartsWith("THU")) kh.DuNoLuyKe += amount;
+                            // If Payment, deleting it DECREASES debt
+                            else kh.DuNoLuyKe -= amount;
+                        }
+                    }
+                    else if (v.LoaiPhieu != null && (v.LoaiDoiTuong == "NCC" || v.LoaiPhieu.Contains("NCC")) && !string.IsNullOrEmpty(v.MaDoiTuong))
+                    {
+                        var ncc = await _context.NhaCungCaps.FindAsync(v.MaDoiTuong);
+                        if (ncc != null)
+                        {
+                            if (v.LoaiPhieu == "THU TRA HANG NCC") ncc.DuNoLuyKe -= amount; // Receipt from return decreases debt
+                            else if (v.LoaiPhieu != null && v.LoaiPhieu.StartsWith("CHI")) ncc.DuNoLuyKe += amount; // Payment to NCC increases debt
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(string id)
+        {
+            var p = await _context.PhieuXuats
+                .Include(x => x.IdKhachHangNavigation)
+                .Include(x => x.IdNhaCungCapNavigation)
+                .Include(x => x.ChiTietPhieuXuats)
+                .ThenInclude(ct => ct.MaHangNavigation)
+                .FirstOrDefaultAsync(x => x.MaPhieu == id && !x.IsDisabled);
+
+            if (p == null) return NotFound();
+
+            var details = p.ChiTietPhieuXuats.Select((ct, index) => new {
+                STT = index + 1,
+                MaHang = ct.MaHang,
+                TenHang = ct.MaHangNavigation?.TenHang,
+                DVT = ct.MaHangNavigation?.DonViTinh,
+                SoLuong = ct.SoLuong,
+                GiaBan = ct.GiaBan,
+                ThanhTien = (decimal)(ct.SoLuong ?? 0) * (ct.GiaBan ?? 0)
+            }).ToList();
+
+            var memoryStream = new MemoryStream();
+            memoryStream.SaveAs(details);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PhieuXuat_{id}.xlsx");
         }
     }
 }

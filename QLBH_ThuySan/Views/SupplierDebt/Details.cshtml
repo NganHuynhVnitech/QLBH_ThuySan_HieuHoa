@@ -50,6 +50,9 @@
                 <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addEntryModal">
                     <i class="bi bi-plus-circle"></i> Thêm Giao Dịch
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="exportExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+                </button>
                 <button type="button" class="btn btn-sm btn-outline-light ms-2" onclick="printSelected()">
                     <i class="bi bi-printer"></i> In các dòng đã chọn
                 </button>
@@ -144,6 +147,9 @@
     <div class="card mb-5 shadow-sm border-warning">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
             <h3 class="h5 mb-0"><i class="bi bi-percent"></i> Lịch Sử Chiết Khấu Nhận Được</h3>
+            <button type="button" class="btn btn-sm btn-outline-dark" onclick="printSelected('discounts')">
+                <i class="bi bi-printer"></i> In các phiếu đã chọn
+            </button>
         </div>
         <div class="card-body">
             <!-- Filter Form -->
@@ -179,6 +185,7 @@
                 <table class="table table-hover table-sm">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 30px;"><input type="checkbox" id="checkAllDiscounts" /></th>
                             <th><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Ma"]" class="text-decoration-none text-dark">Mã Phiếu <i class="bi bi-arrow-down-up"></i></a></th>
                             <th>Kỳ Chiết Khấu</th>
                             <th><a href="?id=@Model.MaDoiTuong&dsSortOrder=@ViewData["DSSort_Date"]" class="text-decoration-none text-dark">Ngày Tính <i class="bi bi-arrow-down-up"></i></a></th>
@@ -193,6 +200,7 @@
                         @foreach (var ds in discounts ?? Enumerable.Empty<QLBH_ThuySan.Models.PhieuTinhChietKhau>())
                         {
                             <tr>
+                                <td><input type="checkbox" class="discount-checkbox" value="@ds.MaPhieuTinh" /></td>
                                 <td class="fw-bold text-primary">@ds.MaPhieuTinh</td>
                                 <td class="small">@(ds.TuNgay?.ToString("dd/MM") ?? "-") - @(ds.DenNgay?.ToString("dd/MM/yy") ?? "-")</td>
                                 <td>@(ds.NgayTao?.ToString("dd/MM/yy HH:mm") ?? "")</td>
@@ -533,36 +541,49 @@
         document.getElementById('checkAllEntries')?.addEventListener('change', function() {
             document.querySelectorAll('.entry-checkbox').forEach(cb => cb.checked = this.checked);
         });
+        document.getElementById('checkAllDiscounts')?.addEventListener('change', function() {
+            document.querySelectorAll('.discount-checkbox').forEach(cb => cb.checked = this.checked);
+        });
         document.getElementById('checkAllImports')?.addEventListener('change', function() {
             document.querySelectorAll('.import-checkbox').forEach(cb => cb.checked = this.checked);
         });
 
         // Printing
-        function printSelected() {
+        function printSelected(type) {
             var selectedEntries = Array.from(document.querySelectorAll('.entry-checkbox:checked')).map(cb => cb.value);
             var selectedImports = Array.from(document.querySelectorAll('.import-checkbox:checked')).map(cb => cb.value);
+            var selectedDiscounts = Array.from(document.querySelectorAll('.discount-checkbox:checked')).map(cb => cb.value);
 
-            if (selectedEntries.length === 0 && selectedImports.length === 0) {
-                alert('Vui lòng chọn ít nhất một dòng giao dịch hoặc nhập hàng để in.');
+            if (selectedEntries.length === 0 && selectedImports.length === 0 && selectedDiscounts.length === 0) {
+                alert('Vui lòng chọn ít nhất một dòng giao dịch, nhập hàng hoặc chiết khấu để in.');
                 return;
             }
 
             var url = '/SupplierDebt/Print?id=@Model.MaDoiTuong';
             selectedEntries.forEach(id => url += '&selectedEntries=' + id);
             selectedImports.forEach(ma => url += '&selectedImports=' + ma);
+            selectedDiscounts.forEach(ma => url += '&selectedDiscounts=' + ma);
 
             window.open(url, '_blank');
         }
 
         function printSelectedImports() {
-            var selectedImports = Array.from(document.querySelectorAll('.import-checkbox:checked')).map(cb => cb.value);
-            if (selectedImports.length === 0) {
-                alert('Vui lòng chọn ít nhất một phiếu nhập để in.');
-                return;
-            }
-            var url = '/SupplierDebt/Print?id=@Model.MaDoiTuong';
-            selectedImports.forEach(ma => url += '&selectedImports=' + ma);
-            window.open(url, '_blank');
+            printSelected('imports');
+        }
+
+        function exportExcel() {
+            var url = '/SupplierDebt/ExportExcel?id=@Model.MaDoiTuong';
+            var fromDate = document.getElementsByName('entryFromDate')[0].value;
+            var toDate = document.getElementsByName('entryToDate')[0].value;
+            var loai = document.getElementsByName('entryLoai')[0].value;
+            var dienGiai = document.getElementsByName('entryDienGiai')[0].value;
+
+            if (fromDate) url += '&entryFromDate=' + fromDate;
+            if (toDate) url += '&entryToDate=' + toDate;
+            if (loai) url += '&entryLoai=' + loai;
+            if (dienGiai) url += '&entryDienGiai=' + encodeURIComponent(dienGiai);
+
+            window.location.href = url;
         }
 
         // Modals opening

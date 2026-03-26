@@ -4,73 +4,77 @@
     ViewData["Title"] = "Quản Lý Đại Lý";
 }
 
-<div class="row mb-4">
+<div class="row pt-4 mb-4">
     <div class="col-md-8">
-        <h1>Quản Lý Đại Lý</h1>
-        <p class="text-muted">Danh sách đại lý thuộc hệ thống</p>
+        <h1 class="display-6 fw-bold">Quản Lý Đại Lý</h1>
+        <p class="text-muted">Danh sách các đại lý, điểm thu mua và điểm bán hàng thuộc hệ thống Hieu Hoa.</p>
     </div>
     <div class="col-md-4 text-end align-self-center">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Thêm Mới
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg"></i> Thêm Đại Lý Mới
         </a>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Đại Lý</th>
-                        <th>Tên Đại Lý</th>
-                        <th>Loại Đại Lý</th>
-                        <th>Thao Tác</th>
+                        <th class="ps-3 small fw-bold text-uppercase">Mã Đại Lý</th>
+                        <th class="small fw-bold text-uppercase">Tên Đại Lý</th>
+                        <th class="small fw-bold text-uppercase">Phân Loại</th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model) {
                         <tr>
-                            <td><span class="badge bg-secondary">@item.MaDaiLy</span></td>
-                            <td class="fw-bold">@item.TenDaiLy</td>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaDaiLy</span></td>
+                            <td class="fw-bold text-uppercase">@item.TenDaiLy</td>
                             <td>
                                 @if (item.LoaiDaiLy == "NHAP_A") {
-                                    <span class="badge bg-primary">Nhập A</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary small">Đại Lý Nhập A</span>
                                 } else if (item.LoaiDaiLy == "NHAP_B") {
-                                    <span class="badge bg-info text-dark">Nhập B</span>
+                                    <span class="badge bg-info-subtle text-info border border-info small">Đại Lý Nhập B</span>
                                 } else if (item.LoaiDaiLy == "BAN_C") {
-                                    <span class="badge bg-success">Bán C</span>
+                                    <span class="badge bg-success-subtle text-success border border-success small">Đại Lý Bán C</span>
                                 } else {
-                                    <span class="badge bg-secondary">@item.LoaiDaiLy</span>
+                                    <span class="badge bg-light text-muted border small">@item.LoaiDaiLy</span>
                                 }
                             </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Edit" asp-route-id="@item.MaDaiLy" class="btn btn-sm btn-outline-primary" title="Sửa">
-                                        Sửa
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaDaiLy" class="btn btn-outline-primary" title="Chỉnh sửa thông tin">
+                                        <i class="bi bi-pencil-square"></i> Sửa
                                     </a>
-                                    <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDaiLy" title="Xóa">
-                                        Xóa
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDaiLy" title="Xóa đại lý">
+                                        <i class="bi bi-trash3"></i> Xóa
                                     </button>
                                 </div>
 
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteModal-@item.MaDaiLy" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-danger text-white border-0">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i> Xác Nhận Xóa</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa đại lý <strong>@item.TenDaiLy</strong>?<br/>
-                                                <small class="text-danger">Lưu ý: Không thể xóa nếu đã có phát sinh nhập/xuất hoặc quản lý kho.</small>
+                                            <div class="modal-body p-4 text-start">
+                                                <p>Bạn có chắc muốn xóa đại lý <strong>@item.TenDaiLy</strong>?</p>
+                                                <div class="alert alert-light border small text-danger mb-0">
+                                                    <i class="bi bi-info-circle me-1"></i> Lưu ý: Không thể xóa đại lý nếu đã phát sinh dữ liệu nhập/xuất hoặc đang quản lý kho hàng.
+                                                </div>
                                             </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <form asp-action="Delete" asp-route-id="@item.MaDaiLy">
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                            <div class="modal-footer border-0 pt-0">
+                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaDaiLy" method="post">
+                                                    <button type="submit" class="btn btn-danger px-4 shadow-sm">Đồng Ý Xóa</button>
                                                 </form>
                                             </div>
                                         </div>

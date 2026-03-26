@@ -4,61 +4,66 @@
     ViewData["Title"] = "Quản Lý Nhà Cung Cấp";
 }
 
-<div class="row mb-4">
+<div class="row pt-4 mb-4">
     <div class="col-md-8">
-        <h1>Quản Lý Nhà Cung Cấp</h1>
-        <p class="text-muted">Danh sách đối tác cung cấp hàng hóa</p>
+        <h1 class="display-6 fw-bold">Danh Mục Nhà Cung Cấp</h1>
+        <p class="text-muted">Quản lý danh sách đối tác cung cấp hàng hóa và theo dõi công nợ.</p>
     </div>
     <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
         <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Thêm Mới
+            <i class="bi bi-plus-circle"></i> Thêm Nhà Cung Cấp
         </a>
     </div>
 </div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
         <form asp-action="Index" method="get" class="row g-3 align-items-end" id="searchForm">
             <div class="col-md-2">
-                <label for="searchMa" class="form-label">Mã NCC</label>
-                <input type="text" name="searchMa" id="searchMa" class="form-control" placeholder="Mã NCC..." value="@ViewData["searchMa"]" />
+                <label for="searchMa" class="form-label small fw-bold text-uppercase">Mã NCC</label>
+                <input type="text" name="searchMa" id="searchMa" class="form-control form-control-sm" placeholder="Mã NCC..." value="@ViewData["searchMa"]" />
             </div>
             <div class="col-md-3">
-                <label for="searchTen" class="form-label">Tên Nhà Cung Cấp</label>
-                <input type="text" name="searchTen" id="searchTen" class="form-control" placeholder="Tên NCC..." value="@ViewData["searchTen"]" />
+                <label for="searchTen" class="form-label small fw-bold text-uppercase">Tên Nhà Cung Cấp</label>
+                <input type="text" name="searchTen" id="searchTen" class="form-control form-control-sm" placeholder="Tên NCC..." value="@ViewData["searchTen"]" />
             </div>
             <div class="col-md-2">
-                <label for="searchSdt" class="form-label">Điện Thoại</label>
-                <input type="text" name="searchSdt" id="searchSdt" class="form-control" placeholder="SĐT..." value="@ViewData["searchSdt"]" />
+                <label for="searchSdt" class="form-label small fw-bold text-uppercase">Điện Thoại</label>
+                <input type="text" name="searchSdt" id="searchSdt" class="form-control form-control-sm" placeholder="SĐT..." value="@ViewData["searchSdt"]" />
             </div>
             <div class="col-md-3">
-                <label for="searchDiaChi" class="form-label">Địa Chỉ</label>
-                <input type="text" name="searchDiaChi" id="searchDiaChi" class="form-control" placeholder="Địa chỉ..." value="@ViewData["searchDiaChi"]" />
+                <label for="searchDiaChi" class="form-label small fw-bold text-uppercase">Địa Chỉ</label>
+                <input type="text" name="searchDiaChi" id="searchDiaChi" class="form-control form-control-sm" placeholder="Địa chỉ..." value="@ViewData["searchDiaChi"]" />
             </div>
-            <div class="col-md-10 mt-3">
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="searchCoNo" id="searchCoNo" value="true" @((bool)(ViewData["searchCoNo"] ?? false) ? "checked" : "")>
-                    <label class="form-check-label" for="searchCoNo">Chỉ hiện NCC có dư nợ (>0)</label>
-                </div>
-            </div>
-            <div class="col-md-2 text-end mt-3">
-                <div class="btn-group w-100">
+            <div class="col-md-2 text-end">
+                <div class="btn-group btn-group-sm w-100">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-search"></i> Tìm
                     </button>
                     <a asp-action="Index" class="btn btn-outline-secondary" title="Xóa lọc">
-                        <i class="bi bi-x-lg"></i>
+                        <i class="bi bi-x-circle"></i>
                     </a>
+                </div>
+            </div>
+            <div class="col-md-12 mt-2">
+                <div class="form-check form-check-inline small">
+                    <input class="form-check-input" type="checkbox" name="searchCoNo" id="searchCoNo" value="true" @((bool)(ViewData["searchCoNo"] ?? false) ? "checked" : "")>
+                    <label class="form-check-label text-danger fw-bold" for="searchCoNo">
+                        Chỉ hiện NCC đang có dư nợ (>0)
+                    </label>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         @{
@@ -74,67 +79,69 @@
 
                             string GetSortIcon(string? sortOrder, string ascTarget, string descTarget)
                             {
-                                if (sortOrder == ascTarget) return "<i class='bi bi-sort-up'></i>";
-                                if (sortOrder == descTarget) return "<i class='bi bi-sort-down'></i>";
+                                if (sortOrder == ascTarget) return "<i class='bi bi-sort-up text-primary'></i>";
+                                if (sortOrder == descTarget) return "<i class='bi bi-sort-down text-primary'></i>";
                                 return "<i class='bi bi-arrow-down-up text-muted small'></i>";
                             }
                         }
-                        <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["MaSortParm"]" class="text-decoration-none text-dark">
+                        <th class="ps-3">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["MaSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 Mã NCC @Html.Raw(GetSortIcon(currentSort, "", "ma_desc"))
                             </a>
                         </th>
                         <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["TenSortParm"]" class="text-decoration-none text-dark">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["TenSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 Tên NCC @Html.Raw(GetSortIcon(currentSort, "name_asc", "name_desc"))
                             </a>
                         </th>
                         <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["SdtSortParm"]" class="text-decoration-none text-dark">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["SdtSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 SĐT @Html.Raw(GetSortIcon(currentSort, "sdt_asc", "sdt_desc"))
                             </a>
                         </th>
                         <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DiaChiSortParm"]" class="text-decoration-none text-dark">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DiaChiSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 Địa Chỉ @Html.Raw(GetSortIcon(currentSort, "addr_asc", "addr_desc"))
                             </a>
                         </th>
                         <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["TaxSortParm"]" class="text-decoration-none text-dark">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["TaxSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 MST @Html.Raw(GetSortIcon(currentSort, "tax_asc", "tax_desc"))
                             </a>
                         </th>
                         <th>
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DaySortParm"]" class="text-decoration-none text-dark">
-                                Nợ (Ngày) @Html.Raw(GetSortIcon(currentSort, "day_asc", "day_desc"))
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DaySortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
+                                Hạn No @Html.Raw(GetSortIcon(currentSort, "day_asc", "day_desc"))
                             </a>
                         </th>
                         <th class="text-end">
-                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DebtSortParm"]" class="text-decoration-none text-dark">
+                            <a asp-action="Index" asp-all-route-data="searchParams" asp-route-sortOrder="@ViewData["DebtSortParm"]" class="text-decoration-none text-dark small fw-bold text-uppercase">
                                 @Html.Raw(GetSortIcon(currentSort, "debt_asc", "debt_desc")) Dư Nợ
                             </a>
                         </th>
-                        <th>Thao Tác</th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model) {
                         <tr>
-                            <td><span class="badge bg-secondary">@item.MaDoiTuong</span></td>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaDoiTuong</span></td>
                             <td class="fw-bold">@item.TenDoiTuong</td>
                             <td>@item.SoDienThoai</td>
                             <td>@item.DiaChi</td>
                             <td>@item.MaSoThue</td>
-                            <td>@item.SoNgayDuocNo</td>
-                            <td class="text-danger fw-bold">@string.Format("{0:N0}", item.DuNoLuyKe ?? 0) đ</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-sm btn-outline-primary" title="Sửa">
-                                        Sửa
+                            <td class="text-center">@item.SoNgayDuocNo <small class="text-muted">ngày</small></td>
+                            <td class="text-end text-danger fw-bold">@string.Format("{0:N0}", item.DuNoLuyKe ?? 0)</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
-                                        Xóa
+                                    <a asp-controller="SupplierDebt" asp-action="Details" asp-route-id="@item.MaDoiTuong" class="btn btn-outline-success" title="Xem Chi Tiết Công Nợ">
+                                        <i class="bi bi-journal-text"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaDoiTuong" title="Xóa">
+                                        <i class="bi bi-trash3"></i>
                                     </button>
                                 </div>
 
@@ -142,17 +149,18 @@
                                 <div class="modal fade" id="deleteModal-@item.MaDoiTuong" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <div class="modal-header bg-danger text-white py-2">
+                                                <h5 class="modal-title font-size-sm"><i class="bi bi-exclamation-octagon"></i> Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="modal-body">
-                                                Bạn có chắc chắn muốn xóa nhà cung cấp <strong>@item.TenDoiTuong</strong>?
+                                            <div class="modal-body text-start">
+                                                Bạn có chắc chắn muốn xóa nhà cung cấp <strong>@item.TenDoiTuong</strong>?<br/>
+                                                <small class="text-danger d-block mt-2"><i class="bi bi-info-circle"></i> Lưu ý: Không thể xóa nhà cung cấp nếu có lịch sử nhập hàng hoặc công nợ.</small>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                                                 <form asp-action="Delete" asp-route-id="@item.MaDoiTuong">
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                    <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
                                                 </form>
                                             </div>
                                         </div>

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
@@ -335,18 +337,18 @@ namespace QLBH_ThuySan.Controllers
                 else if (loaiGiaoDich == "THANH_TOAN" || loaiGiaoDich == "CAN_TRU" || loaiGiaoDich == "THU_CK")
                 {
                     supplier.DuNoLuyKe = (supplier.DuNoLuyKe ?? 0) - soTienPhatSinh;
-
                     // Create PhieuThuChi (CHI) if it's a payment
                     if (loaiGiaoDich == "THANH_TOAN")
                     {
                         var paymentVoucher = new PhieuThuChi
                         {
                             MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                            LoaiPhieu = "CHI",
+                            LoaiPhieu = "CHI PHIEU NHAP",
                             NgayLap = DateTime.Now,
                             SoTien = soTienPhatSinh,
                             LyDo = string.IsNullOrEmpty(dienGiai) ? "Chi tiền thanh toán cho NCC " + maNhaCungCap : dienGiai,
-                            MaDoiTuong = maNhaCungCap
+                            MaDoiTuong = maNhaCungCap,
+                            LoaiDoiTuong = "NCC"
                         };
                         _context.PhieuThuChis.Add(paymentVoucher);
                     }
@@ -401,11 +403,12 @@ namespace QLBH_ThuySan.Controllers
             var paymentVoucher = new PhieuThuChi
             {
                 MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                LoaiPhieu = "THU",
+                LoaiPhieu = "THU CHIET KHAU NCC",
                 NgayLap = DateTime.Now,
                 SoTien = amount,
                 LyDo = string.IsNullOrEmpty(dienGiai) ? $"Thu tiền chiết khấu từ NCC cho phiếu {maPhieuTinh}" : dienGiai,
-                MaDoiTuong = maNhaCungCap
+                MaDoiTuong = maNhaCungCap,
+                LoaiDoiTuong = "NCC"
             };
             _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -490,11 +493,12 @@ namespace QLBH_ThuySan.Controllers
             var paymentVoucher = new PhieuThuChi
             {
                 MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-                LoaiPhieu = "CHI",
+                LoaiPhieu = "CHI PHIEU NHAP",
                 NgayLap = DateTime.Now,
                 SoTien = amount,
                 LyDo = ledgerEntry.DienGiai,
-                MaDoiTuong = pn.IdNhaCungCap
+                MaDoiTuong = pn.IdNhaCungCap,
+                LoaiDoiTuong = "NCC"
             };
             _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -512,7 +516,7 @@ namespace QLBH_ThuySan.Controllers
 
         // GET: SupplierDebt/Print
         [HttpGet("/SupplierDebt/Print")]
-        public async Task<IActionResult> Print(string id, [FromQuery] int[] selectedEntries, [FromQuery] string[] selectedImports)
+        public async Task<IActionResult> Print(string id, [FromQuery] int[] selectedEntries, [FromQuery] string[] selectedImports, [FromQuery] string[] selectedDiscounts)
         {
             if (string.IsNullOrEmpty(id)) return NotFound();
             
@@ -538,7 +542,18 @@ namespace QLBH_ThuySan.Controllers
                     .ToListAsync();
             }
 
-            // Auto-fetch imports mentioned in manual entries
+            var phieuChiets = new List<PhieuTinhChietKhau>();
+            if (selectedDiscounts != null && selectedDiscounts.Length > 0)
+            {
+                phieuChiets = await _context.PhieuTinhChietKhaus
+                    .Include(p => p.ChiTietChietKhaus)
+                        .ThenInclude(c => c.MaHangNavigation)
+                    .Where(p => selectedDiscounts.Contains(p.MaPhieuTinh))
+                    .OrderBy(p => p.NgayTao)
+                    .ToListAsync();
+            }
+
+            // 1. Auto-fetch imports mentioned in manual entries
             foreach (var entry in entries.Where(e => e.LoaiGiaoDich == "MUA_HANG"))
             {
                 var words = entry.DienGiai?.Split(' ');
@@ -557,10 +572,63 @@ namespace QLBH_ThuySan.Controllers
                 }
             }
 
+            // 2. Auto-fetch and include referenced discount slips
+            foreach (var entry in entries.Where(e => e.LoaiGiaoDich == "THU_CK"))
+            {
+                var words = entry.DienGiai?.Split(' ');
+                if (words != null)
+                {
+                    foreach (var word in words)
+                    {
+                        if (word.StartsWith("CK") && !phieuChiets.Any(p => p.MaPhieuTinh == word))
+                        {
+                            var ck = await _context.PhieuTinhChietKhaus
+                                .Include(p => p.ChiTietChietKhaus).ThenInclude(c => c.MaHangNavigation)
+                                .FirstOrDefaultAsync(p => p.MaPhieuTinh == word);
+                            if (ck != null) phieuChiets.Add(ck);
+                        }
+                    }
+                }
+            }
+
             ViewBag.Entries = entries;
             ViewBag.Imports = imports.OrderBy(p => p.NgayNhap).ToList();
+            ViewBag.PhieuChiets = phieuChiets.OrderBy(p => p.NgayTao).ToList();
             return View(supplier);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            string id,
+            DateTime? entryFromDate, DateTime? entryToDate, string? entryLoai, string? entryDienGiai)
+        {
+            var supplier = await _context.NhaCungCaps.FindAsync(id);
+            if (supplier == null) return NotFound();
+
+            var query = _context.SoRiengNhaCungCaps.Where(e => e.MaNhaCungCap == id);
+
+            if (entryFromDate.HasValue) query = query.Where(e => e.NgayGiaoDich >= entryFromDate.Value.Date);
+            if (entryToDate.HasValue) query = query.Where(e => e.NgayGiaoDich <= entryToDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (!string.IsNullOrEmpty(entryLoai)) query = query.Where(e => e.LoaiGiaoDich == entryLoai);
+            if (!string.IsNullOrEmpty(entryDienGiai)) query = query.Where(e => e.DienGiai != null && e.DienGiai.Contains(entryDienGiai));
+
+            var entries = await query.OrderBy(e => e.NgayGiaoDich).ToListAsync();
+
+            var data = entries.Select(e => new {
+                Ngay = e.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm"),
+                Loai = e.LoaiGiaoDich == "MUA_HANG" ? "Ghi Nợ (Mua Hàng)" :
+                       e.LoaiGiaoDich == "THANH_TOAN" ? "Thanh Toán" :
+                       e.LoaiGiaoDich == "CAN_TRU" ? "Cấn Trừ" :
+                       e.LoaiGiaoDich == "THU_CK" ? "Thu Chiết Khấu" : e.LoaiGiaoDich,
+                SoTien = e.SoTienPhatSinh,
+                DienGiai = e.DienGiai
+            }).ToList();
+
+            var memoryStream = new MemoryStream();
+            memoryStream.SaveAs(data);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CongNo_NCC_{id}.xlsx");
         }
     }
 }
-

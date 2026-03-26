@@ -3,188 +3,145 @@
     ViewData["Title"] = "Lịch Sử Xuất Kho (Outbound)";
 }
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <h2>Lịch Sử Nghiệp Vụ Xuất Kho</h2>
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Quản Lý Xuất Kho</h1>
+        <p class="text-muted">Theo dõi đơn hàng bán, trả hàng NCC, hao hụt và điều chuyển kho nội bộ.</p>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
         <div class="dropdown d-inline-block">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="createSlipDropdown"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-plus-circle"></i> Tạo Phiếu Xuất Kho
+            <button class="btn btn-primary dropdown-toggle shadow-sm" type="button" id="createSlipDropdown" data-bs-toggle="dropdown">
+                <i class="bi bi-cart-plus"></i> Lập Phiếu Xuất
             </button>
-            <ul class="dropdown-menu" aria-labelledby="createSlipDropdown">
-                <li><a class="dropdown-item" asp-action="Create">Bán Hàng</a></li>
-                <li><a class="dropdown-item" asp-action="CreateSlip" asp-route-type="RETURN_VENDOR">Trả hàng Nhà cung
-                        cấp</a></li>
-                <li><a class="dropdown-item" asp-action="CreateSlip" asp-route-type="DAMAGE_LOSS">Xuất Hủy / Hao hụt</a>
-                </li>
-                <li><a class="dropdown-item" asp-action="CreateSlip" asp-route-type="TRANSFER">Điều chuyển Kho</a></li>
+            <ul class="dropdown-menu shadow animate slideIn">
+                <li><a class="dropdown-item py-2" asp-action="Create"><i class="bi bi-bag-check me-2 text-success"></i> Bán Hàng</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2" asp-action="CreateSlip" asp-route-type="RETURN_VENDOR"><i class="bi bi-reply-all me-2 text-warning"></i> Trả hàng NCC</a></li>
+                <li><a class="dropdown-item py-2" asp-action="CreateSlip" asp-route-type="DAMAGE_LOSS"><i class="bi bi-trash me-2 text-danger"></i> Xuất Hủy / Hao hụt</a></li>
+                <li><a class="dropdown-item py-2" asp-action="CreateSlip" asp-route-type="TRANSFER"><i class="bi bi-arrow-left-right me-2 text-info"></i> Điều chuyển Kho</a></li>
             </ul>
         </div>
     </div>
 </div>
 
-<div class="card mb-4 shadow-sm border-0">
-    <div class="card-body bg-light">
-        <form method="get" asp-action="Index" class="row gx-2 gy-2 align-items-end mb-3">
-            <div class="col-sm-2">
-                <label class="form-label mb-0">Loại Xuất</label>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" asp-action="Index" class="row gx-3 gy-2 align-items-end" id="filterForm">
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase mb-1">Loại Xuất</label>
                 <select id="filterType" name="type" class="form-select form-select-sm" onchange="applyFilters()">
-                    <option value="">Tất cả</option>
+                    <option value="">Tất cả loại</option>
                     <option value="SALES" selected="@(ViewData["CurrentType"]?.ToString() == "SALES")">Bán Hàng</option>
-                    <option value="RETURN_VENDOR" selected="@(ViewData["CurrentType"]?.ToString() == "RETURN_VENDOR")">
-                        Trả Cung Cấp</option>
-                    <option value="DAMAGE_LOSS" selected="@(ViewData["CurrentType"]?.ToString() == "DAMAGE_LOSS")">Hao
-                        Hụt</option>
-                    <option value="TRANSFER" selected="@(ViewData["CurrentType"]?.ToString() == "TRANSFER")">Điều Chuyển
-                    </option>
+                    <option value="RETURN_VENDOR" selected="@(ViewData["CurrentType"]?.ToString() == "RETURN_VENDOR")">Trả Cung Cấp</option>
+                    <option value="DAMAGE_LOSS" selected="@(ViewData["CurrentType"]?.ToString() == "DAMAGE_LOSS")">Hao Hụt / Hủy</option>
+                    <option value="TRANSFER" selected="@(ViewData["CurrentType"]?.ToString() == "TRANSFER")">Điều Chuyển</option>
                 </select>
             </div>
-            <div class="col-sm-2">
-                <label class="form-label mb-0">Thanh Toán</label>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase mb-1">Thanh Toán</label>
                 <select id="filterPaymentStatus" name="paymentStatus" class="form-select form-select-sm" onchange="applyFilters()">
-                    <option value="">Tất cả</option>
-                    <option value="Chưa Thanh Toán"
-                        selected="@(ViewData["PaymentStatus"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán
-                    </option>
-                    <option value="Đã Thanh Toán"
-                        selected="@(ViewData["PaymentStatus"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Chưa Thanh Toán" selected="@(ViewData["PaymentStatus"]?.ToString() == "Chưa Thanh Toán")">Chưa Thanh Toán</option>
+                    <option value="Đã Thanh Toán" selected="@(ViewData["PaymentStatus"]?.ToString() == "Đã Thanh Toán")">Đã Thanh Toán</option>
                 </select>
             </div>
-            <div class="col-sm-3">
-                <label class="form-label mb-0">Thông tin nhận/đối tượng</label>
-                <input type="text" id="filterTargetInfo" name="targetInfo" value="@ViewData["TargetInfo"]"
-                    class="form-control form-control-sm" placeholder="Tên đối tượng/Lý do" 
-                    onkeypress="if(event.keyCode==13) applyFilters()"/>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase mb-1">Đối tượng / Ghi chú</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="filterTargetInfo" name="targetInfo" value="@ViewData["TargetInfo"]" class="form-control" placeholder="Tìm tên khách, NCC..." onkeypress="if(event.keyCode==13) applyFilters()"/>
+                </div>
             </div>
-            <div class="col-sm-2">
-                <label class="form-label mb-0">Từ ngày</label>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase mb-1">Từ ngày</label>
                 <input type="date" id="filterFromDate" name="fromDate" value="@ViewData["FromDate"]" class="form-control form-control-sm" onchange="applyFilters()"/>
             </div>
-            <div class="col-sm-2">
-                <label class="form-label mb-0">Đến ngày</label>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase mb-1">Đến ngày</label>
                 <input type="date" id="filterToDate" name="toDate" value="@ViewData["ToDate"]" class="form-control form-control-sm" onchange="applyFilters()"/>
             </div>
-            <div class="col-sm-1 d-flex flex-column gap-1">
-                <button type="button" onclick="applyFilters()" class="btn btn-sm btn-secondary w-100">Lọc</button>
-                <button type="button" onclick="clearFilters()" class="btn btn-sm btn-outline-secondary w-100">Xóa</button>
+            <div class="col-md-1">
+                <button type="button" onclick="clearFilters()" class="btn btn-sm btn-outline-secondary w-100" title="Xóa lọc">
+                    <i class="bi bi-x-circle"></i> Xóa
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-hover table-bordered align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th class="sort-header" data-column="MaPhieu" onclick="handleSort(this)">
-                    Mã Phiếu <i class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th class="sort-header" data-column="Date" data-order="desc" onclick="handleSort(this)">
-                    Ngày Xuất <i class="bi bi-sort-down ms-1"></i>
-                </th>
-                <th class="sort-header" data-column="Type" onclick="handleSort(this)">
-                    Loại Phiếu <i class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th class="sort-header" data-column="Target" onclick="handleSort(this)">
-                    Thông tin Nhận / Đối tượng <i class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th class="text-end sort-header" data-column="Total" onclick="handleSort(this)">
-                    Số Phải TT <i class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th class="text-end">Đã TT</th>
-                <th class="text-end">Còn Nợ</th>
-                <th class="sort-header" data-column="Payment" onclick="handleSort(this)">
-                    Thanh Toán <i class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th class="text-center">Thao Tác</th>
-            </tr>
-        </thead>
-        <tbody id="exportsTableBody">
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.MaPhieu</td>
-                    <td>@item.NgayXuat?.ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>
-                        @switch (item.LoaiXuat)
-
-                        {
-                            case "SALES":
-                                <span class="badge bg-success">Bán Hàng</span>
-                                ; break;
-                            case "RETURN_VENDOR":
-                                <span class="badge bg-warning text-dark">Trả Cung Cấp</span>
-                                ; break;
-                            case "DAMAGE_LOSS":
-                                <span class="badge bg-danger">Hao Hụt</span>
-                                ; break;
-                            case "TRANSFER":
-                                <span class="badge bg-info text-dark">Điều Chuyển</span>
-                                ; break;
-                            default:
-                                <span class="badge bg-secondary">@item.LoaiXuat</span>
-                                ; break;
-
-                        }
-                    </td>
-                    <td>
-                        @if (item.LoaiXuat == "SALES")
-
-                        {
-                            <span class="text-muted">KH:</span> @item.IdKhachHangNavigation?.TenDoiTuong
-                        }
-
-                        else if (item.LoaiXuat == "RETURN_VENDOR")
-
-                        {
-                            <span class="text-muted">NCC:</span> @item.IdNhaCungCapNavigation?.TenDoiTuong
-                        }
-
-                        else if (item.LoaiXuat == "TRANSFER")
-
-                        {
-                            <span class="text-muted">Đến Kho:</span> @item.MaKhoNhanNavigation?.TenKho
-                        }
-
-                        else if (item.LoaiXuat == "DAMAGE_LOSS")
-
-                        {
-                            <span class="text-muted">Lý do:</span> @item.LyDo
-                        }
-                    </td>
-                    <td class="text-end fw-bold text-primary">@item.SoPhaiThanhToan?.ToString("N0")</td>
-                    <td class="text-end fw-bold text-success">@item.SoDaThanhToan?.ToString("N0")</td>
-                    <td class="text-end fw-bold text-danger">@item.SoChuaThanhToan?.ToString("N0")</td>
-                    <td>
-                        @if (item.TrangThaiThanhToan == "Đã Thanh Toán" || item.TrangThaiThanhToan == "Hoàn Tất")
-
-                        {
-                            <span class="badge bg-success">@item.TrangThaiThanhToan</span>
-                        }
-
-                        else
-
-                        {
-                            <span class="badge bg-secondary">@item.TrangThaiThanhToan</span>
-                        }
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group" role="group">
-                            <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-sm btn-outline-info">Chi tiết</a>
-                            @if (item.LoaiXuat == "SALES" && item.TrangThaiThanhToan != "Đã Thanh Toán")
-                            {
-                                <button type="button" class="btn btn-sm btn-success" onclick="openPayModal('@item.MaPhieu', @(item.SoChuaThanhToan ?? 0))">
-                                    $ Thanh Toán
-                                </button>
-                            }
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3 sort-header small fw-bold text-uppercase" data-column="MaPhieu" onclick="handleSort(this)">Mã Phiếu <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="Date" data-order="desc" onclick="handleSort(this)">Ngày Xuất <i class="bi bi-sort-down ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="Type" onclick="handleSort(this)">Loại Hình <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="Target" onclick="handleSort(this)">Đối Tượng / Nội Dung <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header small fw-bold text-uppercase" data-column="Total" onclick="handleSort(this)">Thành Tiền <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end small fw-bold text-uppercase">Còn Nợ</th>
+                        <th class="sort-header small fw-bold text-uppercase text-center" data-column="Payment" onclick="handleSort(this)">TT <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="exportsTableBody">
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaPhieu</span></td>
+                            <td>@item.NgayXuat?.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @switch (item.LoaiXuat)
+                                {
+                                    case "SALES": <span class="badge bg-primary">Bán Hàng</span>; break;
+                                    case "RETURN_VENDOR": <span class="badge bg-warning text-dark">Trả NCC</span>; break;
+                                    case "DAMAGE_LOSS": <span class="badge bg-danger">Hao Hụt</span>; break;
+                                    case "TRANSFER": <span class="badge bg-info text-dark">Chuyển Kho</span>; break;
+                                    default: <span class="badge bg-secondary">@item.LoaiXuat</span>; break;
+                                }
+                            </td>
+                            <td>
+                                @if (item.LoaiXuat == "SALES") { <span class="fw-bold">@item.IdKhachHangNavigation?.TenDoiTuong</span> }
+                                else if (item.LoaiXuat == "RETURN_VENDOR") { <span>@item.IdNhaCungCapNavigation?.TenDoiTuong</span> }
+                                else if (item.LoaiXuat == "TRANSFER") { <i class="bi bi-arrow-right me-1"></i> @item.MaKhoNhanNavigation?.TenKho }
+                                else { <span class="small text-muted">@item.LyDo</span> }
+                            </td>
+                            <td class="text-end fw-bold text-primary">@item.SoPhaiThanhToan?.ToString("N0")</td>
+                            <td class="text-end fw-bold text-danger">@item.SoChuaThanhToan?.ToString("N0")</td>
+                            <td class="text-center">
+                                @if (item.TrangThaiThanhToan == "Đã Thanh Toán" || item.TrangThaiThanhToan == "Hoàn Tất")
+                                { <span class="badge bg-success">@item.TrangThaiThanhToan</span> }
+                                else { <span class="badge bg-light text-dark border">@item.TrangThaiThanhToan</span> }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-outline-info" title="Xem Chi Tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (item.LoaiXuat == "SALES" && (item.SoChuaThanhToan ?? 0) > 0)
+                                    {
+                                        <button type="button" class="btn btn-success" onclick="openPayModal('@item.MaPhieu', @(item.SoChuaThanhToan ?? 0))" title="Thu Tiền">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-outline-danger" onclick="if(confirm('Bạn có chắc chắn muốn ẩn phiếu này? Số nợ liên quan sẽ được tự động điều chỉnh.')) document.getElementById('delete-form-@item.MaPhieu').submit();" title="Ẩn/Xóa">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                                <form id="delete-form-@item.MaPhieu" asp-action="Delete" asp-route-id="@item.MaPhieu" method="post" style="display:none;">
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Thanh Toán -->
@@ -363,7 +320,13 @@
                                     ${item.loaiXuat === 'SALES' && item.trangThaiThanhToan !== 'Đã Thanh Toán' && item.trangThaiThanhToan !== 'Hoàn Tất' ? 
                                         `<button type="button" class="btn btn-sm btn-success" onclick="openPayModal('${item.maPhieu}', ${item.soChuaThanhToanRaw})">$ Thanh Toán</button>` 
                                         : ''}
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="if(confirm('Bạn có chắc chắn muốn ẩn phiếu này? Số nợ liên quan sẽ được tự động điều chỉnh.')) document.getElementById('delete-form-${item.maPhieu}').submit();">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
                                 </div>
+                                <form id="delete-form-${item.maPhieu}" action="/Export/Delete/${item.maPhieu}" method="post" style="display:none;">
+                                    <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=\"__RequestVerificationToken\"]').value}">
+                                </form>
                             </td>
                         `;
                         tbody.appendChild(tr);

@@ -38,15 +38,15 @@ namespace QLBH_ThuySan.Controllers
 
         private List<OpeningStockDraftViewModel> GetDrafts()
         {
-            if (!System.IO.File.Exists(DraftFilePath)) return new List<OpeningStockDraftViewModel>();
+            if (!System.IO.File.Exists(DraftFilePath)) return [];
             try
             {
                 var json = System.IO.File.ReadAllText(DraftFilePath);
-                return JsonSerializer.Deserialize<List<OpeningStockDraftViewModel>>(json) ?? new List<OpeningStockDraftViewModel>();
+                return JsonSerializer.Deserialize<List<OpeningStockDraftViewModel>>(json) ?? [];
             }
             catch
             {
-                return new List<OpeningStockDraftViewModel>();
+                return [];
             }
         }
 
@@ -107,6 +107,28 @@ namespace QLBH_ThuySan.Controllers
 
             SaveDrafts(drafts);
             return Ok(new { success = true });
+        }
+
+        [HttpPost]
+        public IActionResult UpdateDraft([FromBody] OpeningStockDraftViewModel model)
+        {
+            if (IsFinalized()) return BadRequest("Tồn kho đã được chốt.");
+
+            if (string.IsNullOrEmpty(model.MaKho) || string.IsNullOrEmpty(model.MaHang) || model.SoLuong < 0 || model.GiaVon < 0)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
+            var drafts = GetDrafts();
+            var existing = drafts.FirstOrDefault(d => d.MaKho == model.MaKho && d.MaHang == model.MaHang);
+            if (existing != null)
+            {
+                existing.SoLuong = model.SoLuong; // Ghi đè số lượng thay vì cộng dồn
+                existing.GiaVon = model.GiaVon;
+                SaveDrafts(drafts);
+                return Ok(new { success = true });
+            }
+            return NotFound("Không tìm thấy bản nháp để cập nhật.");
         }
 
         [HttpPost]
@@ -221,7 +243,7 @@ namespace QLBH_ThuySan.Controllers
             if (IsFinalized()) return BadRequest("Tồn kho đã được chốt.");
 
             var drafts = GetDrafts();
-            if (!drafts.Any()) return BadRequest("Chưa có dữ liệu tồn kho để chốt.");
+            if (drafts.Count == 0) return BadRequest("Chưa có dữ liệu tồn kho để chốt.");
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -249,7 +271,7 @@ namespace QLBH_ThuySan.Controllers
                     {
                         MaKho = maKhoTongAo,
                         TenKho = "Kho Tổng (Ảo)",
-                        LoaiKho = "Ao"
+                        LoaiKho = "TONG_AO"
                     };
                     _context.Khos.Add(khoTongAo);
                     await _context.SaveChangesAsync();
@@ -257,29 +279,39 @@ namespace QLBH_ThuySan.Controllers
 
                 var groupedDrafts = drafts.GroupBy(d => d.MaKho).ToList();
 
-                foreach (var group in groupedDrafts)
-                {
-                    string maKho = group.Key;
-                    
-                    var newPhieuNhap = new PhieuNhap
-                    {
-                        MaPhieu = "PN_TKBD_" + maKho + "_" + DateTime.Now.ToString("ddMMyyHHmmss"),
-                        NgayNhap = DateTime.Now,
-                        IdNhaCungCap = "SYS_OPENING_STOCK",
-                        // IdDaiLyNhap maps to DaiLy, we can optionally map this if Kho has a MaDaiLyPhuTrach
-                        TrangThaiThanhToan = "Đã Thanh Toán", // Opening stock so shouldn't affect debt
-                        SoPhaiThanhToan = group.Sum(x => (decimal)x.SoLuong * x.GiaVon)
-                    };
+                    var now = DateTime.Now;
+                    string dateStr = now.ToString("ddMMyyHHmmss");
+                    int counter = 1;
 
-                    // Try to map DaiLyNhap if possible (fallback)
-                    var khoEntity = await _context.Khos.FindAsync(maKho);
-                    if (khoEntity != null && !string.IsNullOrEmpty(khoEntity.MaDaiLyPhuTrach))
+                    foreach (var group in groupedDrafts)
                     {
-                        newPhieuNhap.IdDaiLyNhap = khoEntity.MaDaiLyPhuTrach;
-                    }
+                        string maKho = group.Key;
+                        string maPhieu = $"PN_TKBD_{maKho}_{dateStr}{counter++:D2}";
+                        if (maPhieu.Length > 50) maPhieu = maPhieu.Substring(0, 50);
 
-                    _context.PhieuNhaps.Add(newPhieuNhap);
-                    await _context.SaveChangesAsync(); // save to get context
+                        decimal soPhaiThanhToan = group.Sum(x => (decimal)x.SoLuong * x.GiaVon);
+
+                        var newPhieuNhap = new PhieuNhap
+                        {
+                            MaPhieu = maPhieu,
+                            NgayNhap = now,
+                            IdNhaCungCap = "SYS_OPENING_STOCK",
+                            TrangThaiThanhToan = "Đã Thanh Toán",
+                            SoPhaiThanhToan = soPhaiThanhToan,
+                            SoDaThanhToan = soPhaiThanhToan,
+                            SoChuaThanhToan = 0,
+                            NgayThanhToan = now
+                        };
+
+                        // Try to map DaiLyNhap if possible (fallback)
+                        var khoEntity = await _context.Khos.FindAsync(maKho);
+                        if (khoEntity != null && !string.IsNullOrEmpty(khoEntity.MaDaiLyPhuTrach))
+                        {
+                            newPhieuNhap.IdDaiLyNhap = khoEntity.MaDaiLyPhuTrach;
+                        }
+
+                        _context.PhieuNhaps.Add(newPhieuNhap);
+                        await _context.SaveChangesAsync(); // save to get context
 
                     foreach (var item in group)
                     {
@@ -345,7 +377,12 @@ namespace QLBH_ThuySan.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return BadRequest($"Có lỗi xảy ra khi chốt tồn kho: {ex.Message}");
+                var message = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    message += " | Detail: " + ex.InnerException.Message;
+                }
+                return BadRequest($"Có lỗi xảy ra khi chốt tồn kho: {message}");
             }
         }
 

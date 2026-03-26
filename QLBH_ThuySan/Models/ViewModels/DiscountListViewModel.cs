@@ -13,6 +13,10 @@ namespace QLBH_ThuySan.Models.ViewModels
         public DateTime? PaymentFrom { get; set; }
         public DateTime? PaymentTo { get; set; }
         public string? RuleSearch { get; set; }
+        
+        // Sorting
+        public string? SortColumn { get; set; }
+        public string? SortOrder { get; set; } // asc / desc
 
         public List<DiscountListItem> Items { get; set; } = new();
     }

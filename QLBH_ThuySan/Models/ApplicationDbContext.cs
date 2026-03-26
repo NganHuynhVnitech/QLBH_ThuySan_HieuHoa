@@ -24,7 +24,8 @@ namespace QLBH_ThuySan.Models
         public virtual DbSet<HangHoa> HangHoas { get; set; } = null!;
         public virtual DbSet<KhachHang> KhachHangs { get; set; } = null!;
         public virtual DbSet<Kho> Khos { get; set; } = null!;
-        public virtual DbSet<NhaCungCap> NhaCungCaps { get; set; } = null!;
+        public virtual DbSet<TonKhoChotKy> TonKhoChotKys { get; set; } = null!;
+    public virtual DbSet<NhaCungCap> NhaCungCaps { get; set; } = null!;
         public virtual DbSet<PhieuNhap> PhieuNhaps { get; set; } = null!;
         public virtual DbSet<PhieuThuChi> PhieuThuChis { get; set; } = null!;
         public virtual DbSet<PhieuTinhChietKhau> PhieuTinhChietKhaus { get; set; } = null!;
@@ -67,7 +68,7 @@ namespace QLBH_ThuySan.Models
                 entity.ToTable("ChiTietPhieuNhap");
 
                 entity.Property(e => e.MaPhieu)
-                    .HasMaxLength(20)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("maPhieu");
                 entity.Property(e => e.MaHang)
@@ -100,7 +101,7 @@ namespace QLBH_ThuySan.Models
                 entity.ToTable("ChiTietPhieuXuat");
 
                 entity.Property(e => e.MaPhieu)
-                    .HasMaxLength(20)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("maPhieu");
                 entity.Property(e => e.MaHang)
@@ -326,7 +327,7 @@ namespace QLBH_ThuySan.Models
                 entity.ToTable("PhieuNhap", tb => tb.HasTrigger("trg_PhieuNhap_TinhHanThanhToan"));
 
                 entity.Property(e => e.MaPhieu)
-                    .HasMaxLength(20)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("maPhieu");
                 entity.Property(e => e.HanThanhToan)
@@ -377,6 +378,31 @@ namespace QLBH_ThuySan.Models
                     .HasConstraintName("FK__PhieuNhap__idNha__3B0BC30C");
             });
 
+            modelBuilder.Entity<TonKhoChotKy>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_TonKhoChotKy");
+                entity.ToTable("TonKhoChotKy");
+
+                entity.Property(e => e.MaKho)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.MaHang)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.GiaTriTonCuoi)
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.HasOne(d => d.MaHangNavigation).WithMany()
+                    .HasForeignKey(d => d.MaHang)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.MaKhoNavigation).WithMany()
+                    .HasForeignKey(d => d.MaKho)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
             modelBuilder.Entity<PhieuThuChi>(entity =>
             {
                 entity.HasKey(e => e.MaPhieu).HasName("PK__PhieuThu__458D7B2C7991D479");
@@ -384,11 +410,11 @@ namespace QLBH_ThuySan.Models
                 entity.ToTable("PhieuThuChi");
 
                 entity.Property(e => e.MaPhieu)
-                    .HasMaxLength(20)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("maPhieu");
                 entity.Property(e => e.LoaiPhieu)
-                    .HasMaxLength(10)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("loaiPhieu");
                 entity.Property(e => e.LyDo)
@@ -405,6 +431,14 @@ namespace QLBH_ThuySan.Models
                     .HasMaxLength(20)
                     .IsUnicode(false)
                     .HasColumnName("maDoiTuong");
+                entity.Property(e => e.LoaiDoiTuong)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("loaiDoiTuong");
+
+                entity.Property(e => e.IsDisabled)
+                    .HasDefaultValue(false)
+                    .HasColumnName("isDisabled");
             });
 
             modelBuilder.Entity<PhieuTinhChietKhau>(entity =>
@@ -504,7 +538,7 @@ namespace QLBH_ThuySan.Models
                 entity.ToTable("PhieuXuat");
 
                 entity.Property(e => e.MaPhieu)
-                    .HasMaxLength(20)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("maPhieu");
                 entity.Property(e => e.IdDaiLyBan)
@@ -549,6 +583,12 @@ namespace QLBH_ThuySan.Models
                     .HasMaxLength(20)
                     .IsUnicode(false)
                     .HasColumnName("idNhaCungCap");
+
+                entity.Property(e => e.TrangThaiThanhToan)
+                .HasMaxLength(50)
+                .IsUnicode(true)
+                .HasColumnName("trangThaiThanhToan");
+            entity.Property(e => e.IsDisabled).HasColumnName("IsDisabled").HasDefaultValue(false);
 
                 entity.Property(e => e.MaKhoNhan)
                     .HasMaxLength(20)

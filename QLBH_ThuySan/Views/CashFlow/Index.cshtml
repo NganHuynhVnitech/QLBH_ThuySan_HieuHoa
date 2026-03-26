@@ -3,10 +3,6 @@
 @{
     ViewData["Title"] = "Quản Lý Thu Chi";
 
-    decimal TongThu = Model.Where(x => x.LoaiPhieu == "THU").Sum(x => x.SoTien ?? 0);
-    decimal TongChi = Model.Where(x => x.LoaiPhieu == "CHI" || x.LoaiPhieu == "NHAP").Sum(x => x.SoTien ?? 0);
-    decimal ChenhLech = TongThu - TongChi;
-
     var customerNames = ViewData["CustomerNames"] as Dictionary<string, string>;
     var supplierNames = ViewData["SupplierNames"] as Dictionary<string, string>;
     var costObjectNames = ViewData["CostObjectNames"] as Dictionary<string, string>;
@@ -15,128 +11,229 @@
     {
         if (string.IsNullOrEmpty(maDoiTuong)) return "-";
 
-        if (loaiPhieu == "THU" && customerNames != null && customerNames.ContainsKey(maDoiTuong))
-        {
-            return customerNames[maDoiTuong];
-        }
-        else if (loaiPhieu == "CHI" && supplierNames != null && supplierNames.ContainsKey(maDoiTuong))
-        {
-            return supplierNames[maDoiTuong];
-        }
-        else if (loaiPhieu == "NHAP" && costObjectNames != null && costObjectNames.ContainsKey(maDoiTuong))
-        {
-            return costObjectNames[maDoiTuong];
-        }
+        if (customerNames != null && customerNames.ContainsKey(maDoiTuong)) return customerNames[maDoiTuong];
+        if (supplierNames != null && supplierNames.ContainsKey(maDoiTuong)) return supplierNames[maDoiTuong];
+        if (costObjectNames != null && costObjectNames.ContainsKey(maDoiTuong)) return costObjectNames[maDoiTuong];
+
         return maDoiTuong;
     }
 }
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>Quản Lý Thu Chi</h1>
-        <p class="text-muted">Ghi nhận các khoản thu chi hoạt động</p>
+<div class="row pt-4 mb-4">
+    <div class="col-md-7">
+        <h1 class="display-6 fw-bold">Quản Lý Thu Chi</h1>
+        <p class="text-muted">Theo dõi dòng tiền thực tế, công nợ và dự báo tài chính theo thời gian thực.</p>
     </div>
-    <div class="col-md-4 text-end align-self-center">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Thêm Phiếu
-        </a>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h5 class="card-title">Tổng Thu</h5>
-                <h3 class="fw-bold">@string.Format("{0:N0}", TongThu) VNĐ</h3>
-            </div>
+    <div class="col-md-5 text-end align-self-center">
+        <div class="btn-group btn-group-sm mb-2 shadow-sm">
+            <form asp-action="SyncDebt" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-secondary" onclick="return confirm('Đồng bộ lại toàn bộ số dư công nợ?')">
+                    <i class="bi bi-arrow-repeat"></i> Đồng bộ Công Nợ
+                </button>
+            </form>
+            <form asp-action="MigrateVoucherTypes" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-secondary" onclick="return confirm('Cập nhật lại loại phiếu cho dữ liệu cũ?')">
+                    <i class="bi bi-list-check"></i> Phân loại Phiếu
+                </button>
+            </form>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <h5 class="card-title">Tổng Chi</h5>
-                <h3 class="fw-bold">@string.Format("{0:N0}", TongChi) VNĐ</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card @(ChenhLech >= 0 ? "bg-info" : "bg-warning") text-white">
-            <div class="card-body">
-                <h5 class="card-title">Chênh Lệch</h5>
-                <h3 class="fw-bold">@string.Format("{0:N0}", ChenhLech) VNĐ</h3>
-            </div>
+        <div class="d-block">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Quay Lại
+            </a>
+            <a asp-action="Create" class="btn btn-primary shadow-sm px-4">
+                <i class="bi bi-plus-circle"></i> Lập Phiếu Mới
+            </a>
         </div>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
+<!-- Actual Cash Summary -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm bg-success text-white">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75 small text-uppercase fw-bold">Tổng Thu Thực Tế</p>
+                        <h2 class="fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongThuThucTe) <small class="fs-6">đ</small></h2>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-arrow-down-left-circle fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm bg-danger text-white">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75 small text-uppercase fw-bold">Tổng Chi Thực Tế</p>
+                        <h2 class="fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongChiThucTe) <small class="fs-6">đ</small></h2>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-arrow-up-right-circle fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm @(ViewBag.ThucTeTienMat >= 0 ? "bg-dark" : "bg-warning text-dark") text-white">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75 small text-uppercase fw-bold">Thực Tế Tiền Mặt</p>
+                        <h2 class="fw-bold mb-0">@string.Format("{0:N0}", ViewBag.ThucTeTienMat) <small class="fs-6">đ</small></h2>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-safe fs-3 @(ViewBag.ThucTeTienMat < 0 ? "text-dark" : "")"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h6 class="mb-3 fw-bold text-uppercase text-muted"><i class="bi bi-graph-up-arrow me-2"></i> Phân Tích Công Nợ & Dự Tính</h6>
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body py-3">
+                <p class="text-muted small mb-1 fw-bold">TỔNG NỢ KH</p>
+                <h4 class="text-success fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongNoKH)</h4>
+                <span class="x-small text-muted">Phải thu từ khách hàng</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body py-3">
+                <p class="text-muted small mb-1 fw-bold">NỢ CK NCC</p>
+                <h4 class="text-success fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongNoChietKhauNCC)</h4>
+                <span class="x-small text-muted">NCC nợ trả chiết khấu</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm border-start border-danger border-4">
+            <div class="card-body py-3">
+                <p class="text-muted small mb-1 fw-bold">TỔNG NỢ NCC</p>
+                <h4 class="text-danger fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongNoNCC)</h4>
+                <span class="x-small text-muted">Phải trả cho đối tác</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm border-start border-danger border-4">
+            <div class="card-body py-3">
+                <p class="text-muted small mb-1 fw-bold">NỢ CK KH</p>
+                <h4 class="text-danger fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongNoChietKhauKH)</h4>
+                <span class="x-small text-muted">Phải trả CK cho khách</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4 bg-light">
+    <div class="card-body py-3">
+        <div class="row align-items-center">
+            <div class="col-md-6 border-end">
+                <div class="ps-3">
+                    <p class="text-muted small mb-1 fw-bold">TỔNG THU DỰ KIẾN <i class="bi bi-info-circle ms-1" title="Bao gồm tiền mặt hiện tại + các khoản nợ phải thu"></i></p>
+                    <h3 class="text-success fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongThuDuKien) <small class="fs-6 fw-normal text-dark">VNĐ</small></h3>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="ps-3">
+                    <p class="text-muted small mb-1 fw-bold">TỔNG CHI DỰ KIẾN <i class="bi bi-info-circle ms-1" title="Các khoản nợ phải trả cho nhà cung cấp và khách hàng"></i></p>
+                    <h3 class="text-danger fw-bold mb-0">@string.Format("{0:N0}", ViewBag.TongChiDuKien) <small class="fs-6 fw-normal text-dark">VNĐ</small></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm overflow-hidden">
+    <div class="card-header bg-white py-3 border-0">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i> Lịch Sử Giao Dịch</h5>
+            <div class="text-muted small">Hiển thị các phát sinh dòng tiền gần nhất</div>
+        </div>
+    </div>
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Phiếu</th>
-                        <th>Ngày Lập</th>
-                        <th>Loại Phiếu</th>
-                        <th>Đối Tượng</th>
-                        <th class="text-end">Số Tiền</th>
-                        <th>Lý Do</th>
-                        <th>Thao Tác</th>
+                        <th class="ps-4 small fw-bold text-uppercase">Mã Phiếu</th>
+                        <th class="small fw-bold text-uppercase">Ngày Lập</th>
+                        <th class="small fw-bold text-uppercase">Loại</th>
+                        <th class="small fw-bold text-uppercase">Đối Tượng</th>
+                        <th class="text-end small fw-bold text-uppercase">Số Tiền</th>
+                        <th class="small fw-bold text-uppercase">Lý Do</th>
+                        <th class="text-center small fw-bold text-uppercase" style="width: 140px;">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td><span class="badge bg-secondary">@item.MaPhieu</span></td>
-                            <td>@item.NgayLap?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="ps-4"><span class="badge bg-light text-dark border">@item.MaPhieu</span></td>
+                            <td>@item.NgayLap?.ToString("dd/MM/yyyy")</td>
                             <td>
-                                @if (item.LoaiPhieu == "THU")
-                                {
-                                    <span class="badge bg-success">THU</span>
-                                }
-                                else if (item.LoaiPhieu == "CHI")
-                                {
-                                    <span class="badge bg-danger">CHI</span>
-                                }
+                                @if (item.LoaiPhieu != null && item.LoaiPhieu.StartsWith("THU"))
+                                { <span class="badge bg-success">@item.LoaiPhieu</span> }
+                                else if (item.LoaiPhieu != null && (item.LoaiPhieu.StartsWith("CHI") || item.LoaiPhieu == "NHAP"))
+                                { <span class="badge @(item.LoaiPhieu == "NHAP" || item.LoaiPhieu == "CHI PHI" ? "bg-warning text-dark" : "bg-danger")">@item.LoaiPhieu</span> }
                                 else
-                                {
-                                    <span class="badge bg-warning text-dark">NHAP (Chi Phí)</span>
-                                }
+                                { <span class="badge bg-secondary">@item.LoaiPhieu</span> }
                             </td>
-                            <td class="fw-bold">
-                                @GetDoiTuongName(item.LoaiPhieu, item.MaDoiTuong)
-                                <small class="text-muted d-block">@item.MaDoiTuong</small>
+                            <td>
+                                <div class="fw-bold">@GetDoiTuongName(item.LoaiPhieu, item.MaDoiTuong)</div>
+                                <div class="x-small text-muted">@item.MaDoiTuong</div>
                             </td>
-                            <td class="text-end fw-bold @(item.LoaiPhieu == "THU" ? "text-success" : "text-danger")">
+                            <td class="text-end fw-bold @(item.LoaiPhieu != null && item.LoaiPhieu.StartsWith("THU") ? "text-success" : "text-danger")">
                                 @string.Format("{0:N0}", item.SoTien)
                             </td>
-                            <td>@item.LyDo</td>
-                            <td>
-                                <!-- Button trigger modal -->
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                            <td class="text-truncate small" style="max-width: 200px;">@item.LyDo</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-outline-info" title="Xem Chi Tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (item.LoaiPhieu == "CHI PHI" || item.LoaiPhieu == "NHAP")
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.MaPhieu" class="btn btn-outline-primary" title="Sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    }
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
 
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteModal-@item.MaPhieu" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Xác nhận xóa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-danger text-white py-2">
+                                                <h5 class="modal-title font-size-sm"><i class="bi bi-exclamation-triangle"></i> Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="modal-body">
+                                            <div class="modal-body text-start">
                                                 Bạn có chắc chắn muốn xóa phiếu <strong>@item.MaPhieu</strong>?<br />
+                                                <small class="text-danger mt-2 d-block"><i class="bi bi-info-circle"></i> Hành động này sẽ cập nhật lại số dư công nợ của đối tượng liên quan.</small>
                                             </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Hủy</button>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                                                 <form asp-action="Delete" asp-route-id="@item.MaPhieu">
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
                                                 </form>
                                             </div>
                                         </div>
@@ -150,3 +247,7 @@
         </div>
     </div>
 </div>
+
+<style>
+    .x-small { font-size: 0.75rem; }
+</style>

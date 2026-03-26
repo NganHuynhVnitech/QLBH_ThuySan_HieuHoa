@@ -16,4 +16,8 @@ public partial class PhieuThuChi
     public string? LyDo { get; set; }
 
     public string? MaDoiTuong { get; set; }
+
+    public string? LoaiDoiTuong { get; set; }
+
+    public bool IsDisabled { get; set; }
 }

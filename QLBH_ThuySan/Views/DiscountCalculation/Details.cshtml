@@ -42,6 +42,9 @@
                 <a asp-action="Print" asp-route-id="@Model.MaPhieuTinh" class="btn btn-secondary me-2" target="_blank">
                     <i class="bi bi-printer"></i> In Phiếu
                 </a>
+                <a asp-action="ExportExcel" asp-route-id="@Model.MaPhieuTinh" class="btn btn-outline-success me-2">
+                    <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+                </a>
                 <a asp-action="Index" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Quay Lại
                 </a>

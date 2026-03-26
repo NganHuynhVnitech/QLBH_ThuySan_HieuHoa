@@ -277,12 +277,16 @@
                                 lượng</span>
                             <span class="font-bold text-lg" id="totalQty">0</span>
                         </div>
+                        <div class="pt-2 pb-2 border-b border-on-primary-fixed-variant/10">
+                            <span class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">GIÁ TRỊ HOÀN TRẢ (DỰ TÍNH)</span>
+                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter" id="totalValue">0 VND</p>
+                        </div>
                         <div class="pt-2">
-                            <span
-                                class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">GIÁ
-                                TRỊ HOÀN TRẢ (DỰ TÍNH)</span>
-                            <p class="text-3xl font-black text-on-primary-fixed-variant tracking-tighter"
-                                id="totalValue">0 VND</p>
+                            <label class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest opacity-80 block mb-1">SỐ TIỀN NCC THANH TOÁN (THU TIỀN MẶT)</label>
+                            <div class="relative group">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary opacity-60">payments</span>
+                                <input type="text" id="paidAmount" class="w-full pl-10 pr-4 py-3 bg-white/20 border-2 border-on-primary-fixed-variant/10 rounded-2xl focus:border-white focus:ring-4 focus:ring-white/10 transition-all font-black text-xl text-on-primary-fixed-variant text-right" value="0" />
+                            </div>
                         </div>
                     </div>
                     <div class="pt-6 space-y-3">
@@ -412,7 +416,7 @@
             $('#rowCount').text(`${count} mặt hàng`);
         }
 
-        $(document).on('input', '.price-input', function () {
+        $(document).on('input', '.price-input, #paidAmount', function () {
             let val = $(this).val().replace(/\D/g, '');
             if (val) $(this).val(formatNumber(parseInt(val)));
             updateStats();
@@ -471,9 +475,13 @@
 
             if (items.length === 0) { alert("Vui lòng chọn sản phẩm."); return; }
 
+            const paidAmountStr = $('#paidAmount').val();
+            const paidAmount = parseFloat(paidAmountStr.replace(/\./g, '')) || 0;
+
             const payload = {
                 SourceWarehouseCode: warehouse,
                 VendorId: vendor,
+                SoDaThanhToan: paidAmount,
                 Items: items
             };
 

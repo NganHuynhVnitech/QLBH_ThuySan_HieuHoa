@@ -35,6 +35,7 @@ namespace QLBH_ThuySan.ViewModels
     {
         [Required]
         public string VendorId { get; set; } = null!;
+        public decimal SoDaThanhToan { get; set; }
     }
 
     public class OutboundDamageDto : OutboundBaseDto

@@ -5,215 +5,222 @@
     var isFinalized = ViewBag.IsFinalized as bool? ?? false;
 }
 
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="fw-bold mb-3"><i class="fas fa-boxes text-primary me-2"></i> Thiết Lập Tồn Kho Ban Đầu</h2>
-            <p class="text-muted">Tính năng này cho phép thiết lập số lượng tồn kho và giá vốn ban đầu trước khi hệ thống chính thức hoạt động.</p>
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Tồn Kho Ban Đầu</h1>
+        <p class="text-muted">Thiết lập số lượng tồn và giá vốn khởi dựng trước khi vận hành hệ thống.</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+</div>
+
+@if (isFinalized)
+{
+    <div class="alert alert-success border-0 shadow-sm mb-4 d-flex align-items-center">
+        <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1">Dữ liệu đã được chốt và ghi sổ</h6>
+            <p class="mb-0 small text-dark opacity-75">Hệ thống đã ghi nhận tồn kho ban đầu. Mọi điều chỉnh sau này phải thực hiện qua nghiệp vụ Nhập/Xuất hoặc Kiểm kho.</p>
         </div>
     </div>
 
-    @if (isFinalized)
-    {
-        <div class="alert alert-success shadow-sm mb-4">
-            <h5 class="alert-heading"><i class="fas fa-check-circle me-2"></i> Trạng thái: Đã Chốt</h5>
-            <p class="mb-0">Tồn kho ban đầu đã được chốt và ghi nhận vào hệ thống. Không thể sửa đổi thêm tại đây. Mọi thay đổi tiếp theo phải thực hiện qua Phiếu Nhập / Phiếu Xuất.</p>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2 text-success"></i> Danh Sách Tồn Kho Đã Khởi Tạo</h5>
         </div>
-
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                <h5 class="mb-0">Dữ Liệu Tồn Kho Ban Đầu Khởi Tạo</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Mã Phiếu</th>
-                                <th>Thời Gian</th>
-                                <th>Sản Phẩm</th>
-                                <th>Số Lượng</th>
-                                <th>Giá Vốn</th>
-                                <th>Thành Tiền</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model is IEnumerable<QLBH_ThuySan.Models.ChiTietPhieuNhap> finalizedData)
-                            {
-                                foreach (var item in finalizedData)
-                                {
-                                    <tr>
-                                        <td><span class="badge bg-secondary">@item.MaPhieu</span></td>
-                                        <td>@(item.MaPhieuNavigation?.NgayNhap?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
-                                        <td>
-                                            <div class="fw-bold">@item.MaHangNavigation?.TenHang</div>
-                                            <div class="small text-muted">@item.MaHang</div>
-                                        </td>
-                                        <td>@item.SoLuong?.ToString("N2", new CultureInfo("vi-VN"))</td>
-                                        <td>@item.DonGiaNhap?.ToString("N0", new CultureInfo("vi-VN")) đ</td>
-                                        <td>@item.ThanhTien?.ToString("N0", new CultureInfo("vi-VN")) đ</td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning shadow-sm mb-4">
-            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i> Trạng thái: Bản Nháp (Chưa Chốt)</h5>
-            <p class="mb-0">Bạn có thể thêm dữ liệu thủ công hoặc upload qua file Excel. Sau khi hoàn tất và kiểm tra kỹ, nhấn nút "Chốt Tồn Kho" bên dưới để hoàn thành.</p>
-        </div>
-
-        <div class="row g-4 mb-4">
-            <!-- Khai Báo Thủ Công -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                        <h5 class="mb-0"><i class="fas fa-keyboard text-primary me-2"></i> Khai Báo Thủ Công</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="formManual" class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Kho Vật Lý</label>
-                                <select id="MaKho" name="MaKho" class="form-select" required>
-                                    <option value="">-- Chọn Kho --</option>
-                                    @if (ViewBag.Khos != null)
-                                    {
-                                        foreach (var kho in ViewBag.Khos)
-                                        {
-                                            <option value="@kho.MaKho">@kho.TenKho</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Hàng Hóa</label>
-                                <select id="MaHang" name="MaHang" class="form-select" required>
-                                    <option value="">-- Chọn Hàng --</option>
-                                    @if (ViewBag.HangHoas != null)
-                                    {
-                                        foreach (var hh in ViewBag.HangHoas)
-                                        {
-                                            <option value="@hh.MaHang">@hh.TenHang (@hh.MaHang)</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Số Lượng</label>
-                                <input type="number" step="0.01" min="0" id="SoLuong" name="SoLuong" class="form-control" required />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Giá Vốn Ban Đầu</label>
-                                <input type="number" step="1" min="0" id="GiaVon" name="GiaVon" class="form-control" required />
-                            </div>
-                            <div class="col-12 mt-4 text-end">
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="fas fa-plus me-1"></i> Thêm Vào Bản Nháp
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Import Hàng Loạt -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                        <h5 class="mb-0"><i class="fas fa-file-excel text-success me-2"></i> Import Hàng Loạt</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-4">Tải file mẫu Excel về, điền dữ liệu và upload lên hệ thống. Dữ liệu sẽ được cộng dồn vào bản nháp hiện tại.</p>
-                        
-                        <a href="@Url.Action("DownloadTemplate", "OpeningStock")" class="btn btn-outline-success mb-4 w-100">
-                            <i class="fas fa-download me-2"></i> Tải File Mẫu (Template)
-                        </a>
-
-                        <form id="formUpload" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Chọn File Excel/CSV</label>
-                                <input type="file" id="fileExcel" name="file" class="form-control" accept=".xlsx,.csv" required />
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-success px-4" id="btnUpload">
-                                    <span class="spinner-border spinner-border-sm d-none me-1" id="uploadSpinner" role="status" aria-hidden="true"></span>
-                                    <i class="fas fa-upload me-1" id="uploadIcon"></i> Tải Dữ Liệu Lên
-                                </button>
-                            </div>
-                        </form>
-                        <div id="uploadResult" class="mt-3" style="display:none;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bảng Dữ Liệu Nháp -->
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Chi Tiết Bản Nháp</h5>
-                <button type="button" class="btn btn-danger px-4" id="btnFinalize">
-                    <i class="fas fa-lock me-2"></i> Chốt Tồn Kho
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Mã Kho</th>
-                                <th>Mã Hàng</th>
-                                <th>Tên Hàng Hóa</th>
-                                <th class="text-end">Số Lượng</th>
-                                <th class="text-end">Giá Vốn</th>
-                                <th class="text-end">Thành Tiền (Tạm tính)</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model is List<OpeningStockDraftViewModel> drafts && drafts.Any())
-                            {
-                                foreach (var item in drafts)
-                                {
-                                    var thanhTien = (decimal)item.SoLuong * item.GiaVon;
-                                    <tr>
-                                        <td><span class="badge bg-info text-dark">@item.MaKho</span></td>
-                                        <td>@item.MaHang</td>
-                                        <td class="fw-bold">@item.TenHang</td>
-                                        <td class="text-end">@item.SoLuong.ToString("N2", new CultureInfo("vi-VN"))</td>
-                                        <td class="text-end">@item.GiaVon.ToString("N0", new CultureInfo("vi-VN")) đ</td>
-                                        <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0", new CultureInfo("vi-VN")) đ</td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-draft" data-kho="@item.MaKho" data-hang="@item.MaHang">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="small fw-bold text-uppercase">
+                            <th class="ps-3">Mã Phiếu</th>
+                            <th>Thời Gian</th>
+                            <th>Sản Phẩm</th>
+                            <th class="text-end">Số Lượng</th>
+                            <th class="text-end">Giá Vốn</th>
+                            <th class="text-end pe-3">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model is IEnumerable<QLBH_ThuySan.Models.ChiTietPhieuNhap> finalizedData)
+                        {
+                            foreach (var item in finalizedData)
                             {
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu nháp</td>
+                                    <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaPhieu</span></td>
+                                    <td>@(item.MaPhieuNavigation?.NgayNhap?.ToString("dd/MM/yyyy") ?? "")</td>
+                                    <td>
+                                        <div class="fw-bold">@item.MaHangNavigation?.TenHang</div>
+                                        <div class="small text-muted">@item.MaHang</div>
+                                    </td>
+                                    <td class="text-end">@item.SoLuong?.ToString("N2", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end">@item.DonGiaNhap?.ToString("N0", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end fw-bold text-primary pe-3">@item.ThanhTien?.ToString("N0", new CultureInfo("vi-VN"))</td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center">
+        <i class="bi bi-pencil-square fs-4 me-3"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1">Đang trong chế độ thiết lập (Bản Nháp)</h6>
+            <p class="mb-0 small">Dữ liệu dưới đây chưa ảnh hưởng đến tồn kho thực tế cho đến khi bạn nhấn <b>"Chốt Tồn Kho"</b>.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Khai Báo Thủ Công -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-keyboard me-2 text-primary"></i> Khai Báo Thủ Công</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formManual" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Kho Vật Lý</label>
+                            <select id="MaKho" name="MaKho" class="form-select form-select-sm" required>
+                                <option value="">-- Chọn Kho --</option>
+                                @if (ViewBag.Khos != null) { foreach (var kho in ViewBag.Khos) { <option value="@kho.MaKho">@kho.TenKho</option> } }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Sản Phẩm</label>
+                            <select id="MaHang" name="MaHang" class="form-select form-select-sm" required>
+                                <option value="">-- Chọn Hàng --</option>
+                                @if (ViewBag.HangHoas != null) { foreach (var hh in ViewBag.HangHoas) { <option value="@hh.MaHang">@hh.TenHang (@hh.MaHang)</option> } }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Số Lượng</label>
+                            <input type="number" step="0.01" min="0" id="SoLuong" name="SoLuong" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Giá Vốn Ban Đầu</label>
+                            <input type="number" step="1" min="0" id="GiaVon" name="GiaVon" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-12 mt-4 text-end">
+                            <button type="button" id="btnCancelEdit" class="btn btn-sm btn-outline-secondary px-3 me-2 d-none">
+                                <i class="bi bi-x-lg"></i> Hủy Bỏ
+                            </button>
+                            <button type="submit" id="btnSubmitManual" class="btn btn-sm btn-primary px-4 shadow-sm">
+                                <i class="bi bi-plus-lg"></i> <span id="btnSubmitText">Thêm Vào Danh Sách</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    }
-</div>
+
+        <!-- Import Hàng Loạt -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-excel me-2 text-success"></i> Nhập Từ Excel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="bg-light p-3 rounded-3 mb-3">
+                        <p class="text-muted small mb-2">Tải file mẫu, điền dữ liệu và tải lên để nhập nhanh hàng loạt.</p>
+                        <a href="@Url.Action("DownloadTemplate", "OpeningStock")" class="btn btn-sm btn-outline-success w-100 border-dashed">
+                            <i class="bi bi-download"></i> Tải File Mẫu (Template)
+                        </a>
+                    </div>
+
+                    <form id="formUpload" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Chọn File Dữ Liệu</label>
+                            <div class="input-group input-group-sm">
+                                <input type="file" id="fileExcel" name="file" class="form-control" accept=".xlsx,.csv" required />
+                                <button type="submit" class="btn btn-success" id="btnUpload">
+                                    <span class="spinner-border spinner-border-sm d-none" id="uploadSpinner"></span>
+                                    <i class="bi bi-upload" id="uploadIcon"></i> Tải Lên
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="uploadResult" class="mt-2" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng Dữ Liệu Nháp -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-list-ul me-2"></i> Chi Tiết Bản Nháp</h5>
+            <button type="button" class="btn btn-danger btn-sm px-4 shadow-sm" id="btnFinalize">
+                <i class="bi bi-lock-fill"></i> CHỐT TỒN KHO NGAY
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="small fw-bold text-uppercase">
+                            <th class="ps-3">Kho</th>
+                            <th>Mã Hàng</th>
+                            <th>Tên Hàng Hóa</th>
+                            <th class="text-end">Số Lượng</th>
+                            <th class="text-end">Giá Vốn</th>
+                            <th class="text-end">Thành Tiền</th>
+                            <th class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model is List<OpeningStockDraftViewModel> drafts && drafts.Any())
+                        {
+                            foreach (var item in drafts)
+                            {
+                                var thanhTien = (decimal)item.SoLuong * item.GiaVon;
+                                <tr>
+                                    <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaKho</span></td>
+                                    <td><code class="text-primary fw-bold">@item.MaHang</code></td>
+                                    <td class="fw-bold">@item.TenHang</td>
+                                    <td class="text-end">@item.SoLuong.ToString("N2", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end">@item.GiaVon.ToString("N0", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-info btn-edit-draft" title="Sửa"
+                                                    data-kho="@item.MaKho" data-hang="@item.MaHang" data-soluong="@item.SoLuong" data-giavon="@item.GiaVon">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-delete-draft" title="Xóa"
+                                                    data-kho="@item.MaKho" data-hang="@item.MaHang">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-4 small">Chưa có dữ liệu khởi tạo trong bản nháp.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
         $(document).ready(function () {
+            var isOpeningStockEditMode = false;
 
-            // Xử lý thêm thủ công
+            // Xử lý thêm/sửa thủ công
             $('#formManual').on('submit', function (e) {
                 e.preventDefault();
                 var data = {
@@ -223,8 +230,10 @@
                     GiaVon: parseFloat($('#GiaVon').val())
                 };
 
+                var url = isOpeningStockEditMode ? '@Url.Action("UpdateDraft", "OpeningStock")' : '@Url.Action("AddDraft", "OpeningStock")';
+
                 $.ajax({
-                    url: '@Url.Action("AddDraft", "OpeningStock")',
+                    url: url,
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(data),
@@ -237,6 +246,42 @@
                         alert(xhr.responseText || 'Có lỗi xảy ra.');
                     }
                 });
+            });
+
+            // Khi click Sửa
+            $('.btn-edit-draft').on('click', function () {
+                var maKho = $(this).data('kho');
+                var maHang = $(this).data('hang');
+                var soLuong = $(this).data('soluong');
+                var giaVon = $(this).data('giavon');
+
+                // Điền form
+                $('#MaKho').val(maKho).prop('disabled', true);
+                $('#MaHang').val(maHang).prop('disabled', true);
+                $('#SoLuong').val(soLuong);
+                $('#GiaVon').val(giaVon);
+
+                // Chế độ sửa
+                isOpeningStockEditMode = true;
+                $('#btnSubmitText').text('Cập Nhật Bản Nháp');
+                $('#btnSubmitManual').removeClass('btn-primary').addClass('btn-warning');
+                $('#btnCancelEdit').removeClass('d-none');
+
+                // Cuộn lên form
+                $('html, body').animate({
+                    scrollTop: $("#formManual").offset().top - 100
+                }, 500);
+            });
+
+            // Hủy sửa
+            $('#btnCancelEdit').on('click', function() {
+                isOpeningStockEditMode = false;
+                $('#formManual')[0].reset();
+                $('#MaKho').prop('disabled', false);
+                $('#MaHang').prop('disabled', false);
+                $('#btnSubmitText').text('Thêm Vào Bản Nháp');
+                $('#btnSubmitManual').removeClass('btn-warning').addClass('btn-primary');
+                $(this).addClass('d-none');
             });
 
             // Xử lý Upload file
@@ -305,7 +350,7 @@
                 if (confirm('BẠN CHẮC CHẮN MUỐN CHỐT TỒN KHO? Hành động này không thể hoàn tác và sẽ đóng tính năng này lại.')) {
                     var btn = $(this);
                     btn.prop('disabled', true);
-                    btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Đang xử lý...');
+                    btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang xử lý...');
 
                     $.ajax({
                         url: '@Url.Action("FinalizeOpeningStock", "OpeningStock")',
@@ -319,7 +364,7 @@
                         error: function (xhr) {
                             alert(xhr.responseText || 'Có lỗi xảy ra.');
                             btn.prop('disabled', false);
-                            btn.html('<i class="fas fa-lock me-2"></i> Chốt Tồn Kho');
+                            btn.html('<i class="bi bi-lock me-2"></i> Chốt Tồn Kho');
                         }
                     });
                 }

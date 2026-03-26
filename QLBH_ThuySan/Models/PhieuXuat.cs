@@ -24,6 +24,7 @@ public partial class PhieuXuat
     public string? TrangThaiThanhToan { get; set; }
 
     public string LoaiXuat { get; set; } = "SALES"; // SALES, RETURN_VENDOR, DAMAGE_LOSS, TRANSFER
+    public bool IsDisabled { get; set; } = false;
 
     public string? IdNhaCungCap { get; set; }
 

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
 
 namespace QLBH_ThuySan.Controllers;
@@ -8,8 +9,29 @@ namespace QLBH_ThuySan.Controllers;
 [Authorize]
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly ApplicationDbContext _context;
+
+    public HomeController(ApplicationDbContext context)
     {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var today = DateTime.Today;
+        var thresholdDate = today.AddDays(3);
+
+        var warnings = await _context.PhieuNhaps
+            .Include(p => p.IdNhaCungCapNavigation)
+            .Where(p => !p.IsDisabled && 
+                        p.TrangThaiThanhToan != "Đã Thanh Toán" && 
+                        p.HanThanhToan != null && 
+                        p.HanThanhToan <= thresholdDate)
+            .OrderBy(p => p.HanThanhToan)
+            .Take(10) // Limit to top 10
+            .ToListAsync();
+
+        ViewBag.PaymentWarnings = warnings;
         return View();
     }
 

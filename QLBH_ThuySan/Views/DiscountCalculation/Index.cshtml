@@ -4,135 +4,174 @@
     ViewData["Title"] = "Quản Lý Chiết Khấu";
 }
 
-<div class="container-fluid px-4">
-    <div class="row pt-4 mb-3">
-        <div class="col-md-8">
-            <h1 class="display-6 fw-bold">Quản Lý Chiết Khấu</h1>
-            <p class="text-muted">Theo dõi và quản lý các phiếu tính chiết khấu cho Khách Hàng và Nhà Cung Cấp.</p>
-        </div>
-        <div class="col-md-4 text-end align-self-center">
-            <a asp-action="Create" class="btn btn-primary px-4 py-2">
-                <i class="bi bi-plus-lg"></i> Lập Phiếu Mới
-            </a>
-        </div>
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Quản Lý Chiết Khấu</h1>
+        <p class="text-muted">Tính toán, đối soát và thanh toán các khoản chiết khấu thương mại theo kỳ.</p>
     </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="bi bi-calculator"></i> Lập Phiếu Mới
+        </a>
+    </div>
+</div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-light">
-        <h5 class="mb-0 text-primary"><i class="bi bi-funnel"></i> Bộ Lọc Tìm Kiếm</h5>
-    </div>
-    <div class="card-body">
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
         <form method="get" asp-action="Index">
-            <div class="row g-3">
-                <!-- Row 1 -->
-                <div class="col-md-3">
-                    <label class="form-label">Từ Ngày (Tạo)</label>
-                    <input type="date" name="fromDate" class="form-control"
-                        value="@Model.FromDate?.ToString("yyyy-MM-dd")">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Từ Ngày</label>
+                    <input type="date" name="fromDate" class="form-control form-control-sm" value="@Model.FromDate?.ToString("yyyy-MM-dd")">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Đến Ngày (Tạo)</label>
-                    <input type="date" name="toDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd")">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Đến Ngày</label>
+                    <input type="date" name="toDate" class="form-control form-control-sm" value="@Model.ToDate?.ToString("yyyy-MM-dd")">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Loại Đối Tượng</label>
-                    <select name="type" class="form-select" asp-for="Type">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Loại</label>
+                    <select name="type" class="form-select form-select-sm" asp-for="Type" onchange="this.form.submit()">
                         <option value="">-- Tất Cả --</option>
                         <option value="NCC">Nhà Cung Cấp</option>
                         <option value="KHACH">Khách Hàng</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Trạng Thái</label>
-                    <select name="status" class="form-select" asp-for="Status">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Trạng Thái</label>
+                    <select name="status" class="form-select form-select-sm" asp-for="Status" onchange="this.form.submit()">
                         <option value="">-- Tất Cả --</option>
                         <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
                         <option value="Đã Thanh Toán">Đã Thanh Toán</option>
-                        <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
                     </select>
                 </div>
-
-                <!-- Row 2 -->
                 <div class="col-md-3">
-                    <label class="form-label">Kỳ Tính (Từ)</label>
-                    <input type="date" name="periodFrom" class="form-control"
-                        value="@Model.PeriodFrom?.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Kỳ Tính (Đến)</label>
-                    <input type="date" name="periodTo" class="form-control"
-                        value="@Model.PeriodTo?.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Quy Tắc Chiết Khấu</label>
-                    <input type="text" name="ruleSearch" class="form-control" placeholder="Tìm nội dung quy tắc..."
-                        value="@Model.RuleSearch">
-                </div>
-
-                <!-- Row 3 -->
-                <div class="col-md-3">
-                    <label class="form-label">Ngày Thanh Toán (Từ)</label>
-                    <input type="date" name="paymentFrom" class="form-control"
-                        value="@Model.PaymentFrom?.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Ngày Thanh Toán (Đến)</label>
-                    <input type="date" name="paymentTo" class="form-control"
-                        value="@Model.PaymentTo?.ToString("yyyy-MM-dd")">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Đối Tượng (Tên/Mã)</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" name="searchTerm" class="form-control" placeholder="Tên hoặc Mã..."
-                            value="@Model.SearchTerm">
+                    <label class="form-label small fw-bold text-uppercase">Đối Tượng / Nội Dung</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="searchTerm" class="form-control border-start-0" placeholder="Tìm tên, mã, quy tắc..." value="@Model.SearchTerm">
                     </div>
                 </div>
-
-                <!-- Actions -->
-                <div class="col-md-3 d-flex align-items-end mb-1">
-                    <div class="btn-group w-100" role="group">
-                        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center">
-                            <i class="bi bi-search me-1"></i> Tìm Kiếm
-                        </button>
-                        <a asp-action="Index"
-                            class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
-                            title="Đặt lại bộ lọc" style="flex: 0 0 auto; width: 35%;">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa Lọc
-                        </a>
-                    </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary btn-sm w-100" title="Tìm Kiếm">
+                        <i class="bi bi-funnel"></i>
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Phiếu</th>
-                        <th>Tên Phiếu</th>
-                        <th>Ngày Tạo</th>
-                        <th>Kỳ Tính Toán</th>
-                        <th>Loại</th>
-                        <th>Đối Tượng</th>
-                        <th>Quy Tắc (Tóm Tắt)</th>
-                        <th>Ngày Thanh Toán</th>
-                        <th class="text-end">Phải TT</th>
-                        <th class="text-end">Đã TT</th>
-                        <th class="text-end">Còn Nợ</th>
-                        <th class="text-center">Trạng Thái</th>
-                        <th class="text-center">Thao Tác</th>
+                        @{
+                            string GetSortUrl(string column)
+                            {
+                                string nextOrder = (Model.SortColumn == column && Model.SortOrder == "asc") ? "desc" : "asc";
+                                return Url.Action("Index", new
+                                {
+                                    searchTerm = Model.SearchTerm,
+                                    status = Model.Status,
+                                    type = Model.Type,
+                                    fromDate = Model.FromDate?.ToString("yyyy-MM-dd"),
+                                    toDate = Model.ToDate?.ToString("yyyy-MM-dd"),
+                                    ruleSearch = Model.RuleSearch,
+                                    periodFrom = Model.PeriodFrom?.ToString("yyyy-MM-dd"),
+                                    periodTo = Model.PeriodTo?.ToString("yyyy-MM-dd"),
+                                    paymentFrom = Model.PaymentFrom?.ToString("yyyy-MM-dd"),
+                                    paymentTo = Model.PaymentTo?.ToString("yyyy-MM-dd"),
+                                    sortColumn = column,
+                                    sortOrder = nextOrder
+                                }) ?? "#";
+                            }
+
+                            string GetSortIcon(string column)
+                            {
+                                if (Model.SortColumn != column) return "bi-arrow-down-up opacity-25";
+                                return Model.SortOrder == "asc" ? "bi-sort-up text-primary" : "bi-sort-down text-primary";
+                            }
+                        }
+                        <th class="ps-3 small fw-bold text-uppercase"><a href="@GetSortUrl("MaPhieu")" class="text-decoration-none text-dark">Mã Phiếu <i class="bi @GetSortIcon("MaPhieu")"></i></a></th>
+                        <th class="small fw-bold text-uppercase">Nội Dung</th>
+                        <th class="small fw-bold text-uppercase text-center">Ngày Tạo</th>
+                        <th class="small fw-bold text-uppercase">Đối Tượng</th>
+                        <th class="small fw-bold text-uppercase text-end">Phải TT</th>
+                        <th class="small fw-bold text-uppercase text-end">Đã TT</th>
+                        <th class="small fw-bold text-uppercase text-end">Còn Nợ</th>
+                        <th class="small fw-bold text-uppercase text-center">Trạng Thái</th>
+                        <th class="text-center pe-3 small fw-bold text-uppercase">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Items.Any())
                     {
+                        <tr><td colspan="9" class="text-center py-4 text-muted small">Không tìm thấy dữ liệu phù hợp.</td></tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
                         <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">Không tìm thấy dữ liệu phù hợp.</td>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaPhieuTinh</span></td>
+                            <td>
+                                <div class="fw-bold">@item.TenPhieu</div>
+                                <div class="small text-muted fst-italic text-truncate" style="max-width:200px">@item.QuyTacChietKhau</div>
+                            </td>
+                            <td class="text-center">@item.NgayTao.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <div class="fw-bold">@item.TenDoiTuong</div>
+                                <span class="badge @(item.LoaiDoiTuong == "NCC" ? "bg-info-subtle text-info border border-info" : "bg-warning-subtle text-warning border border-warning") small">
+                                    @(item.LoaiDoiTuong == "NCC" ? "Nhà Cung Cấp" : "Khách Hàng")
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">@string.Format("{0:N0}", item.SoPhaiThanhToan)</td>
+                            <td class="text-end text-success small">@string.Format("{0:N0}", item.SoDaThanhToan)</td>
+                            <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.SoChuaThanhToan)</td>
+                            <td class="text-center">
+                                @if (item.TrangThai?.Equals("Đã Thanh Toán", StringComparison.OrdinalIgnoreCase) == true)
+                                { <span class="badge bg-success">Đã Xong</span> }
+                                else if (item.TrangThai?.Equals("Thanh Toán Một Phần", StringComparison.OrdinalIgnoreCase) == true)
+                                { <span class="badge bg-warning text-dark">Một Phần</span> }
+                                else
+                                { <span class="badge bg-light text-muted border">Chờ Chi</span> }
+                            </td>
+                            <td class="text-center pe-3">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.MaPhieuTinh" class="btn btn-outline-info" title="Xem Chi Tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (item.SoChuaThanhToan > 0)
+                                    {
+                                        <button type="button" class="btn btn-primary" title="Thanh Toán" onclick="openPayModal('@item.MaPhieuTinh', @(item.SoChuaThanhToan))">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </button>
+                                    }
+                                    <a asp-action="Print" asp-route-id="@item.MaPhieuTinh" class="btn btn-outline-secondary" title="In Phiếu" target="_blank">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.MaPhieuTinh" method="post" style="display:inline;" onsubmit="return confirm('Xóa phiếu chiết khấu này?')">
+                                        <button type="submit" class="btn btn-outline-danger" title="Xóa">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="13" class="text-center py-4 text-muted">Không tìm thấy dữ liệu phù hợp.</td>
                         </tr>
                     }
                     @foreach (var item in Model.Items)

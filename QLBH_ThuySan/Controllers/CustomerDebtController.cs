@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
@@ -426,11 +428,12 @@ namespace QLBH_ThuySan.Controllers
             var paymentVoucher = new PhieuThuChi
             {
                 MaPhieu = "PC_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                LoaiPhieu = "CHI",
+                LoaiPhieu = "CHI CHIET KHAU KHACH HANG",
                 NgayLap = DateTime.Now,
                 SoTien = amount,
                 LyDo = string.IsNullOrEmpty(dienGiai) ? $"Chi tiền chiết khấu cho phiếu {maPhieuTinh}" : dienGiai,
-                MaDoiTuong = maKhachHang
+                MaDoiTuong = maKhachHang,
+                LoaiDoiTuong = "KH"
             };
             _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -533,11 +536,12 @@ namespace QLBH_ThuySan.Controllers
                         var paymentVoucher = new PhieuThuChi
                         {
                             MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                            LoaiPhieu = "THU",
+                            LoaiPhieu = "THU BAN HANG",
                             NgayLap = DateTime.Now,
                             SoTien = soTienPhatSinh,
                             LyDo = string.IsNullOrEmpty(dienGiai) ? "Thu tiền thanh toán từ khách hàng " + maKhachHang : dienGiai,
-                            MaDoiTuong = maKhachHang
+                            MaDoiTuong = maKhachHang,
+                            LoaiDoiTuong = "KH"
                         };
                         _context.PhieuThuChis.Add(paymentVoucher);
                     }
@@ -598,7 +602,7 @@ namespace QLBH_ThuySan.Controllers
                 NgayGiaoDich = DateTime.Now,
                 LoaiGiaoDich = "THANH_TOAN",
                 SoTienPhatSinh = amount,
-                DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Thanh toán cho phiếu {maPhieu}" : dienGiai
+                DienGiai = string.IsNullOrEmpty(dienGiai) ? $"Thanh toán for phiếu {maPhieu}" : dienGiai
             };
             _context.Add(ledgerEntry);
 
@@ -612,12 +616,13 @@ namespace QLBH_ThuySan.Controllers
                 // 2b. Create PhieuThuChi (THU) for cash flow
                 var paymentVoucher = new PhieuThuChi
                 {
-                    MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                    LoaiPhieu = "THU",
+                    MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                    LoaiPhieu = "THU BAN HANG",
                     NgayLap = DateTime.Now,
                     SoTien = amount,
-                    LyDo = string.IsNullOrEmpty(dienGiai) ? $"Thu tiền thanh toán cho phiếu {maPhieu}" : dienGiai,
-                    MaDoiTuong = maKhachHang
+                    LyDo = string.IsNullOrEmpty(dienGiai) ? $"Thu tiền thanh toán for phiếu {maPhieu}" : dienGiai,
+                    MaDoiTuong = maKhachHang,
+                    LoaiDoiTuong = "KH"
                 };
                 _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -661,7 +666,7 @@ namespace QLBH_ThuySan.Controllers
         }
         // GET: PrivateLedger/Print
         [HttpGet("/PrivateLedger/Print")]
-        public async Task<IActionResult> Print(string id, int[] selectedEntries, string[] selectedBills)
+        public async Task<IActionResult> Print(string id, int[] selectedEntries, string[] selectedBills, string[] selectedDiscounts)
         {
             var customer = await _context.KhachHangs.FindAsync(id);
             if (customer == null) return NotFound();
@@ -678,10 +683,16 @@ namespace QLBH_ThuySan.Controllers
                 .OrderBy(p => p.NgayXuat)
                 .ToListAsync();
 
-            // Also check if any selectedEntries of type MUA_HANG mention a MaPhieu that wasn't explicitly selected in selectedBills
+            var phieuChiets = await _context.PhieuTinhChietKhaus
+                .Include(p => p.ChiTietChietKhaus)
+                    .ThenInclude(c => c.MaHangNavigation)
+                .Where(p => selectedDiscounts.Contains(p.MaPhieuTinh))
+                .OrderBy(p => p.NgayTao)
+                .ToListAsync();
+
+            // 1. Link MUA_HANG entries to PhieuXuats
             foreach (var entry in entries.Where(e => e.LoaiGiaoDich == "MUA_HANG"))
             {
-                // Try to extract MaPhieu from DienGiai (e.g. "PX260314162441")
                 var words = entry.DienGiai?.Split(' ');
                 if (words != null)
                 {
@@ -699,10 +710,64 @@ namespace QLBH_ThuySan.Controllers
                 }
             }
 
+            // 2. Link CHI_CK entries to PhieuTinhChietKhaus
+            foreach (var entry in entries.Where(e => e.LoaiGiaoDich == "CHI_CK"))
+            {
+                var words = entry.DienGiai?.Split(' ');
+                if (words != null)
+                {
+                    foreach (var word in words)
+                    {
+                        if (word.StartsWith("CK") && !phieuChiets.Any(p => p.MaPhieuTinh == word))
+                        {
+                            var ck = await _context.PhieuTinhChietKhaus
+                                .Include(p => p.ChiTietChietKhaus)
+                                    .ThenInclude(c => c.MaHangNavigation)
+                                .FirstOrDefaultAsync(p => p.MaPhieuTinh == word);
+                            if (ck != null) phieuChiets.Add(ck);
+                        }
+                    }
+                }
+            }
+
             ViewBag.Entries = entries;
             ViewBag.PhieuXuats = phieuXuats.OrderBy(p => p.NgayXuat).ToList();
+            ViewBag.PhieuChiets = phieuChiets.OrderBy(p => p.NgayTao).ToList();
             return View(customer);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            string id,
+            DateTime? entryFromDate, DateTime? entryToDate, string? entryLoai, string? entryDienGiai)
+        {
+            var customer = await _context.KhachHangs.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            var query = _context.SoRiengKhachHangs.Where(e => e.MaKhachHang == id);
+
+            if (entryFromDate.HasValue) query = query.Where(e => e.NgayGiaoDich >= entryFromDate.Value.Date);
+            if (entryToDate.HasValue) query = query.Where(e => e.NgayGiaoDich <= entryToDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (!string.IsNullOrEmpty(entryLoai)) query = query.Where(e => e.LoaiGiaoDich == entryLoai);
+            if (!string.IsNullOrEmpty(entryDienGiai)) query = query.Where(e => e.DienGiai != null && e.DienGiai.Contains(entryDienGiai));
+
+            var entries = await query.OrderBy(e => e.NgayGiaoDich).ToListAsync();
+
+            var data = entries.Select(e => new {
+                Ngay = e.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm"),
+                Loai = e.LoaiGiaoDich == "MUA_HANG" ? "Ghi Nợ (Bán Hàng)" :
+                       e.LoaiGiaoDich == "THANH_TOAN" ? "Thanh Toán" :
+                       e.LoaiGiaoDich == "CAN_TRU" ? "Cấn Trừ" :
+                       e.LoaiGiaoDich == "CHI_CK" ? "Chi Chiết Khấu" : e.LoaiGiaoDich,
+                SoTien = e.SoTienPhatSinh,
+                DienGiai = e.DienGiai
+            }).ToList();
+
+            var memoryStream = new MemoryStream();
+            memoryStream.SaveAs(data);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CongNo_KH_{id}.xlsx");
         }
     }
 }
-

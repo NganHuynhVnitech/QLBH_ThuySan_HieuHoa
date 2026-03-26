@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
@@ -130,7 +132,43 @@ namespace QLBH_ThuySan.Controllers
                 // Call SP to sync inventory and calculate COGS
                 await _context.Database.ExecuteSqlRawAsync("EXEC sp_PhieuNhap_DongBoVaTinhGia @p0", phieuNhap.MaPhieu);
 
-                return RedirectToAction(nameof(Index));
+                // Update Supplier Debt
+                if (!string.IsNullOrEmpty(phieuNhap.IdNhaCungCap))
+                {
+                    var ncc = await _context.NhaCungCaps.FindAsync(phieuNhap.IdNhaCungCap);
+                    if (ncc != null)
+                    {
+                        ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) + phieuNhap.SoChuaThanhToan;
+                        _context.Update(ncc);
+                        
+                        // Ledger entry
+                        if (!string.IsNullOrEmpty(phieuNhap.IdNhaCungCap))
+                        {
+                            _context.SoRiengNhaCungCaps.Add(new SoRiengNhaCungCap
+                            {
+                                MaNhaCungCap = phieuNhap.IdNhaCungCap,
+                                NgayGiaoDich = DateTime.Now,
+                                LoaiGiaoDich = "NHAP_HANG",
+                                SoTienPhatSinh = phieuNhap.SoPhaiThanhToan,
+                                DienGiai = $"Nhập hàng từ phiếu {phieuNhap.MaPhieu}"
+                            });
+                            
+                            if ((phieuNhap.SoDaThanhToan ?? 0) > 0)
+                            {
+                                _context.SoRiengNhaCungCaps.Add(new SoRiengNhaCungCap
+                                {
+                                    MaNhaCungCap = phieuNhap.IdNhaCungCap,
+                                    NgayGiaoDich = DateTime.Now,
+                                    LoaiGiaoDich = "THANH_TOAN",
+                                    SoTienPhatSinh = phieuNhap.SoDaThanhToan,
+                                    DienGiai = $"Thanh toán ngay cho phiếu {phieuNhap.MaPhieu}"
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
             }
 
             ViewData["IdDaiLyNhap"] = new SelectList(_context.DaiLys.Where(d => d.LoaiDaiLy != "BAN_C"), "MaDaiLy", "TenDaiLy", phieuNhap.IdDaiLyNhap);
@@ -154,7 +192,7 @@ namespace QLBH_ThuySan.Controllers
                     .Include(p => p.IdNhaCungCapNavigation)
                     .FirstOrDefaultAsync(p => p.MaPhieu == id);
                 if (firstPhieu == null) return NotFound();
-                contractorId = firstPhieu.IdNhaCungCap;
+                contractorId = firstPhieu.IdNhaCungCap ?? "";
             }
             else // Payment for a supplier directly
             {
@@ -171,11 +209,12 @@ namespace QLBH_ThuySan.Controllers
             var paymentVoucher = new PhieuThuChi
             {
                 MaPhieu = "PT_" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
-                LoaiPhieu = "CHI",
+                LoaiPhieu = "CHI PHIEU NHAP",
                 NgayLap = DateTime.Now,
                 SoTien = amount,
                 LyDo = string.IsNullOrEmpty(dienGiai) ? (firstPhieu != null ? "Chi tiền thanh toán phiếu " + firstPhieu.MaPhieu : "Chi tiền trả nợ nhà cung cấp") : dienGiai,
-                MaDoiTuong = contractorId
+                MaDoiTuong = contractorId,
+                LoaiDoiTuong = "NCC"
             };
             _context.PhieuThuChis.Add(paymentVoucher);
 
@@ -241,10 +280,47 @@ namespace QLBH_ThuySan.Controllers
             {
                 phieuNhap.IsDisabled = true;
                 _context.Update(phieuNhap);
-                await _context.SaveChangesAsync();
                 
-                // Note: We might also want to revert inventory/COGS if the business logic requires it.
-                // For now, consistent with other modules, we just mark as disabled.
+                // Reverse Debt
+                if (!string.IsNullOrEmpty(phieuNhap.IdNhaCungCap))
+                {
+                    var ncc = await _context.NhaCungCaps.FindAsync(phieuNhap.IdNhaCungCap);
+                    if (ncc != null)
+                    {
+                        // PN originally increased debt by SoPhai. Deleting it decreases debt by SoPhai.
+                        ncc.DuNoLuyKe = (ncc.DuNoLuyKe ?? 0) - (phieuNhap.SoPhaiThanhToan ?? 0);
+                        _context.Update(ncc);
+                    }
+                }
+
+                // Find and disable associated PhieuThuChi (vouchers)
+                var associatedVouchers = await _context.PhieuThuChis
+                    .Where(v => v.LyDo != null && v.LyDo.Contains(phieuNhap.MaPhieu) && !v.IsDisabled)
+                    .ToListAsync();
+
+                foreach (var v in associatedVouchers)
+                {
+                    v.IsDisabled = true;
+                    _context.Update(v);
+
+                    // Reverse Debt part from the Voucher
+                    decimal amount = v.SoTien ?? 0;
+                    if ((v.LoaiDoiTuong == "NCC" || (v.LoaiPhieu != null && v.LoaiPhieu.Contains("NCC"))) && !string.IsNullOrEmpty(v.MaDoiTuong))
+                    {
+                        var ncc = await _context.NhaCungCaps.FindAsync(v.MaDoiTuong);
+                        if (ncc != null)
+                        {
+                            // Deleting a payment (CHI) INCREASES debt back.
+                            // Deleting a receipt (THU TRA HANG) DECREASES debt back.
+                            if (v.LoaiPhieu == "THU TRA HANG NCC") ncc.DuNoLuyKe -= amount;
+                            else if (v.LoaiPhieu != null && v.LoaiPhieu.StartsWith("CHI")) ncc.DuNoLuyKe += amount;
+                            else if (v.LoaiPhieu != null && v.LoaiPhieu.StartsWith("THU")) ncc.DuNoLuyKe -= amount;
+                            _context.Update(ncc);
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
             }
             
             return RedirectToAction(nameof(Index));
@@ -368,6 +444,34 @@ namespace QLBH_ThuySan.Controllers
             }).ToListAsync();
 
             return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(string id)
+        {
+            var p = await _context.PhieuNhaps
+                .Include(x => x.IdNhaCungCapNavigation)
+                .Include(x => x.ChiTietPhieuNhaps)
+                .ThenInclude(ct => ct.MaHangNavigation)
+                .FirstOrDefaultAsync(x => x.MaPhieu == id && !x.IsDisabled);
+
+            if (p == null) return NotFound();
+
+            var details = p.ChiTietPhieuNhaps.Select((ct, index) => new {
+                STT = index + 1,
+                MaHang = ct.MaHang,
+                TenHang = ct.MaHangNavigation?.TenHang,
+                DVT = ct.MaHangNavigation?.DonViTinh,
+                SoLuong = ct.SoLuong,
+                DonGiaNhap = ct.DonGiaNhap,
+                ThanhTien = (decimal)(ct.SoLuong ?? 0) * (ct.DonGiaNhap ?? 0)
+            }).ToList();
+
+            var memoryStream = new MemoryStream();
+            memoryStream.SaveAs(details);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PhieuNhap_{id}.xlsx");
         }
     }
 }

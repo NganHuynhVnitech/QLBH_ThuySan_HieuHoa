@@ -95,9 +95,13 @@
 
 
                         <!-- Báo Cáo -->
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Financial"
-                                asp-action="ProfitLoss">Báo Cáo P&L</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Báo Cáo</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Financial" asp-action="ProfitLoss">Báo Cáo P&L</a></li>
+                                <li><a class="dropdown-item" asp-controller="InventoryReport" asp-action="Index">Xuất Nhập Tồn</a></li>
+                            </ul>
                         </li>
                     </ul>
                     @if (User.Identity?.IsAuthenticated == true)

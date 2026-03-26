@@ -1,9 +1,9 @@
-@model QLBH_ThuySan.Models.NhaCungCap
-
 @{
     Layout = null;
     var entries = ViewBag.Entries as List<QLBH_ThuySan.Models.SoRiengNhaCungCap>;
     var imports = ViewBag.Imports as List<QLBH_ThuySan.Models.PhieuNhap>;
+    var phieuChiets = ViewBag.PhieuChiets as List<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
+    var linkedDiscounts = ViewBag.LinkedDiscounts as List<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
 }
 
 <!DOCTYPE html>
@@ -13,17 +13,20 @@
     <title>In Chi Tiết Công Nợ NCC - @Model.TenDoiTuong</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <style>
-        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: black; background: white; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 13px; color: black; background: white; }
         .print-container { width: 210mm; margin: 0 auto; padding: 10mm; }
         .header-title { text-align: center; text-transform: uppercase; font-weight: bold; font-size: 20px; margin-bottom: 20px; }
         .supplier-info { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
         .section-title { font-weight: bold; text-decoration: underline; margin-top: 20px; margin-bottom: 10px; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid black; padding: 4px 6px; text-align: left; vertical-align: top; }
         th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
         .text-end { text-align: right; }
         .text-center { text-align: center; }
         .footer { margin-top: 30px; text-align: right; font-style: italic; }
+        .nested-table { margin: 5px 0; border: none; font-size: 0.9em; width: 100%; }
+        .nested-table th, .nested-table td { border: 1px solid #ddd; padding: 2px 4px; }
+        .nested-table th { background-color: #fafafa !important; }
         @@media print {
             .no-print { display: none; }
             body { margin: 0; padding: 0; }
@@ -62,10 +65,10 @@
                 <thead>
                     <tr>
                         <th style="width: 5%">STT</th>
-                        <th style="width: 20%">Ngày Giao Dịch</th>
-                        <th style="width: 20%">Loại GĐ</th>
-                        <th style="width: 20%" class="text-end">Số Tiền (VNĐ)</th>
-                        <th style="width: 35%">Diễn giải</th>
+                        <th style="width: 15%">Ngày</th>
+                        <th style="width: 15%">Loại GĐ</th>
+                        <th style="width: 18%" class="text-end">Số Tiền</th>
+                        <th style="width: 47%">Diễn giải & Chi tiết</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -77,12 +80,13 @@
                             <td>@entry.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
                                 @if (entry.LoaiGiaoDich == "MUA_HANG") { <span>Nhập Hàng (Nợ NCC)</span> }
-                                else if (entry.LoaiGiaoDich == "THANH_TOAN") { <span>Thanh Toán (Chi Tiền)</span> }
-                                else if (entry.LoaiGiaoDich == "CAN_TRU") { <span>Cấn Trừ Công Nợ</span> }
+                                else if (entry.LoaiGiaoDich == "THANH_TOAN") { <span>Thanh Toán (Chi)</span> }
+                                else if (entry.LoaiGiaoDich == "CAN_TRU") { <span>Cấn Trừ</span> }
+                                else if (entry.LoaiGiaoDich == "THU_CK") { <span>Thu Chiết Khấu</span> }
                                 else { <span>@entry.LoaiGiaoDich</span> }
                             </td>
                             <td class="text-end fw-bold">@((entry.SoTienPhatSinh ?? 0).ToString("N0"))</td>
-                            <td class="small">@entry.DienGiai</td>
+                            <td>@entry.DienGiai</td>
                         </tr>
                     }
                 </tbody>
@@ -91,18 +95,18 @@
 
         @if (imports != null && imports.Any())
         {
-            <div class="section-title">Chi tiết các phiếu nhập hàng liên quan:</div>
+            <div class="section-title">Chi tiết các phiếu nhập hàng:</div>
             @foreach (var pn in imports)
             {
-                <div style="margin-top: 15px; border: 1px dotted #333; padding: 10px; border-radius: 5px;">
+                <div style="margin-top: 15px; border: 1px dashed #333; padding: 10px;">
                     <div class="row fw-bold mb-2">
-                        <div class="col-6">Phiếu: @pn.MaPhieu - Ngày nhập: @pn.NgayNhap?.ToString("dd/MM/yyyy")</div>
+                        <div class="col-6">Phiếu: @pn.MaPhieu - Ngày: @pn.NgayNhap?.ToString("dd/MM/yyyy")</div>
                         <div class="col-6 text-end">Trạng thái: @pn.TrangThaiThanhToan</div>
                     </div>
                     <table class="table-sm">
                         <thead class="table-light">
                             <tr>
-                                <th>Mã hàng - Tên hàng hóa sản phẩm</th>
+                                <th>Mã hàng - Tên hàng hóa</th>
                                 <th class="text-center">SL</th>
                                 <th class="text-end">Đơn giá</th>
                                 <th class="text-end">Thành tiền</th>
@@ -115,22 +119,67 @@
                                     <td>@ct.MaHang - @(ct.MaHangNavigation?.TenHang ?? "")</td>
                                     <td class="text-center">@((ct.SoLuong ?? 0).ToString("N2"))</td>
                                     <td class="text-end">@((ct.DonGiaNhap ?? 0).ToString("N0"))</td>
-                                    <td class="text-end fw-bold">@(((decimal)(ct.SoLuong ?? 0) * (ct.DonGiaNhap ?? 0)).ToString("N0"))</td>
+                                    <td class="text-end">@(((decimal)(ct.SoLuong ?? 0) * (ct.DonGiaNhap ?? 0)).ToString("N0"))</td>
                                 </tr>
                             }
                         </tbody>
-                        <tfoot class="fw-bold bg-light">
+                        <tfoot class="fw-bold">
                             <tr>
-                                <td colspan="3" class="text-end">Tổng giá trị phiếu nhập:</td>
-                                <td class="text-end text-primary">@((pn.SoPhaiThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                                <td colspan="3" class="text-end">Tổng cộng:</td>
+                                <td class="text-end text-primary">@((pn.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        }
+
+        @if (phieuChiets != null && phieuChiets.Any())
+        {
+            <div class="section-title">Chi tiết các phiếu chiết khấu:</div>
+            @foreach (var ck in phieuChiets)
+            {
+                <div style="margin-top: 15px; border: 1px dashed #333; padding: 10px;">
+                    <div class="row fw-bold mb-2">
+                        <div class="col-6">Phiếu chiết khấu: @ck.MaPhieuTinh - Ngày tính: @ck.NgayTao?.ToString("dd/MM/yyyy")</div>
+                        <div class="col-6 text-end">Kỳ: @(ck.TuNgay?.ToString("dd/MM/yy")) - @(ck.DenNgay?.ToString("dd/MM/yy"))</div>
+                    </div>
+                    <table class="table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã hàng</th>
+                                <th>Tên hàng</th>
+                                <th>Cách tính / Nội dung</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Đơn giá CK</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ck.ChiTietChietKhaus)
+                            {
+                                <tr>
+                                    <td>@item.MaHang</td>
+                                    <td>@(item.MaHangNavigation?.TenHang)</td>
+                                    <td>@item.NoiDung</td>
+                                    <td class="text-center">@((item.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((item.GiaChietKhau ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((item.ThanhTien ?? 0).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="fw-bold">
+                            <tr>
+                                <td colspan="5" class="text-end">Tổng chiết khấu:</td>
+                                <td class="text-end text-success">@((ck.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-end">Đã thanh toán cho phiếu:</td>
-                                <td class="text-end text-success">@((pn.SoDaThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                                <td colspan="5" class="text-end">Đã thanh toán:</td>
+                                <td class="text-end">@((ck.SoDaThanhToan ?? 0).ToString("N0"))</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-end">Còn nợ phiếu này:</td>
-                                <td class="text-end text-danger">@((pn.SoChuaThanhToan ?? 0).ToString("N0")) VNĐ</td>
+                                <td colspan="5" class="text-end">Còn nợ:</td>
+                                <td class="text-end text-danger">@((ck.SoChuaThanhToan ?? 0).ToString("N0"))</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -141,12 +190,12 @@
         <div class="footer d-flex justify-content-between">
             <div style="width: 40%; text-align: center;">
                 <strong>Người lập bản kê</strong><br />
-                <br /><br /><br />
+                <br /><br />
                 ...........................................
             </div>
             <div style="width: 40%; text-align: center;">
                 <strong>Xác nhận từ NCC</strong><br />
-                <br /><br /><br />
+                <br /><br />
                 ...........................................
             </div>
         </div>

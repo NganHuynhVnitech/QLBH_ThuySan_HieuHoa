@@ -105,16 +105,23 @@ namespace QLBH_ThuySan.Services
                 }
 
                 phieuXuat.SoPhaiThanhToan = soPhaiThanhToan;
-                if (phieuXuat.TrangThaiThanhToan == "Đã Thanh Toán" || phieuXuat.TrangThaiThanhToan == "Hoàn Tất")
+                
+                // Allow modifyPhieu to set SoDaThanhToan/SoChuaThanhToan if needed
+                // Otherwise fallback to default logic
+                if (phieuXuat.SoDaThanhToan == null)
                 {
-                    phieuXuat.SoDaThanhToan = soPhaiThanhToan;
-                    phieuXuat.SoChuaThanhToan = 0;
+                    if (phieuXuat.TrangThaiThanhToan == "Đã Thanh Toán" || phieuXuat.TrangThaiThanhToan == "Hoàn Tất")
+                    {
+                        phieuXuat.SoDaThanhToan = soPhaiThanhToan;
+                        phieuXuat.SoChuaThanhToan = 0;
+                    }
+                    else
+                    {
+                        phieuXuat.SoDaThanhToan = 0;
+                        phieuXuat.SoChuaThanhToan = soPhaiThanhToan;
+                    }
                 }
-                else
-                {
-                    phieuXuat.SoDaThanhToan = 0;
-                    phieuXuat.SoChuaThanhToan = soPhaiThanhToan;
-                }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -165,7 +172,55 @@ namespace QLBH_ThuySan.Services
         {
             await ApplyInventoryChangesAsync(dto, "PX_RET", "RETURN_VENDOR", phieu => {
                 phieu.IdNhaCungCap = dto.VendorId;
-                phieu.TrangThaiThanhToan = "Hoàn Tất";
+                phieu.SoDaThanhToan = dto.SoDaThanhToan;
+                
+                // We'll calculate SoPhai later in the generic block, but we need it here for debt
+                // Actually, ApplyInventoryChanges calculates it. Let's do debt update AFTER save changes? 
+                // No, better to do it in the action if possible, but SoPhai matches dto.Items sum.
+                decimal totalValue = dto.Items.Sum(item => (decimal)item.SoLuong * (item.GiaBan > 0 ? item.GiaBan : 0));
+                phieu.SoPhaiThanhToan = totalValue;
+                phieu.SoChuaThanhToan = totalValue - dto.SoDaThanhToan;
+                phieu.TrangThaiThanhToan = phieu.SoChuaThanhToan <= 0 ? "Hoàn Tất" : "Thanh Toán Một Phần";
+
+                // Update Supplier Debt
+                var ncc = _context.NhaCungCaps.Find(dto.VendorId);
+                if (ncc != null)
+                {
+                    // Return reduces debt by totalValue. Cash receipt increases debt (reverses reduction).
+                    // Net debt change = Paid - Total
+                    ncc.DuNoLuyKe += (dto.SoDaThanhToan - totalValue);
+                    
+                    // Ledger entries
+                    _context.SoRiengNhaCungCaps.Add(new SoRiengNhaCungCap {
+                        MaNhaCungCap = dto.VendorId,
+                        NgayGiaoDich = DateTime.Now,
+                        LoaiGiaoDich = "TRA_HANG",
+                        SoTienPhatSinh = totalValue,
+                        DienGiai = $"Xuất trả hàng nhà cung cấp {phieu.MaPhieu}"
+                    });
+                }
+
+                // Create PhieuThuChi if paid
+                if (dto.SoDaThanhToan > 0)
+                {
+                    _context.PhieuThuChis.Add(new PhieuThuChi {
+                        MaPhieu = "PT" + DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(10, 99).ToString(),
+                        LoaiPhieu = "THU TRA HANG NCC",
+                        NgayLap = DateTime.Now,
+                        SoTien = dto.SoDaThanhToan,
+                        LyDo = $"Thu tiền mặt từ xuất trả hàng {phieu.MaPhieu}",
+                        MaDoiTuong = dto.VendorId,
+                        LoaiDoiTuong = "NCC"
+                    });
+                    
+                    _context.SoRiengNhaCungCaps.Add(new SoRiengNhaCungCap {
+                        MaNhaCungCap = dto.VendorId,
+                        NgayGiaoDich = DateTime.Now,
+                        LoaiGiaoDich = "THANH_TOAN",
+                        SoTienPhatSinh = dto.SoDaThanhToan,
+                        DienGiai = $"Thu tiền mặt cho phiếu trả hàng {phieu.MaPhieu}"
+                    });
+                }
             });
             return true;
         }
