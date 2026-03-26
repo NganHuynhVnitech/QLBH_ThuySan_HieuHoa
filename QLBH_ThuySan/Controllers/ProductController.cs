@@ -2,18 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class ProductController : Controller
+    public class ProductController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public ProductController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Product
         public async Task<IActionResult> Index(string? searchMa, string? searchTen, string? sortOrder = null)
@@ -81,9 +78,13 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Product/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new HangHoa
+            {
+                MaHang = await _codeGen.GenerateProductCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: Product/Create

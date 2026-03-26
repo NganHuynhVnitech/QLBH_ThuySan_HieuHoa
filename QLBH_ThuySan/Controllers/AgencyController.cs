@@ -2,18 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class AgencyController : Controller
+    public class AgencyController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public AgencyController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Agency
         public async Task<IActionResult> Index()
@@ -40,9 +37,13 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Agency/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new DaiLy
+            {
+                MaDaiLy = await _codeGen.GenerateAgencyCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: Agency/Create

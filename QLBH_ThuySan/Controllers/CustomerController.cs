@@ -2,18 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class CustomerController : Controller
+    public class CustomerController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CustomerController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Customer
         public async Task<IActionResult> Index(string? searchMa, string? searchTen, string? searchSdt, string? searchDiaChi, string? searchAoNuoi, bool searchCoNo = false, string? sortOrder = null)
@@ -104,9 +101,13 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Customer/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new KhachHang
+            {
+                MaDoiTuong = await _codeGen.GenerateCustomerCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: Customer/Create
@@ -233,10 +234,10 @@ namespace QLBH_ThuySan.Controllers
             // Basic validation
             if (string.IsNullOrEmpty(khachHang.TenDoiTuong)) return BadRequest("Tên khách hàng là bắt buộc");
             
-            // Generate ID if missing (Simple logic: KH + Random or Timestamp for MVP)
+            // Generate ID if missing
             if (string.IsNullOrEmpty(khachHang.MaDoiTuong))
             {
-                khachHang.MaDoiTuong = "KH" + DateTime.Now.ToString("yyMMddHHmmss");
+                khachHang.MaDoiTuong = await _codeGen.GenerateCustomerCodeAsync();
             }
 
             if (_context.KhachHangs.Any(e => e.MaDoiTuong == khachHang.MaDoiTuong))

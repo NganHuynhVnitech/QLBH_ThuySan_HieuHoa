@@ -7,14 +7,9 @@ using QLBH_ThuySan.Models;
 namespace QLBH_ThuySan.Controllers;
 
 [Authorize]
-public class HomeController : Controller
+public class HomeController(ApplicationDbContext context) : Controller
 {
-    private readonly ApplicationDbContext _context;
-
-    public HomeController(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    private readonly ApplicationDbContext _context = context;
 
     public async Task<IActionResult> Index()
     {

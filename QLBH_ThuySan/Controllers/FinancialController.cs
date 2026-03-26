@@ -5,14 +5,9 @@ using QLBH_ThuySan.Services;
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class FinancialController : Controller
+    public class FinancialController(IFinancialService financialService) : Controller
     {
-        private readonly IFinancialService _financialService;
-
-        public FinancialController(IFinancialService financialService)
-        {
-            _financialService = financialService;
-        }
+        private readonly IFinancialService _financialService = financialService;
 
         // GET: Financial/ProfitLoss
         public IActionResult ProfitLoss()

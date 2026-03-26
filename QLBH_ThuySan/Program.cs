@@ -30,6 +30,7 @@ builder.Services.AddScoped<IDiscountService, DiscountService>();
 builder.Services.AddScoped<QLBH_ThuySan.Services.IOutboundService, QLBH_ThuySan.Services.OutboundService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IFinancialService, FinancialService>();
+builder.Services.AddScoped<ICodeGenerationService, CodeGenerationService>();
 
 var app = builder.Build();
 

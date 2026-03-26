@@ -6,17 +6,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
-    public class CostObjectController : Controller
+    public class CostObjectController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CostObjectController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: CostObject
         public async Task<IActionResult> Index()
@@ -25,9 +22,13 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: CostObject/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new DoiTuongChiPhi
+            {
+                MaDoiTuong = await _codeGen.GenerateCostObjectCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: CostObject/Create

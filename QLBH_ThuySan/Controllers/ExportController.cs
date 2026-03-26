@@ -4,19 +4,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class ExportController : Controller
+    public class ExportController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public ExportController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Export Dashboard
         public async Task<IActionResult> Index(
@@ -166,10 +163,17 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Export/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewData["IdDaiLyBan"] = new SelectList(_context.DaiLys.Where(d => d.IsDisabled == false), "MaDaiLy", "TenDaiLy");
-            return View();
+            
+            var model = new PhieuXuat
+            {
+                MaPhieu = await _codeGen.GenerateExportCodeAsync(),
+                NgayXuat = DateTime.Now,
+                TrangThaiThanhToan = "Chưa Thanh Toán"
+            };
+            return View(model);
         }
 
         // POST: Export/Create
@@ -195,7 +199,7 @@ namespace QLBH_ThuySan.Controllers
             if (phieuXuat.TrangThaiThanhToan == "Đã Thanh Toán") phieuXuat.NgayThanhToan = DateTime.Now;
 
             decimal soPhaiThanhToan = 0;
-            var details = new List<ChiTietPhieuXuat>();
+            List<ChiTietPhieuXuat> details = [];
 
             for (int i = 0; i < MaHang.Length; i++)
             {
@@ -534,7 +538,7 @@ namespace QLBH_ThuySan.Controllers
                 .ToListAsync();
             
             decimal remainingPayment = amount;
-            var settledBills = new List<string>();
+            List<string> settledBills = [];
             foreach(var inv in unpaidInvoices)
             {
                 if (remainingPayment <= 0) break;

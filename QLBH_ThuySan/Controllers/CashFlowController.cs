@@ -3,19 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
 using QLBH_ThuySan.Models.ViewModels;
+using QLBH_ThuySan.Services;
 using System.Text.RegularExpressions;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class CashFlowController : Controller
+    public class CashFlowController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CashFlowController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: CashFlow
         public async Task<IActionResult> Index()
@@ -143,12 +140,26 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: CashFlow/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewData["Customers"] = _context.KhachHangs.Select(k => new { k.MaDoiTuong, k.TenDoiTuong }).ToList();
             ViewData["Suppliers"] = _context.NhaCungCaps.Select(n => new { n.MaDoiTuong, n.TenDoiTuong }).ToList();
             ViewData["CostObjects"] = _context.DoiTuongChiPhis.Select(d => new { d.MaDoiTuong, d.TenDoiTuong }).ToList();
-            return View();
+            
+            var model = new PhieuThuChi
+            {
+                LoaiPhieu = "THU",
+                MaPhieu = await _codeGen.GenerateFinancialCodeAsync("THU"),
+                NgayLap = DateTime.Now
+            };
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNextCode(string type)
+        {
+            var code = await _codeGen.GenerateFinancialCodeAsync(type);
+            return Json(new { code = code });
         }
 
         // POST: CashFlow/Create

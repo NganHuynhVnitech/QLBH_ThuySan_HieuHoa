@@ -6,14 +6,9 @@ using QLBH_ThuySan.Models;
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class DataMaintenanceController : Controller
+    public class DataMaintenanceController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public DataMaintenanceController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
         public async Task<IActionResult> SyncPayments()

@@ -9,14 +9,9 @@ using System.Data;
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class InventoryReportController : Controller
+    public class InventoryReportController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public InventoryReportController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         public async Task<IActionResult> Index()
         {
@@ -47,18 +42,17 @@ namespace QLBH_ThuySan.Controllers
                 .Where(s => s.Thang == month && s.Nam == year && (string.IsNullOrEmpty(maKho) || s.MaKho == maKho))
                 .ToListAsync();
 
-            if (snapshots.Any())
+            if (snapshots.Count > 0)
             {
-                return snapshots.Select(s => new InventoryReportItem
+                return [.. snapshots.Select(s => new InventoryReportItem
                 {
                     MaHang = s.MaHang,
                     TenHang = s.MaHangNavigation?.TenHang ?? "N/A",
                     DonViTinh = s.MaHangNavigation?.DonViTinh ?? "",
                     TonDau = s.SoLuongTonDau ?? 0,
-                    TienTonDau = s.SoLuongTonDau * (double?)(s.MaHangNavigation?.GiaVonHienTai ?? 0) ?? 0, // Fallback to current if missing in snapshot? 
-                    // Actually, let's use the snapshot's value for the end of the previous period.
+                    TienTonDau = s.SoLuongTonDau * (double?)(s.MaHangNavigation?.GiaVonHienTai ?? 0) ?? 0, 
                     Nhap = s.SoLuongNhap ?? 0,
-                    TienNhap = s.SoLuongNhap * (double?)(s.MaHangNavigation?.GiaVonHienTai ?? 0) ?? 0, // These snapshots should probably have historical values.
+                    TienNhap = s.SoLuongNhap * (double?)(s.MaHangNavigation?.GiaVonHienTai ?? 0) ?? 0, 
                     Xuat = s.SoLuongXuat ?? 0,
                     TienXuat = s.SoLuongXuat * (double?)(s.MaHangNavigation?.GiaVonHienTai ?? 0) ?? 0,
                     TonCuoi = s.SoLuongTonCuoi ?? 0,
@@ -66,7 +60,7 @@ namespace QLBH_ThuySan.Controllers
                     IsClosed = true,
                     MaKho = s.MaKho,
                     TenKho = s.MaKhoNavigation?.TenKho ?? s.MaKho
-                }).ToList();
+                })];
             }
 
             // 2. Calculate dynamically

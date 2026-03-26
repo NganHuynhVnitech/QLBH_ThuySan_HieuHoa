@@ -151,6 +151,15 @@
             } else if (type === "NHAP") {
                 document.getElementById("div-costobject").style.display = "block";
             }
+
+            // AJAX to fetch next code
+            fetch(`/CashFlow/GetNextCode?type=${type}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code) {
+                        document.getElementById("MaPhieu").value = data.code;
+                    }
+                });
             
             updateHiddenField();
         }

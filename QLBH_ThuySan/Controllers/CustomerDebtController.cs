@@ -12,14 +12,9 @@ namespace QLBH_ThuySan.Controllers
     /// Maps to SoRiengKhachHang table in HieuHoaDB
     /// </summary>
     [Authorize]
-    public class CustomerDebtController : Controller
+    public class CustomerDebtController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CustomerDebtController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         // GET: PrivateLedger - List all customers with their ledger entries
         [HttpGet("/PrivateLedger")]
@@ -38,13 +33,13 @@ namespace QLBH_ThuySan.Controllers
             // In a production environment with millions of rows, this should be a background job or one-time migration.
             var allPhieuXuats = await _context.PhieuXuats.Where(p => p.LoaiXuat == "SALES").ToListAsync();
             var allEntries = await _context.SoRiengKhachHangs.ToListAsync();
-            var customersToUpdate = new List<KhachHang>();
+            List<KhachHang> customersToUpdate = [];
             bool globalNeedsSave = false;
 
             foreach (var kh in await query.ToListAsync())
             {
-                var pxs = allPhieuXuats.Where(p => p.IdKhachHang == kh.MaDoiTuong).ToList();
-                var entries = allEntries.Where(e => e.MaKhachHang == kh.MaDoiTuong).ToList();
+                List<PhieuXuat> pxs = [.. allPhieuXuats.Where(p => p.IdKhachHang == kh.MaDoiTuong)];
+                List<SoRiengKhachHang> entries = [.. allEntries.Where(e => e.MaKhachHang == kh.MaDoiTuong)];
                 bool khNeedsSave = false;
                 
                 // Fix missing entries for PhieuXuat created via ExportController previously
@@ -99,7 +94,7 @@ namespace QLBH_ThuySan.Controllers
                     }
                 }
 
-                if (khNeedsSave || kh.DuNoLuyKe < 0 || entries.Any())
+                if (khNeedsSave || kh.DuNoLuyKe < 0 || entries.Count > 0)
                 {
                     decimal calculatedDebt = 0;
                     foreach (var entry in entries.OrderBy(e => e.NgayGiaoDich))
@@ -219,7 +214,7 @@ namespace QLBH_ThuySan.Controllers
             bool needsSave = false;
             foreach (var px in phieuXuats.Where(p => p.LoaiXuat == "SALES"))
             {
-                bool hasEntry = entries.Any(e => e.LoaiGiaoDich == "MUA_HANG" && 
+                bool hasEntry = entries.Count > 0 && entries.Any(e => e.LoaiGiaoDich == "MUA_HANG" && 
                                                (e.SoTienPhatSinh == px.SoPhaiThanhToan && e.NgayGiaoDich?.Date == px.NgayXuat?.Date) ||
                                                (e.DienGiai != null && e.DienGiai.Contains(px.MaPhieu)));
                 if (!hasEntry)
@@ -268,7 +263,7 @@ namespace QLBH_ThuySan.Controllers
                 }
             }
 
-            if (needsSave || (customer.DuNoLuyKe ?? 0) < 0 || entries.Any())
+            if (needsSave || (customer.DuNoLuyKe ?? 0) < 0 || entries.Count > 0)
             {
                 decimal calculatedDebt = 0;
                 foreach (var entry in entries.OrderBy(e => e.NgayGiaoDich))
@@ -298,10 +293,10 @@ namespace QLBH_ThuySan.Controllers
             }
 
             // 3. Apply Filters and Sorting to Purchase History (phieuXuats)
-            if (!string.IsNullOrEmpty(pxMaPhieu)) phieuXuats = phieuXuats.Where(p => p.MaPhieu != null && p.MaPhieu.Contains(pxMaPhieu)).ToList();
-            if (pxFromDate.HasValue) phieuXuats = phieuXuats.Where(p => p.NgayXuat?.Date >= pxFromDate.Value.Date).ToList();
-            if (pxToDate.HasValue) phieuXuats = phieuXuats.Where(p => p.NgayXuat?.Date <= pxToDate.Value.Date).ToList();
-            if (!string.IsNullOrEmpty(pxTrangThai)) phieuXuats = phieuXuats.Where(p => p.TrangThaiThanhToan == pxTrangThai).ToList();
+            if (!string.IsNullOrEmpty(pxMaPhieu)) phieuXuats = [.. phieuXuats.Where(p => p.MaPhieu != null && p.MaPhieu.Contains(pxMaPhieu))];
+            if (pxFromDate.HasValue) phieuXuats = [.. phieuXuats.Where(p => p.NgayXuat?.Date >= pxFromDate.Value.Date)];
+            if (pxToDate.HasValue) phieuXuats = [.. phieuXuats.Where(p => p.NgayXuat?.Date <= pxToDate.Value.Date)];
+            if (!string.IsNullOrEmpty(pxTrangThai)) phieuXuats = [.. phieuXuats.Where(p => p.TrangThaiThanhToan == pxTrangThai)];
 
             ViewData["PXSort_Ma"] = pxSortOrder == "ma_asc" ? "ma_desc" : "ma_asc";
             ViewData["PXSort_Date"] = string.IsNullOrEmpty(pxSortOrder) || pxSortOrder == "date_desc" ? "date_asc" : "date_desc";
@@ -311,26 +306,26 @@ namespace QLBH_ThuySan.Controllers
             ViewData["PXSort_Debt"] = pxSortOrder == "debt_asc" ? "debt_desc" : "debt_asc";
 
             phieuXuats = pxSortOrder switch {
-                "ma_asc" => phieuXuats.OrderBy(p => p.MaPhieu).ToList(),
-                "ma_desc" => phieuXuats.OrderByDescending(p => p.MaPhieu).ToList(),
-                "date_asc" => phieuXuats.OrderBy(p => p.NgayXuat).ToList(),
-                "date_desc" => phieuXuats.OrderByDescending(p => p.NgayXuat).ToList(),
-                "status_asc" => phieuXuats.OrderBy(p => p.TrangThaiThanhToan).ToList(),
-                "status_desc" => phieuXuats.OrderByDescending(p => p.TrangThaiThanhToan).ToList(),
-                "total_asc" => phieuXuats.OrderBy(p => p.SoPhaiThanhToan).ToList(),
-                "total_desc" => phieuXuats.OrderByDescending(p => p.SoPhaiThanhToan).ToList(),
-                "paid_asc" => phieuXuats.OrderBy(p => p.SoDaThanhToan).ToList(),
-                "paid_desc" => phieuXuats.OrderByDescending(p => p.SoDaThanhToan).ToList(),
-                "debt_asc" => phieuXuats.OrderBy(p => p.SoChuaThanhToan).ToList(),
-                "debt_desc" => phieuXuats.OrderByDescending(p => p.SoChuaThanhToan).ToList(),
-                _ => phieuXuats.OrderByDescending(p => p.NgayXuat).ToList()
+                "ma_asc" => [.. phieuXuats.OrderBy(p => p.MaPhieu)],
+                "ma_desc" => [.. phieuXuats.OrderByDescending(p => p.MaPhieu)],
+                "date_asc" => [.. phieuXuats.OrderBy(p => p.NgayXuat)],
+                "date_desc" => [.. phieuXuats.OrderByDescending(p => p.NgayXuat)],
+                "status_asc" => [.. phieuXuats.OrderBy(p => p.TrangThaiThanhToan)],
+                "status_desc" => [.. phieuXuats.OrderByDescending(p => p.TrangThaiThanhToan)],
+                "total_asc" => [.. phieuXuats.OrderBy(p => p.SoPhaiThanhToan)],
+                "total_desc" => [.. phieuXuats.OrderByDescending(p => p.SoPhaiThanhToan)],
+                "paid_asc" => [.. phieuXuats.OrderBy(p => p.SoDaThanhToan)],
+                "paid_desc" => [.. phieuXuats.OrderByDescending(p => p.SoDaThanhToan)],
+                "debt_asc" => [.. phieuXuats.OrderBy(p => p.SoChuaThanhToan)],
+                "debt_desc" => [.. phieuXuats.OrderByDescending(p => p.SoChuaThanhToan)],
+                _ => [.. phieuXuats.OrderByDescending(p => p.NgayXuat)]
             };
 
             // 4. Apply Filters and Sorting to Transaction History (entries)
-            if (entryFromDate.HasValue) entries = entries.Where(e => e.NgayGiaoDich?.Date >= entryFromDate.Value.Date).ToList();
-            if (entryToDate.HasValue) entries = entries.Where(e => e.NgayGiaoDich?.Date <= entryToDate.Value.Date).ToList();
-            if (!string.IsNullOrEmpty(entryLoai)) entries = entries.Where(e => e.LoaiGiaoDich == entryLoai).ToList();
-            if (!string.IsNullOrEmpty(entryDienGiai)) entries = entries.Where(e => e.DienGiai != null && e.DienGiai.Contains(entryDienGiai)).ToList();
+            if (entryFromDate.HasValue) entries = [.. entries.Where(e => e.NgayGiaoDich?.Date >= entryFromDate.Value.Date)];
+            if (entryToDate.HasValue) entries = [.. entries.Where(e => e.NgayGiaoDich?.Date <= entryToDate.Value.Date)];
+            if (!string.IsNullOrEmpty(entryLoai)) entries = [.. entries.Where(e => e.LoaiGiaoDich == entryLoai)];
+            if (!string.IsNullOrEmpty(entryDienGiai)) entries = [.. entries.Where(e => e.DienGiai != null && e.DienGiai.Contains(entryDienGiai))];
 
             ViewData["EntrySort_Id"] = entrySortOrder == "id_asc" ? "id_desc" : "id_asc";
             ViewData["EntrySort_Date"] = string.IsNullOrEmpty(entrySortOrder) || entrySortOrder == "date_desc" ? "date_asc" : "date_desc";
@@ -339,17 +334,17 @@ namespace QLBH_ThuySan.Controllers
             ViewData["EntrySort_Desc"] = entrySortOrder == "desc_asc" ? "desc_desc" : "desc_asc";
 
             entries = entrySortOrder switch {
-                "id_asc" => entries.OrderBy(e => e.Id).ToList(),
-                "id_desc" => entries.OrderByDescending(e => e.Id).ToList(),
-                "date_asc" => entries.OrderBy(e => e.NgayGiaoDich).ToList(),
-                "date_desc" => entries.OrderByDescending(e => e.NgayGiaoDich).ToList(),
-                "type_asc" => entries.OrderBy(e => e.LoaiGiaoDich).ToList(),
-                "type_desc" => entries.OrderByDescending(e => e.LoaiGiaoDich).ToList(),
-                "amount_asc" => entries.OrderBy(e => e.SoTienPhatSinh).ToList(),
-                "amount_desc" => entries.OrderByDescending(e => e.SoTienPhatSinh).ToList(),
-                "desc_asc" => entries.OrderBy(e => e.DienGiai).ToList(),
-                "desc_desc" => entries.OrderByDescending(e => e.DienGiai).ToList(),
-                _ => entries.OrderByDescending(e => e.NgayGiaoDich).ToList()
+                "id_asc" => [.. entries.OrderBy(e => e.Id)],
+                "id_desc" => [.. entries.OrderByDescending(e => e.Id)],
+                "date_asc" => [.. entries.OrderBy(e => e.NgayGiaoDich)],
+                "date_desc" => [.. entries.OrderByDescending(e => e.NgayGiaoDich)],
+                "type_asc" => [.. entries.OrderBy(e => e.LoaiGiaoDich)],
+                "type_desc" => [.. entries.OrderByDescending(e => e.LoaiGiaoDich)],
+                "amount_asc" => [.. entries.OrderBy(e => e.SoTienPhatSinh)],
+                "amount_desc" => [.. entries.OrderByDescending(e => e.SoTienPhatSinh)],
+                "desc_asc" => [.. entries.OrderBy(e => e.DienGiai)],
+                "desc_desc" => [.. entries.OrderByDescending(e => e.DienGiai)],
+                _ => [.. entries.OrderByDescending(e => e.NgayGiaoDich)]
             };
 
             // 5. Apply Filters and Sorting to Discounts (PhieuTinhChietKhau)
@@ -359,10 +354,10 @@ namespace QLBH_ThuySan.Controllers
                 .Where(p => p.MaDoiTuong == id && p.LoaiDoiTuong == "KHACH")
                 .ToListAsync();
 
-            if (!string.IsNullOrEmpty(dsMaPhieu)) discounts = discounts.Where(d => d.MaPhieuTinh != null && d.MaPhieuTinh.Contains(dsMaPhieu)).ToList();
-            if (dsFromDate.HasValue) discounts = discounts.Where(d => d.NgayTao?.Date >= dsFromDate.Value.Date).ToList();
-            if (dsToDate.HasValue) discounts = discounts.Where(d => d.NgayTao?.Date <= dsToDate.Value.Date).ToList();
-            if (!string.IsNullOrEmpty(dsStatus)) discounts = discounts.Where(d => d.TrangThai == dsStatus).ToList();
+            if (!string.IsNullOrEmpty(dsMaPhieu)) discounts = [.. discounts.Where(d => d.MaPhieuTinh != null && d.MaPhieuTinh.Contains(dsMaPhieu))];
+            if (dsFromDate.HasValue) discounts = [.. discounts.Where(d => d.NgayTao?.Date >= dsFromDate.Value.Date)];
+            if (dsToDate.HasValue) discounts = [.. discounts.Where(d => d.NgayTao?.Date <= dsToDate.Value.Date)];
+            if (!string.IsNullOrEmpty(dsStatus)) discounts = [.. discounts.Where(d => d.TrangThai == dsStatus)];
 
             ViewData["DSSort_Ma"] = dsSortOrder == "ma_asc" ? "ma_desc" : "ma_asc";
             ViewData["DSSort_Date"] = string.IsNullOrEmpty(dsSortOrder) || dsSortOrder == "date_desc" ? "date_asc" : "date_desc";
@@ -372,19 +367,19 @@ namespace QLBH_ThuySan.Controllers
             ViewData["DSSort_Debt"] = dsSortOrder == "debt_asc" ? "debt_desc" : "debt_asc";
 
             discounts = dsSortOrder switch {
-                "ma_asc" => discounts.OrderBy(d => d.MaPhieuTinh).ToList(),
-                "ma_desc" => discounts.OrderByDescending(d => d.MaPhieuTinh).ToList(),
-                "date_asc" => discounts.OrderBy(d => d.NgayTao).ToList(),
-                "date_desc" => discounts.OrderByDescending(d => d.NgayTao).ToList(),
-                "status_asc" => discounts.OrderBy(d => d.TrangThai).ToList(),
-                "status_desc" => discounts.OrderByDescending(d => d.TrangThai).ToList(),
-                "total_asc" => discounts.OrderBy(d => d.SoPhaiThanhToan).ToList(),
-                "total_desc" => discounts.OrderByDescending(d => d.SoPhaiThanhToan).ToList(),
-                "paid_asc" => discounts.OrderBy(d => d.SoDaThanhToan).ToList(),
-                "paid_desc" => discounts.OrderByDescending(d => d.SoDaThanhToan).ToList(),
-                "debt_asc" => discounts.OrderBy(d => d.SoChuaThanhToan).ToList(),
-                "debt_desc" => discounts.OrderByDescending(d => d.SoChuaThanhToan).ToList(),
-                _ => discounts.OrderByDescending(d => d.NgayTao).ToList()
+                "ma_asc" => [.. discounts.OrderBy(d => d.MaPhieuTinh)],
+                "ma_desc" => [.. discounts.OrderByDescending(d => d.MaPhieuTinh)],
+                "date_asc" => [.. discounts.OrderBy(d => d.NgayTao)],
+                "date_desc" => [.. discounts.OrderByDescending(d => d.NgayTao)],
+                "status_asc" => [.. discounts.OrderBy(d => d.TrangThai)],
+                "status_desc" => [.. discounts.OrderByDescending(d => d.TrangThai)],
+                "total_asc" => [.. discounts.OrderBy(d => d.SoPhaiThanhToan)],
+                "total_desc" => [.. discounts.OrderByDescending(d => d.SoPhaiThanhToan)],
+                "paid_asc" => [.. discounts.OrderBy(d => d.SoDaThanhToan)],
+                "paid_desc" => [.. discounts.OrderByDescending(d => d.SoDaThanhToan)],
+                "debt_asc" => [.. discounts.OrderBy(d => d.SoChuaThanhToan)],
+                "debt_desc" => [.. discounts.OrderByDescending(d => d.SoChuaThanhToan)],
+                _ => [.. discounts.OrderByDescending(d => d.NgayTao)]
             };
 
             ViewData["pxMaPhieu"] = pxMaPhieu;

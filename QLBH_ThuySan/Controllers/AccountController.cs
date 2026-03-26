@@ -12,14 +12,9 @@ namespace QLBH_ThuySan.Controllers
     /// <summary>
     /// Controller for user authentication (login/logout)
     /// </summary>
-    public class AccountController : Controller
+    public class AccountController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public AccountController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         // GET: Account/Login
         [AllowAnonymous]

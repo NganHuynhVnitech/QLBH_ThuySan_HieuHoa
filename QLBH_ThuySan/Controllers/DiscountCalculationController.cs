@@ -3,20 +3,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 using System.IO;
 using System.Linq;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class DiscountCalculationController : Controller
+    public class DiscountCalculationController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public DiscountCalculationController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: DiscountCalculation
         public async Task<IActionResult> Index(string? searchTerm, string? status, string? type, DateTime? fromDate, DateTime? toDate, string? ruleSearch, DateTime? periodFrom, DateTime? periodTo, DateTime? paymentFrom, DateTime? paymentTo, string? sortColumn, string? sortOrder)
@@ -204,9 +201,15 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: DiscountCalculation/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new PhieuTinhChietKhau
+            {
+                MaPhieuTinh = await _codeGen.GenerateDiscountCodeAsync(),
+                NgayTao = DateTime.Now,
+                TrangThai = "Chưa Thanh Toán"
+            };
+            return View(model);
         }
 
         // API: Search Products
@@ -282,7 +285,7 @@ namespace QLBH_ThuySan.Controllers
         [HttpPost]
         public async Task<IActionResult> Save([FromBody] DiscountSaveRequest request)
         {
-            if (request == null || !request.Items.Any()) return BadRequest("Dữ liệu không hợp lệ");
+            if (request == null || request.Items.Count == 0) return BadRequest("Dữ liệu không hợp lệ");
 
             using var transaction = _context.Database.BeginTransaction();
             try
@@ -391,7 +394,7 @@ namespace QLBH_ThuySan.Controllers
                 DateTime start = phieu.TuNgay?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
                 DateTime end = phieu.DenNgay?.ToDateTime(TimeOnly.MaxValue) ?? DateTime.MaxValue.Date.AddDays(1).AddTicks(-1); // End of day
 
-                List<QLBH_ThuySan.Models.ViewModels.DiscountTransactionDetail> transDetails = new();
+                List<QLBH_ThuySan.Models.ViewModels.DiscountTransactionDetail> transDetails = [];
 
                 if (phieu.LoaiDoiTuong == "NCC")
                 {
@@ -484,7 +487,7 @@ namespace QLBH_ThuySan.Controllers
             public string FromDate { get; set; } = "";
             public string ToDate { get; set; } = "";
             public bool PayNow { get; set; }
-            public List<DiscountSaveItem> Items { get; set; } = new();
+            public List<DiscountSaveItem> Items { get; set; } = [];
         }
 
         public class DiscountSaveItem

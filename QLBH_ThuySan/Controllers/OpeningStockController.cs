@@ -10,24 +10,19 @@ using System.Text.Json.Nodes;
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class OpeningStockController : Controller
+    public class OpeningStockController(ApplicationDbContext context, Microsoft.Extensions.Configuration.IConfiguration config, IWebHostEnvironment env) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
-        private readonly IWebHostEnvironment _env;
+        private readonly ApplicationDbContext _context = context;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration _config = config;
+        private readonly IWebHostEnvironment _env = env;
 
-        private string DraftFilePath => Path.Combine(_env.ContentRootPath, "App_Data", "OpeningStockDrafts.json");
-
-        public OpeningStockController(ApplicationDbContext context, Microsoft.Extensions.Configuration.IConfiguration config, IWebHostEnvironment env)
+        private string DraftFilePath
         {
-            _context = context;
-            _config = config;
-            _env = env;
-
-            var appDataPath = Path.Combine(_env.ContentRootPath, "App_Data");
-            if (!Directory.Exists(appDataPath))
+            get
             {
-                Directory.CreateDirectory(appDataPath);
+                var appDataPath = Path.Combine(_env.ContentRootPath, "App_Data");
+                if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
+                return Path.Combine(appDataPath, "OpeningStockDrafts.json");
             }
         }
 

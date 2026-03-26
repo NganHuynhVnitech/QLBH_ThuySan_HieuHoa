@@ -2,18 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class SupplierController : Controller
+    public class SupplierController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public SupplierController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Supplier
         public async Task<IActionResult> Index(string? searchMa, string? searchTen, string? searchSdt, string? searchDiaChi, bool searchCoNo = false, string? sortOrder = null)
@@ -101,9 +98,13 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Supplier/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var model = new NhaCungCap
+            {
+                MaDoiTuong = await _codeGen.GenerateSupplierCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: Supplier/Create
@@ -227,7 +228,7 @@ namespace QLBH_ThuySan.Controllers
             
             if (string.IsNullOrEmpty(nhaCungCap.MaDoiTuong))
             {
-                nhaCungCap.MaDoiTuong = "NCC" + DateTime.Now.ToString("yyMMddHHmmss");
+                nhaCungCap.MaDoiTuong = await _codeGen.GenerateSupplierCodeAsync();
             }
 
             if (_context.NhaCungCaps.Any(e => e.MaDoiTuong == nhaCungCap.MaDoiTuong))

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 
 namespace QLBH_ThuySan.Controllers
 {
@@ -10,14 +11,10 @@ namespace QLBH_ThuySan.Controllers
     /// Maps to Kho and ChiTietTon tables in HieuHoaDB
     /// </summary>
     [Authorize]
-    public class WarehouseController : Controller
+    public class WarehouseController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public WarehouseController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Warehouse - List all warehouses
         public async Task<IActionResult> Index()
@@ -49,10 +46,15 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Warehouse/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewData["MaDaiLyPhuTrach"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.DaiLys, "MaDaiLy", "TenDaiLy");
-            return View();
+            
+            var model = new Kho
+            {
+                MaKho = await _codeGen.GenerateWarehouseCodeAsync()
+            };
+            return View(model);
         }
 
         // POST: Warehouse/Create
@@ -149,7 +151,7 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Warehouse/Inventory/KHO001 - View inventory for a specific warehouse
-        public async Task<IActionResult> Inventory(string? id)
+        public async Task<IActionResult> Inventory(string id, string searchMa, string searchTen, bool lowStock, string sortOrder)
         {
             if (id == null)
             {
@@ -165,12 +167,51 @@ namespace QLBH_ThuySan.Controllers
                 return NotFound();
             }
 
-            var inventory = await _context.ChiTietTons
+            var query = _context.ChiTietTons
                 .Include(ct => ct.MaHangNavigation)
                 .Where(ct => ct.MaKho == id)
-                .ToListAsync();
+                .AsQueryable();
+
+            // Filters
+            if (!string.IsNullOrEmpty(searchMa))
+                query = query.Where(ct => ct.MaHang.Contains(searchMa));
+            
+            if (!string.IsNullOrEmpty(searchTen))
+                query = query.Where(ct => ct.MaHangNavigation != null && ct.MaHangNavigation.TenHang.Contains(searchTen));
+            
+            if (lowStock)
+                query = query.Where(ct => (ct.SoLuongTon ?? 0) < 50);
+
+            // Sorting
+            ViewData["MaSort"] = string.IsNullOrEmpty(sortOrder) || sortOrder == "ma_desc" ? "ma_asc" : "ma_desc";
+            ViewData["TenSort"] = sortOrder == "ten_asc" ? "ten_desc" : "ten_asc";
+            ViewData["QtySort"] = sortOrder == "qty_asc" ? "qty_desc" : "qty_asc";
+            ViewData["UnitSort"] = sortOrder == "unit_asc" ? "unit_desc" : "unit_asc";
+            ViewData["ValueSort"] = sortOrder == "value_asc" ? "value_desc" : "value_asc";
+
+            query = sortOrder switch
+            {
+                "ma_asc" => query.OrderBy(ct => ct.MaHang),
+                "ma_desc" => query.OrderByDescending(ct => ct.MaHang),
+                "ten_asc" => query.OrderBy(ct => ct.MaHangNavigation!.TenHang),
+                "ten_desc" => query.OrderByDescending(ct => ct.MaHangNavigation!.TenHang),
+                "qty_asc" => query.OrderBy(ct => ct.SoLuongTon),
+                "qty_desc" => query.OrderByDescending(ct => ct.SoLuongTon),
+                "unit_asc" => query.OrderBy(ct => ct.MaHangNavigation!.DonViTinh),
+                "unit_desc" => query.OrderByDescending(ct => ct.MaHangNavigation!.DonViTinh),
+                "value_asc" => query.OrderBy(ct => ct.GiaTriTon),
+                "value_desc" => query.OrderByDescending(ct => ct.GiaTriTon),
+                _ => query.OrderByDescending(ct => ct.SoLuongTon)
+            };
+
+            var inventory = await query.ToListAsync();
 
             ViewBag.Warehouse = warehouse;
+            ViewBag.SearchMa = searchMa;
+            ViewBag.SearchTen = searchTen;
+            ViewBag.LowStock = lowStock;
+            ViewBag.SortOrder = sortOrder;
+
             return View(inventory);
         }
     }

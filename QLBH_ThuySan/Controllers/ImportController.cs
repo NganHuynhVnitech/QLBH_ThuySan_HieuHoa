@@ -4,19 +4,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MiniExcelLibs;
 using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
 using System.IO;
 
 namespace QLBH_ThuySan.Controllers
 {
     [Authorize]
-    public class ImportController : Controller
+    public class ImportController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public ImportController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
 
         // GET: Import
         public async Task<IActionResult> Index()
@@ -66,12 +63,19 @@ namespace QLBH_ThuySan.Controllers
         }
 
         // GET: Import/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewData["IdDaiLyNhap"] = new SelectList(_context.DaiLys.Where(d => d.LoaiDaiLy != "BAN_C"), "MaDaiLy", "TenDaiLy");
             ViewData["IdNhaCungCap"] = new SelectList(_context.NhaCungCaps, "MaDoiTuong", "TenDoiTuong");
-            ViewData["HangHoaList"] =  _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.DonViTinh }).ToList();
-            return View();
+            ViewData["HangHoaList"] = _context.HangHoas.Select(h => new { h.MaHang, h.TenHang, h.DonViTinh }).ToList();
+
+            var model = new PhieuNhap
+            {
+                MaPhieu = await _codeGen.GenerateImportCodeAsync(),
+                NgayNhap = DateTime.Now,
+                TrangThaiThanhToan = "Chưa Thanh Toán"
+            };
+            return View(model);
         }
 
         [HttpPost]
@@ -109,7 +113,7 @@ namespace QLBH_ThuySan.Controllers
 
                 // Calculate totals
                 decimal total = 0;
-                if (MaHang != null)
+                if (MaHang != null && MaHang.Length > 0)
                 {
                     for (int i = 0; i < MaHang.Length; i++)
                     {
