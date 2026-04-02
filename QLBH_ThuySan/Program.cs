@@ -2,8 +2,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using QLBH_ThuySan.Models;
 using QLBH_ThuySan.Services;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Set global culture to Vietnamese
+var cultureInfo = new CultureInfo("vi-VN");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

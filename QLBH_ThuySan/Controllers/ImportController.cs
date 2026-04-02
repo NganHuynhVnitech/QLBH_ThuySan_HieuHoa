@@ -130,6 +130,22 @@ namespace QLBH_ThuySan.Controllers
                 
                 phieuNhap.SoChuaThanhToan = phieuNhap.SoPhaiThanhToan - (phieuNhap.SoDaThanhToan ?? 0);
 
+                // Auto-sync status
+                if (phieuNhap.SoChuaThanhToan <= 0)
+                {
+                    phieuNhap.TrangThaiThanhToan = "Đã Thanh Toán";
+                    phieuNhap.SoChuaThanhToan = 0;
+                    phieuNhap.NgayThanhToan = DateTime.Now;
+                }
+                else if ((phieuNhap.SoDaThanhToan ?? 0) > 0)
+                {
+                    phieuNhap.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                }
+                else
+                {
+                    phieuNhap.TrangThaiThanhToan = "Chưa Thanh Toán";
+                }
+
                 _context.Add(phieuNhap);
                 await _context.SaveChangesAsync();
 
@@ -257,7 +273,13 @@ namespace QLBH_ThuySan.Controllers
                     inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
                     inv.SoChuaThanhToan -= remainingPayment;
                     remainingPayment = 0;
-                    if (inv.SoChuaThanhToan > 0)
+                    if (inv.SoChuaThanhToan <= 0)
+                    {
+                        inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                        inv.SoChuaThanhToan = 0;
+                        inv.NgayThanhToan = DateTime.Now;
+                    }
+                    else if ((inv.SoDaThanhToan ?? 0) > 0)
                     {
                         inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
                     }

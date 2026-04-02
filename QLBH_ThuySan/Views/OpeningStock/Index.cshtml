@@ -1,5 +1,4 @@
 @using QLBH_ThuySan.ViewModels
-@using System.Globalization
 @{
     ViewData["Title"] = "Thiết lập Tồn kho ban đầu";
     var isFinalized = ViewBag.IsFinalized as bool? ?? false;
@@ -56,9 +55,9 @@
                                         <div class="fw-bold">@item.MaHangNavigation?.TenHang</div>
                                         <div class="small text-muted">@item.MaHang</div>
                                     </td>
-                                    <td class="text-end">@item.SoLuong?.ToString("N2", new CultureInfo("vi-VN"))</td>
-                                    <td class="text-end">@item.DonGiaNhap?.ToString("N0", new CultureInfo("vi-VN"))</td>
-                                    <td class="text-end fw-bold text-primary pe-3">@item.ThanhTien?.ToString("N0", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end">@item.SoLuong?.ToString("N2")</td>
+                                    <td class="text-end">@item.DonGiaNhap?.ToString("N0")</td>
+                                    <td class="text-end fw-bold text-primary pe-3">@item.ThanhTien?.ToString("N0")</td>
                                 </tr>
                             }
                         }
@@ -186,9 +185,9 @@ else
                                     <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaKho</span></td>
                                     <td><code class="text-primary fw-bold">@item.MaHang</code></td>
                                     <td class="fw-bold">@item.TenHang</td>
-                                    <td class="text-end">@item.SoLuong.ToString("N2", new CultureInfo("vi-VN"))</td>
-                                    <td class="text-end">@item.GiaVon.ToString("N0", new CultureInfo("vi-VN"))</td>
-                                    <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0", new CultureInfo("vi-VN"))</td>
+                                    <td class="text-end">@item.SoLuong.ToString("N2")</td>
+                                    <td class="text-end">@item.GiaVon.ToString("N0")</td>
+                                    <td class="text-end fw-bold text-primary">@thanhTien.ToString("N0")</td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
                                             <button type="button" class="btn btn-outline-info btn-edit-draft" title="Sửa"

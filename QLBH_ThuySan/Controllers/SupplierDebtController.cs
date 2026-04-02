@@ -372,7 +372,17 @@ namespace QLBH_ThuySan.Controllers
                             inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
                             inv.SoChuaThanhToan -= remainingPayment;
                             remainingPayment = 0;
-                            if (inv.SoChuaThanhToan > 0) inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                        }
+
+                        if (inv.SoChuaThanhToan <= 0)
+                        {
+                            inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                            inv.SoChuaThanhToan = 0;
+                            inv.NgayThanhToan = DateTime.Now;
+                        }
+                        else if ((inv.SoDaThanhToan ?? 0) > 0)
+                        {
+                            inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
                         }
                         _context.Update(inv);
                     }
@@ -466,10 +476,15 @@ namespace QLBH_ThuySan.Controllers
             {
                 pn.TrangThaiThanhToan = "Đã Thanh Toán";
                 pn.SoChuaThanhToan = 0;
+                pn.NgayThanhToan = DateTime.Now;
+            }
+            else if ((pn.SoDaThanhToan ?? 0) > 0)
+            {
+                pn.TrangThaiThanhToan = "Thanh Toán Một Phần";
             }
             else
             {
-                pn.TrangThaiThanhToan = "Thanh Toán Một Phần";
+                pn.TrangThaiThanhToan = "Chưa Thanh Toán";
             }
             _context.Update(pn);
 

@@ -111,7 +111,7 @@
                             <td>@item.MaHang</td>
                             <td>@item.MaHangNavigation?.TenHang</td>
                             <td>@item.MaHangNavigation?.DonViTinh</td>
-                            <td class="text-end">@item.SoLuong</td>
+                            <td class="text-end">@item.SoLuong?.ToString("N2")</td>
                             <td class="text-end">@string.Format("{0:N0}", item.DonGiaNhap)</td>
                             <td class="text-end fw-bold">
                                 @string.Format("{0:N0}", (item.SoLuong * (double)(item.DonGiaNhap ?? 0)))
@@ -183,20 +183,16 @@
 
 @section Scripts {
     <script>
-        function formatNumber(n) {
-            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
         function openPayModal(maPhieu, remaining) {
             document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
             document.getElementById('payMaPhieu').value = maPhieu;
-            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            document.getElementById('payRemainingDisplay').value = formatNumber(remaining);
 
             var amountDisplay = document.getElementById('payAmountDisplay');
             var amountHidden = document.getElementById('payAmount');
 
             amountHidden.value = remaining;
-            amountDisplay.value = formatNumber(remaining.toString());
+            amountDisplay.value = formatNumber(remaining);
 
             document.getElementById('payDienGiai').value = 'Thanh toán cho phiếu nhập ' + maPhieu;
 

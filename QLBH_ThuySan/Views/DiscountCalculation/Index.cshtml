@@ -219,17 +219,13 @@
 
 @section Scripts {
     <script>
-        function formatNumber(n) {
-            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
         function openPayModal(id, remaining) {
             $('#payMaPhieuDisplay').text(id);
             $('#payMaPhieu').val(id);
-            $('#payRemainingDisplay').val(remaining.toLocaleString('vi-VN'));
+            $('#payRemainingDisplay').val(formatNumber(remaining));
             
             $('#payAmount').val(remaining);
-            $('#payAmountDisplay').val(formatNumber(remaining.toString()));
+            $('#payAmountDisplay').val(formatNumber(remaining));
             $('#payDienGiai').val('Thanh toán chiết khấu phiếu ' + id);
 
             var modal = new bootstrap.Modal(document.getElementById('payBillModal'));

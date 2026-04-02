@@ -517,10 +517,7 @@
 
 @section Scripts {
     <script>
-        // Number Formatting utility
-        function formatNumber(n) {
-            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
+        // Number Formatting utility is now global in site.js
 
         document.querySelectorAll('.number-format').forEach(input => {
             input.addEventListener('input', function(e) {
@@ -590,7 +587,7 @@
         function openPayBillModal(maPhieu, remaining) {
             document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
             document.getElementById('payMaPhieu').value = maPhieu;
-            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('payRemainingDisplay').value = formatNumber(remaining) + ' VNĐ';
             
             document.getElementById('payAmount').value = remaining;
             document.getElementById('payAmountDisplay').value = formatNumber(remaining.toString());
@@ -602,7 +599,7 @@
         function openPayDiscountModal(maPhieu, remaining) {
             document.getElementById('payDsMaPhieuDisplay').innerText = maPhieu;
             document.getElementById('payDsMaPhieu').value = maPhieu;
-            document.getElementById('payDsRemainingDisplay').value = remaining.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('payDsRemainingDisplay').value = formatNumber(remaining) + ' VNĐ';
             
             document.getElementById('payDsAmount').value = remaining;
             document.getElementById('payDsAmountDisplay').value = formatNumber(remaining.toString());

@@ -182,20 +182,16 @@
 
 @section Scripts {
     <script>
-        function formatNumberJS(n) {
-            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
         function openPayModal(id, remaining) {
             document.getElementById('payMaPhieuDisplay').innerText = id;
             document.getElementById('payMaPhieu').value = id;
-            document.getElementById('payRemainingDisplay').value = remaining.toLocaleString('vi-VN');
+            document.getElementById('payRemainingDisplay').value = formatNumber(remaining);
             
             var amountDisplay = document.getElementById('payAmountDisplay');
             var amountHidden = document.getElementById('payAmount');
             
             amountHidden.value = remaining;
-            amountDisplay.value = formatNumberJS(remaining.toString());
+            amountDisplay.value = formatNumber(remaining);
 
             document.getElementById('payDienGiai').value = 'Thanh toán công nợ cho nhà cung cấp ' + id;
             
@@ -209,7 +205,7 @@
                 document.getElementById('payAmount').value = 0;
                 return;
             }
-            e.target.value = formatNumberJS(value);
+            e.target.value = formatNumber(value);
             document.getElementById('payAmount').value = value;
         });
     </script>

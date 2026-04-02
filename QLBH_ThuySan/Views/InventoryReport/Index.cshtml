@@ -123,10 +123,7 @@
     <script>
         const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
 
-        function formatNumber(num) {
-            if (num === 0) return "-";
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);
-        }
+        // Use global formatDecimal and formatNumber
 
         $('#btnPreview').click(function() {
             const m = $('#monthSelect').val();
@@ -183,13 +180,13 @@
                             <div class="small text-muted text-uppercase">${item.tenKho || item.maKho || ""}</div>
                         </td>
                         <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-secondary">${item.donViTinh || ""}</span></td>
-                        <td class="text-end">${formatNumber(item.tonDau)}</td>
+                        <td class="text-end">${formatDecimal(item.tonDau)}</td>
                         <td class="text-end">${formatNumber(item.tienTonDau)}</td>
-                        <td class="text-end text-success">${formatNumber(item.nhap)}</td>
+                        <td class="text-end text-success">${formatDecimal(item.nhap)}</td>
                         <td class="text-end text-success">${formatNumber(item.tienNhap)}</td>
-                        <td class="text-end text-danger">${formatNumber(item.xuat)}</td>
+                        <td class="text-end text-danger">${formatDecimal(item.xuat)}</td>
                         <td class="text-end text-danger">${formatNumber(item.tienXuat)}</td>
-                        <td class="text-end bg-light fw-bold">${formatNumber(item.tonCuoi)}</td>
+                        <td class="text-end bg-light fw-bold">${formatDecimal(item.tonCuoi)}</td>
                         <td class="text-end bg-light fw-bold text-primary">${formatNumber(item.giaTriCuoi)}</td>
                     </tr>
                 `;
@@ -197,13 +194,13 @@
             });
 
             // Update footer
-            $('#sumTonDau').text(formatNumber(sums.tonDau));
+            $('#sumTonDau').text(formatDecimal(sums.tonDau));
             $('#sumTienTonDau').text(formatNumber(sums.tienTonDau));
-            $('#sumNhap').text(formatNumber(sums.nhap));
+            $('#sumNhap').text(formatDecimal(sums.nhap));
             $('#sumTienNhap').text(formatNumber(sums.tienNhap));
-            $('#sumXuat').text(formatNumber(sums.xuat));
+            $('#sumXuat').text(formatDecimal(sums.xuat));
             $('#sumTienXuat').text(formatNumber(sums.tienXuat));
-            $('#sumTonCuoi').text(formatNumber(sums.tonCuoi));
+            $('#sumTonCuoi').text(formatDecimal(sums.tonCuoi));
             $('#sumGiaTriCuoi').text(formatNumber(sums.giaTriCuoi));
             tfoot.show();
         }

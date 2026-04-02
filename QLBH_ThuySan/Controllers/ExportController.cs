@@ -260,6 +260,22 @@ namespace QLBH_ThuySan.Controllers
             // If Partial Payment, SoDaThanhToan is already bound or set by the client.
             
             phieuXuat.SoChuaThanhToan = phieuXuat.SoPhaiThanhToan - (phieuXuat.SoDaThanhToan ?? 0);
+
+            // Auto-sync status
+            if (phieuXuat.SoChuaThanhToan <= 0)
+            {
+                phieuXuat.TrangThaiThanhToan = "Đã Thanh Toán";
+                phieuXuat.SoChuaThanhToan = 0;
+                phieuXuat.NgayThanhToan = DateTime.Now;
+            }
+            else if ((phieuXuat.SoDaThanhToan ?? 0) > 0)
+            {
+                phieuXuat.TrangThaiThanhToan = "Thanh Toán Một Phần";
+            }
+            else
+            {
+                phieuXuat.TrangThaiThanhToan = "Chưa Thanh Toán";
+            }
             phieuXuat.ChiTietPhieuXuats = details;
             
             _context.PhieuXuats.Add(phieuXuat);
@@ -558,7 +574,13 @@ namespace QLBH_ThuySan.Controllers
                     inv.SoDaThanhToan = (inv.SoDaThanhToan ?? 0) + remainingPayment;
                     inv.SoChuaThanhToan -= remainingPayment;
                     remainingPayment = 0;
-                    if (inv.SoChuaThanhToan > 0)
+                    if (inv.SoChuaThanhToan <= 0)
+                    {
+                        inv.TrangThaiThanhToan = "Đã Thanh Toán";
+                        inv.SoChuaThanhToan = 0;
+                        inv.NgayThanhToan = DateTime.Now;
+                    }
+                    else if ((inv.SoDaThanhToan ?? 0) > 0)
                     {
                         inv.TrangThaiThanhToan = "Thanh Toán Một Phần";
                     }
