@@ -13,8 +13,9 @@ public class CashFlowAndDebtTests : BaseTest
 
     public CashFlowAndDebtTests()
     {
-        _exportController = new ExportController(_context);
-        _cashFlowController = new CashFlowController(_context);
+        var stubCodeGen = new QLBH_ThuySan.Services.CodeGenerationService(_context);
+        _exportController = new ExportController(_context, stubCodeGen);
+        _cashFlowController = new CashFlowController(_context, stubCodeGen);
         
         SetupController(_exportController);
         SetupController(_cashFlowController);

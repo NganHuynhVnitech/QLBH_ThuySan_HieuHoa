@@ -150,7 +150,10 @@ namespace QLBH_ThuySan.Controllers
                 await _context.SaveChangesAsync();
 
                 // Call SP to sync inventory and calculate COGS
-                await _context.Database.ExecuteSqlRawAsync("EXEC sp_PhieuNhap_DongBoVaTinhGia @p0", phieuNhap.MaPhieu);
+                if (_context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+                {
+                    await _context.Database.ExecuteSqlRawAsync("EXEC sp_PhieuNhap_DongBoVaTinhGia @p0", phieuNhap.MaPhieu);
+                }
 
                 // Update Supplier Debt
                 if (!string.IsNullOrEmpty(phieuNhap.IdNhaCungCap))
