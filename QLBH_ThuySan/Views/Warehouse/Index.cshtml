@@ -1,0 +1,104 @@
+@model IEnumerable<QLBH_ThuySan.Models.Kho>
+
+@{
+    ViewData["Title"] = "Quản Lý Kho Hàng";
+}
+
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Danh Mục Kho Hàng</h1>
+        <p class="text-muted">Quản lý các điểm lưu kho vật lý, kho tổng hợp và kho đại lý trên toàn hệ thống.</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg"></i> Thêm Kho Mới
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3 small fw-bold text-uppercase">Mã Kho</th>
+                        <th class="small fw-bold text-uppercase">Tên Kho</th>
+                        <th class="small fw-bold text-uppercase">Phân Loại</th>
+                        <th class="small fw-bold text-uppercase">Đại Lý Phụ Trách</th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaKho</span></td>
+                            <td class="fw-bold text-uppercase">@item.TenKho</td>
+                            <td>
+                                @if (item.LoaiKho == "VAT_LY") {
+                                    <span class="badge bg-success-subtle text-success border border-success small">Điểm Vật Lý</span>
+                                } else if (item.LoaiKho == "TONG_AO") {
+                                    <span class="badge bg-warning-subtle text-warning border border-warning small">Tổng Hợp Ảo</span>
+                                } else {
+                                    <span class="badge bg-light text-muted border small">@item.LoaiKho</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.MaDaiLyPhuTrachNavigation != null) {
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-shop me-2 text-primary"></i>
+                                        <a asp-controller="Agency" asp-action="Edit" asp-route-id="@item.MaDaiLyPhuTrachNavigation.MaDaiLy" class="text-decoration-none fw-medium">
+                                            @item.MaDaiLyPhuTrachNavigation.TenDaiLy
+                                        </a>
+                                    </div>
+                                } else {
+                                    <span class="text-muted small italic">Chưa gán đại lý</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Inventory" asp-route-id="@item.MaKho" class="btn btn-outline-info" title="Xem Tồn Kho">
+                                        <i class="bi bi-box-seam"></i> Tồn
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.MaKho" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaKho" title="Xóa">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal-@item.MaKho" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0">
+                                            <div class="modal-header bg-danger text-white border-0">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i> Xác Nhận Xóa</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body p-4 text-start">
+                                                <p>Bạn có chắc muốn xóa kho <strong>@item.TenKho</strong>?</p>
+                                                <div class="alert alert-light border small text-danger mb-0">
+                                                    <i class="bi bi-info-circle me-1"></i> Lưu ý: Không thể xóa nếu kho đã phát sinh giao dịch hoặc đang có hàng tồn.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-0">
+                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaKho">
+                                                    <button type="submit" class="btn btn-danger px-4">Đồng Ý Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

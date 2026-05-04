@@ -1,0 +1,138 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QLBH_ThuySan.Models;
+using QLBH_ThuySan.Services;
+
+namespace QLBH_ThuySan.Controllers
+{
+    [Authorize]
+    public class AgencyController(ApplicationDbContext context, ICodeGenerationService codeGen) : Controller
+    {
+        private readonly ApplicationDbContext _context = context;
+        private readonly ICodeGenerationService _codeGen = codeGen;
+
+        // GET: Agency
+        public async Task<IActionResult> Index()
+        {
+            return View(await _context.DaiLys.Where(d => !d.IsDisabled).ToListAsync());
+        }
+
+        // GET: Agency/Details/5
+        public async Task<IActionResult> Details(string? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var daiLy = await _context.DaiLys
+                .FirstOrDefaultAsync(m => m.MaDaiLy == id);
+            if (daiLy == null)
+            {
+                return NotFound();
+            }
+
+            return View(daiLy);
+        }
+
+        // GET: Agency/Create
+        public async Task<IActionResult> Create()
+        {
+            var model = new DaiLy
+            {
+                MaDaiLy = await _codeGen.GenerateAgencyCodeAsync()
+            };
+            return View(model);
+        }
+
+        // POST: Agency/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("MaDaiLy,TenDaiLy,LoaiDaiLy")] DaiLy daiLy)
+        {
+            if (ModelState.IsValid)
+            {
+                if (_context.DaiLys.Any(e => e.MaDaiLy == daiLy.MaDaiLy))
+                {
+                    ModelState.AddModelError("MaDaiLy", "Mã đại lý đã tồn tại.");
+                    return View(daiLy);
+                }
+
+                _context.Add(daiLy);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(daiLy);
+        }
+
+        // GET: Agency/Edit/5
+        public async Task<IActionResult> Edit(string? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var daiLy = await _context.DaiLys.FindAsync(id);
+            if (daiLy == null)
+            {
+                return NotFound();
+            }
+            return View(daiLy);
+        }
+
+        // POST: Agency/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, [Bind("MaDaiLy,TenDaiLy,LoaiDaiLy")] DaiLy daiLy)
+        {
+            if (id != daiLy.MaDaiLy)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(daiLy);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!DaiLyExists(daiLy.MaDaiLy))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(daiLy);
+        }
+
+        // POST: Agency/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(string id)
+        {
+            var daiLy = await _context.DaiLys.FindAsync(id);
+            if (daiLy != null)
+            {
+                daiLy.IsDisabled = true;
+                _context.Update(daiLy);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool DaiLyExists(string id)
+        {
+            return _context.DaiLys.Any(e => e.MaDaiLy == id);
+        }
+    }
+}

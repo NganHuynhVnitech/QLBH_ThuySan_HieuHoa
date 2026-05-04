@@ -1,0 +1,449 @@
+@{
+    ViewData["Title"] = "Lập Phiếu Chiết Khấu";
+}
+
+<style>
+    .step-header { font-weight: bold; color: #0d6efd; margin-bottom: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
+    .receipt-list { max-height: 300px; overflow-y: auto; font-size: 0.9em; }
+</style>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h1>Lập Phiếu Chiết Khấu (Ad-hoc)</h1>
+        <p class="text-muted">Tính chiết khấu theo từng mặt hàng cho Nhà cung cấp hoặc Khách hàng.</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Panel: Configuration -->
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <!-- Step 1-3: Target & Date -->
+                <h5 class="step-header">1. Thông Tin Chung</h5>
+                <form id="mainForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên Phiếu (Ghi chú tên gợi nhớ)</label>
+                        <input type="text" id="tenPhieu" class="form-control" placeholder="VD: Chiết khấu tháng 3 - KH A" value="Chiết khấu - @DateTime.Now.ToString("dd/MM/yyyy")">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Khoảng Thời Gian (Kỳ tính toán)</label>
+                        <div class="input-group">
+                            <input type="date" id="fromDate" class="form-control" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+                            <span class="input-group-text">-</span>
+                            <input type="date" id="toDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Loại Đối Tượng</label>
+                        <select id="typeSelect" class="form-select">
+                            <option value="NCC">Nhà Cung Cấp (Nhập)</option>
+                            <option value="KHACH">Khách Hàng (Xuất)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Chọn Đối Tượng</label>
+                        <div class="input-group">
+                            <input type="text" id="partnerSearch" class="form-control" placeholder="Tìm tên hoặc mã..." autocomplete="off">
+                            <input type="hidden" id="partnerId">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        </div>
+                        <div id="partnerResults" class="list-group position-absolute w-100" style="z-index: 1000; display:none;"></div>
+                    </div>
+                </form>
+
+                <!-- Step 4: Product -->
+                <h5 class="step-header mt-4">2. Chọn Mặt Hàng</h5>
+                <div class="mb-3">
+                     <div class="input-group">
+                        <input type="text" id="productSearch" class="form-control" placeholder="Tìm hàng hóa..." autocomplete="off" disabled>
+                        <input type="hidden" id="productId">
+                         <span class="input-group-text"><i class="bi bi-box"></i></span>
+                    </div>
+                     <div id="productResults" class="list-group position-absolute w-100" style="z-index: 1000; display:none;"></div>
+                </div>
+
+                <!-- Step 5: Rule -->
+                <h5 class="step-header mt-4">3. Quy Tắc Chiết Khấu</h5>
+                <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                         <input class="form-check-input" type="radio" name="ruleType" id="ruleFixed" value="Fixed" checked>
+                         <label class="form-check-label" for="ruleFixed">Cố Định (đ/kg)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                         <input class="form-check-input" type="radio" name="ruleType" id="ruleTiered" value="Tiered">
+                         <label class="form-check-label" for="ruleTiered">Theo Bậc Thang</label>
+                    </div>
+                </div>
+
+                <!-- Rule Inputs -->
+                <div id="fixedInput" class="mb-3">
+                    <label class="form-label">Số Tiền Chiết Khấu (đ/ĐVT)</label>
+                    <input type="number" id="fixedRate" class="form-control" placeholder="VD: 500">
+                </div>
+
+                <div id="tieredInput" class="mb-3" style="display:none;">
+                    <label class="form-label">Cấu Hình Bậc (Slượng -> Giá/ĐVT)</label>
+                    <table class="table table-sm table-bordered" id="tierTable">
+                        <thead>
+                            <tr>
+                                <th>Từ</th>
+                                <th>Đến</th>
+                                <th>Giá (đ)</th>
+                                <th>Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" id="btnAddTier">+ Thêm Bậc</button>
+                    <small class="text-muted d-block mt-1">* Bậc cuối cùng có thể để "Đến" trống (= vô cùng)</small>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="button" id="btnCalculate" class="btn btn-primary py-2" disabled>
+                        <i class="bi bi-plus-circle"></i> THÊM VÀO DANH SÁCH PHIẾU
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Items in Slip -->
+    <div class="col-md-7">
+        <div class="card shadow-sm mb-3">
+             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Danh Sách Mặt Hàng Trong Phiếu</h5>
+                <span class="badge bg-danger fs-6" id="slipTotalAmount">Tổng: 0 đ</span>
+            </div>
+            <div class="card-body p-0" style="min-height: 200px;">
+                <table class="table table-hover mb-0 align-middle" id="slipItemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mặt Hàng</th>
+                            <th class="text-center">Số Lượng</th>
+                            <th>Quy Tắc</th>
+                            <th class="text-end">Thành Tiền</th>
+                            <th class="text-center">#</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slipItemsBody">
+                        <tr><td colspan="5" class="text-center text-muted py-5">Chưa có mặt hàng nào. Vui lòng tính toán và thêm ở bên trái.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <div class="small text-muted fst-italic">Vui lòng kiểm tra kỹ danh sách trước khi lưu.</div>
+                <div class="btn-save-group">
+                    <button type="button" id="btnSaveAll" class="btn btn-outline-primary me-2 px-4" disabled>
+                        <i class="bi bi-save"></i> CHỈ LƯU PHIẾU
+                    </button>
+                    <button type="button" id="btnSaveAndPay" class="btn btn-success px-4" disabled>
+                        <i class="bi bi-cash-stack"></i> LƯU & THANH TOÁN
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Log (Hidden by default, shown when adding) -->
+        <div class="card shadow-sm mb-3 border-info">
+             <div class="card-header bg-info text-white py-1">
+                <small class="fw-bold">Giao dịch gần đây của mặt hàng đang chọn</small>
+            </div>
+            <div class="card-body p-0 receipt-list" style="max-height: 200px;">
+                <table class="table table-sm table-striped mb-0" id="receiptTable">
+                    <tbody id="receiptBody">
+                        <tr><td class="text-center text-muted py-3 small">Chọn đối tượng & hàng hóa để xem giao dịch</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let selectedPartner = null;
+            let selectedProduct = null;
+            let pendingItems = [];
+            let currentTotalQty = 0;
+
+            // --- 1. Partner Search ---
+            $('#partnerSearch').on('input', function() {
+                var term = $(this).val();
+                var type = $('#typeSelect').val();
+                if (term.length < 2) { $('#partnerResults').hide(); return; }
+
+                var url = type === 'NCC' ? '/Supplier/SearchJson' : '/Customer/SearchJson';
+                $.get(url, { term: term }, function(data) {
+                    var html = '';
+                    if (data.length === 0) html = '<div class="list-group-item small">Không tìm thấy</div>';
+                    else {
+                        data.forEach(function(item) {
+                            html += `<a href="#" class="list-group-item list-group-item-action partner-item py-1" data-id="${item.maDoiTuong}" data-name="${item.tenDoiTuong}">
+                                        <div class="fw-bold small">${item.tenDoiTuong}</div> <small class="text-muted">${item.maDoiTuong}</small>
+                                     </a>`;
+                        });
+                    }
+                    $('#partnerResults').html(html).show();
+                });
+            });
+
+            $(document).on('click', '.partner-item', function(e) {
+                e.preventDefault();
+                $('#partnerId').val($(this).data('id'));
+                $('#partnerSearch').val($(this).data('name'));
+                $('#partnerResults').hide();
+                selectedPartner = { id: $(this).data('id'), name: $(this).data('name') };
+                $('#productSearch').prop('disabled', false).focus();
+                
+                // Clear pending items if partner changes? 
+                if(pendingItems.length > 0) {
+                    if(confirm('Đổi đối tượng sẽ xóa danh sách mặt hàng hiện tại. Bạn có chắc không?')) {
+                        pendingItems = [];
+                        renderSlipItems();
+                    } else {
+                        // Revert? Hard to do perfectly. Let's assume user knows.
+                    }
+                }
+            });
+
+            // --- 2. Product Search ---
+            $('#productSearch').on('input', function() {
+                var term = $(this).val();
+                if (term.length < 2) { $('#productResults').hide(); return; }
+                
+                $.get('/DiscountCalculation/SearchProduct', { term: term }, function(data) {
+                    var html = '';
+                    if (!data || data.length === 0) html = '<div class="list-group-item small">Không tìm thấy</div>';
+                    else {
+                        data.forEach(function(item) {
+                            html += `<a href="#" class="list-group-item list-group-item-action product-item py-1" data-id="${item.maHang}" data-name="${item.tenHang}">
+                                        <div class="fw-bold small">${item.tenHang}</div> <small class="text-muted">${item.maHang}</small>
+                                     </a>`;
+                        });
+                    }
+                    $('#productResults').html(html).show();
+                });
+            });
+
+             $(document).on('click', '.product-item', function(e) {
+                e.preventDefault();
+                $('#productId').val($(this).data('id'));
+                $('#productSearch').val($(this).data('name'));
+                $('#productResults').hide();
+                selectedProduct = { id: $(this).data('id'), name: $(this).data('name') };
+                loadReceipts();
+            });
+
+            // --- 3. Load Receipts ---
+            function loadReceipts() {
+                if(!selectedPartner || !selectedProduct) return;
+                $('#receiptBody').html('<tr><td class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>');
+                
+                $.get('/DiscountCalculation/GetProductTransactions', {
+                    type: $('#typeSelect').val(),
+                    partnerId: selectedPartner.id,
+                    productId: selectedProduct.id,
+                    fromDate: $('#fromDate').val(),
+                    toDate: $('#toDate').val()
+                }, function(data) {
+                    renderReceipts(data);
+                    currentTotalQty = data.reduce((sum, item) => sum + item.soLuong, 0);
+                    $('#btnCalculate').prop('disabled', data.length === 0);
+                });
+            }
+
+            function renderReceipts(data) {
+                var html = '';
+                if(data.length === 0) {
+                     html = '<tr><td class="text-center text-warning p-2">Không có giao dịch nào trong kỳ này</td></tr>';
+                } else {
+                    data.forEach(item => {
+                        html += `<tr>
+                                    <td class="small">${new Date(item.ngay).toLocaleDateString('vi-VN')}</td>
+                                    <td class="small fw-bold">${item.maPhieu}</td>
+                                    <td class="text-end small">${item.soLuong.toLocaleString()}</td>
+                                 </tr>`;
+                    });
+                }
+                $('#receiptBody').html(html);
+            }
+
+            // --- 4. Rules UI ---
+            $('input[name="ruleType"]').change(function() {
+                if(this.value === 'Fixed') {
+                    $('#fixedInput').show();
+                    $('#tieredInput').hide();
+                } else {
+                    $('#fixedInput').hide();
+                    $('#tieredInput').show();
+                    if($('#tierTable tbody tr').length === 0) addTierRow();
+                }
+            });
+
+            $('#btnAddTier').click(addTierRow);
+
+            function addTierRow() {
+                var html = `<tr>
+                                <td><input type="number" class="form-control form-control-sm tier-from" value="0"></td>
+                                <td><input type="number" class="form-control form-control-sm tier-to" placeholder="∞"></td>
+                                <td><input type="number" class="form-control form-control-sm tier-price" placeholder="Giá"></td>
+                                <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="$(this).closest('tr').remove()">X</button></td>
+                            </tr>`;
+                $('#tierTable tbody').append(html);
+            }
+
+            // --- 5. Add Item ---
+            $('#btnCalculate').click(function() {
+                if(!selectedProduct || currentTotalQty <= 0) return;
+
+                var ruleType = $('input[name="ruleType"]:checked').val();
+                var resultAmount = 0;
+                var log = '';
+                var fixedRate = 0;
+
+                if(ruleType === 'Fixed') {
+                    fixedRate = parseFloat($('#fixedRate').val()) || 0;
+                    if(fixedRate <= 0) { alert('Vui lòng nhập đơn giá chiết khấu'); return; }
+                    resultAmount = currentTotalQty * fixedRate;
+                    log = `Cố định: ${currentTotalQty.toLocaleString()} x ${fixedRate.toLocaleString()} đ`;
+                } else {
+                    // Tiered Progressive Logic
+                    var tiers = [];
+                    $('#tierTable tbody tr').each(function() {
+                        var from = parseFloat($(this).find('.tier-from').val()) || 0;
+                        var to = parseFloat($(this).find('.tier-to').val()) || Infinity;
+                        var price = parseFloat($(this).find('.tier-price').val()) || 0;
+                        tiers.push({from, to, price});
+                    });
+                    
+                    if(tiers.length === 0) { alert('Vui lòng thêm ít nhất một bậc'); return; }
+                    tiers.sort((a,b) => a.from - b.from);
+
+                    var breakdown = [];
+                    tiers.forEach(t => {
+                        var effectiveEnd = t.to === Infinity ? Number.MAX_VALUE : t.to;
+                        var contrib = Math.max(0, Math.min(currentTotalQty, effectiveEnd) - Math.max(0, t.from));
+                        if(contrib > 0) {
+                            resultAmount += contrib * t.price;
+                            breakdown.push(`${contrib.toLocaleString()}x${t.price.toLocaleString()}`);
+                        }
+                    });
+                    log = breakdown.join(' + ');
+                }
+
+                // Add to List
+                pendingItems.push({
+                    maHang: selectedProduct.id,
+                    tenHang: selectedProduct.name,
+                    totalQty: currentTotalQty,
+                    ruleType: ruleType,
+                    fixedRate: fixedRate,
+                    calculatedAmount: resultAmount,
+                    ruleDescription: log
+                });
+
+                // Reset Product Selection
+                $('#productId').val('');
+                $('#productSearch').val('').focus();
+                $('#receiptBody').html('<tr><td class="text-center text-muted py-3 small">Chọn hàng hóa tiếp theo...</td></tr>');
+                currentTotalQty = 0;
+                $('#btnCalculate').prop('disabled', true);
+                
+                renderSlipItems();
+            });
+
+            function renderSlipItems() {
+                var html = '';
+                var totalSlip = 0;
+                if(pendingItems.length === 0) {
+                    html = '<tr><td colspan="5" class="text-center text-muted py-5">Chưa có mặt hàng nào.</td></tr>';
+                } else {
+                    pendingItems.forEach((item, index) => {
+                        totalSlip += item.calculatedAmount;
+                        html += `<tr>
+                                    <td>
+                                        <div class="fw-bold">${item.tenHang}</div>
+                                        <small class="text-muted">${item.maHang}</small>
+                                    </td>
+                                    <td class="text-center fw-bold text-primary">${item.totalQty.toLocaleString()}</td>
+                                    <td><small>${item.ruleDescription}</small></td>
+                                    <td class="text-end fw-bold text-success">${item.calculatedAmount.toLocaleString()}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="removeItem(${index})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                 </tr>`;
+                    });
+                }
+                $('#slipItemsBody').html(html);
+                $('#slipTotalAmount').text('Tổng: ' + totalSlip.toLocaleString() + ' đ');
+                const hasItems = pendingItems.length > 0;
+                $('#btnSaveAll').prop('disabled', !hasItems);
+                $('#btnSaveAndPay').prop('disabled', !hasItems);
+            }
+
+            window.removeItem = function(index) {
+                pendingItems.splice(index, 1);
+                renderSlipItems();
+            };
+
+            // --- 6. Save All ---
+            function saveSlip(payNow) {
+                if(pendingItems.length === 0) return;
+                
+                var payload = {
+                    TenPhieu: $('#tenPhieu').val() || "Phiếu chiết khấu",
+                    Type: $('#typeSelect').val(),
+                    PartnerId: $('#partnerId').val(),
+                    FromDate: $('#fromDate').val(),
+                    ToDate: $('#toDate').val(),
+                    PayNow: payNow,
+                    Items: pendingItems.map(item => ({
+                        IsSelected: true,
+                        MaHang: item.maHang,
+                        TotalQty: item.totalQty,
+                        RuleType: item.ruleType,
+                        FixedRate: item.fixedRate,
+                        CalculatedAmount: item.calculatedAmount,
+                        RuleDescription: item.ruleDescription
+                    }))
+                };
+
+                const $btn = payNow ? $('#btnSaveAndPay') : $('#btnSaveAll');
+                const originalHtml = $btn.html();
+                
+                $('.btn-save-group button').prop('disabled', true);
+                $btn.html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
+
+                $.ajax({
+                    url: '/DiscountCalculation/Save',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function(res) {
+                        if(res.success) {
+                            window.location.href = '/DiscountCalculation/Details/' + res.id;
+                        } else {
+                             alert('Lỗi: ' + res.message);
+                             $('.btn-save-group button').prop('disabled', false);
+                             $btn.html(originalHtml);
+                        }
+                    },
+                    error: function(err) {
+                        alert('Lỗi: ' + err.responseText);
+                        $('.btn-save-group button').prop('disabled', false);
+                        $btn.html(originalHtml);
+                    }
+                });
+            }
+
+            $('#btnSaveAll').click(() => saveSlip(false));
+            $('#btnSaveAndPay').click(() => saveSlip(true));
+        });
+    </script>
+}

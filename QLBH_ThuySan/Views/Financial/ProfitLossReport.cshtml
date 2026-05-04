@@ -1,0 +1,77 @@
+@model QLBH_ThuySan.Services.ProfitLossReport
+
+@{
+    ViewData["Title"] = "Báo Cáo P&L";
+    var startDate = ViewBag.StartDate as DateTime?;
+    var endDate = ViewBag.EndDate as DateTime?;
+}
+
+<h2>Báo Cáo Lãi Lỗ (P&L)</h2>
+
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Kỳ Báo Cáo: @startDate?.ToString("dd/MM/yyyy") - @endDate?.ToString("dd/MM/yyyy")</h5>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <td><strong>Doanh Thu (Revenue)</strong></td>
+                    <td class="text-end">
+                        <strong class="text-success fs-5">@Model.TotalRevenue.ToString("N0") VNĐ</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Tổng Mua Hàng (Purchases)</strong></td>
+                    <td class="text-end">
+                        <strong class="text-danger fs-5">(@Model.TotalPurchases.ToString("N0") VNĐ)</strong>
+                    </td>
+                </tr>
+                <tr class="table-secondary">
+                    <td><strong>Lãi Gộp (Gross Profit)</strong></td>
+                    <td class="text-end">
+                        <strong class="@(Model.GrossProfit >= 0 ? "text-success" : "text-danger") fs-4">
+                            @Model.GrossProfit.ToString("N0") VNĐ
+                        </strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong>Thu Từ Khách Hàng</strong></td>
+                    <td class="text-end">
+                        <strong class="text-success">+@Model.TotalReceipts.ToString("N0") VNĐ</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Chi Phí Vận Hành</strong></td>
+                    <td class="text-end">
+                        <strong class="text-danger">-@Model.TotalExpenses.ToString("N0") VNĐ</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr class="table-primary border-top border-2">
+                    <td><strong class="fs-5">LÃI RÒNG (Net Profit)</strong></td>
+                    <td class="text-end">
+                        <strong class="@(Model.NetProfit >= 0 ? "text-success" : "text-danger") fs-3">
+                            @Model.NetProfit.ToString("N0") VNĐ
+                        </strong>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="ProfitLoss" class="btn btn-secondary">Quay lại</a>
+    <button onclick="window.print()" class="btn btn-info">In Báo Cáo</button>
+</div>

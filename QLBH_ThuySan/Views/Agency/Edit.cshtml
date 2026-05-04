@@ -1,0 +1,56 @@
+@model QLBH_ThuySan.Models.DaiLy
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Đại Lý";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Chỉnh Sửa Đại Lý</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaDaiLy" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mã Đại Lý</label>
+                                <input value="@Model.MaDaiLy" class="form-control" disabled readonly />
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenDaiLy" class="form-label">Tên Đại Lý</label>
+                                <input asp-for="TenDaiLy" class="form-control" required />
+                                <span asp-validation-for="TenDaiLy" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="LoaiDaiLy" class="form-label">Loại Đại Lý</label>
+                            <select asp-for="LoaiDaiLy" class="form-select">
+                                <option value="">-- Chọn Loại Đại Lý --</option>
+                                <option value="NHAP_A">NHAP_A (Nhập Hàng Loại A)</option>
+                                <option value="NHAP_B">NHAP_B (Nhập Hàng Loại B)</option>
+                                <option value="BAN_C">BAN_C (Bán Hàng Loại C)</option>
+                            </select>
+                            <span asp-validation-for="LoaiDaiLy" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

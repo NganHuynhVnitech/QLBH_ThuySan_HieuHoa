@@ -1,0 +1,71 @@
+@model QLBH_ThuySan.Models.KhachHang
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Khách Hàng";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Chỉnh Sửa Khách Hàng</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaDoiTuong" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mã Khách Hàng</label>
+                                <input value="@Model.MaDoiTuong" class="form-control" disabled readonly />
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenDoiTuong" class="form-label">Tên Khách Hàng</label>
+                                <input asp-for="TenDoiTuong" class="form-control" required />
+                                <span asp-validation-for="TenDoiTuong" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SoDienThoai" class="form-label">Số Điện Thoại</label>
+                                <input asp-for="SoDienThoai" class="form-control" />
+                                <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AoNuoi" class="form-label">Ao Nuôi</label>
+                                <input asp-for="AoNuoi" class="form-control" />
+                                <span asp-validation-for="AoNuoi" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DiaChi" class="form-label">Địa Chỉ</label>
+                            <input asp-for="DiaChi" class="form-control" />
+                            <span asp-validation-for="DiaChi" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Dư Nợ Hiện Tại</label>
+                            <input value="@string.Format("{0:N0}", Model.DuNoLuyKe)" class="form-control" disabled readonly />
+                            <small class="text-muted">Để điều chỉnh dư nợ, vui lòng sử dụng chức năng Sổ Riêng.</small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

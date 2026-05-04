@@ -1,0 +1,541 @@
+@model QLBH_ThuySan.Models.PhieuXuat
+
+@{
+    ViewData["Title"] = "Bán Hàng (POS)";
+    Layout = "_Layout"; // Keep standard layout but might want to hide navbar? KiotViet usually hides it or makes it minimal.
+                        // For now we keep it but restrict container-fluid.
+}
+
+<style>
+    /* POS Specific Styles */
+    .pos-container {
+        height: calc(100vh - 120px);
+        /* Adjust based on navbar height */
+        overflow: hidden;
+    }
+
+    .product-list-col {
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        background-color: #f8f9fa;
+        padding: 15px;
+    }
+
+    .invoice-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 15px;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .product-card {
+        cursor: pointer;
+        transition: transform 0.1s;
+        border: 1px solid #e0e0e0;
+    }
+
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #007bff;
+    }
+
+    .product-card .card-body {
+        padding: 10px;
+        text-align: center;
+    }
+
+    .product-card .price-tag {
+        color: #d9534f;
+        font-weight: bold;
+    }
+
+    .invoice-items-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        margin: 10px 0;
+    }
+
+    .invoice-footer {
+        border-top: 2px solid #eee;
+        padding-top: 10px;
+    }
+
+    .search-bar-container {
+        position: relative;
+    }
+
+    .customer-autocomplete-results {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #ddd;
+        display: none;
+    }
+
+    .result-item {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    .result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* Qty Button Styles */
+    .btn-qty {
+        padding: 0 8px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid pos-container">
+    <div class="row h-100">
+        <!-- Left Column: Product List -->
+        <div class="col-md-5 col-lg-5 product-list-col">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="productSearch" class="form-control border-start-0"
+                            placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div id="productGrid" class="product-grid">
+                <!-- Products will be loaded here via JS -->
+            </div>
+            <div id="loadingProducts" class="text-center mt-4 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Order Invoice -->
+        <div class="col-md-7 col-lg-7 invoice-col shadow-sm">
+            <!-- Customer Section -->
+            <div class="mb-3 position-relative">
+                <label class="form-label fw-bold" for="customerSearch">Khách Hàng</label>
+                <div class="input-group">
+                    <input type="text" id="customerSearch" class="form-control" placeholder="Tìm khách hàng..."
+                        autocomplete="off">
+                    <input type="hidden" id="selectedCustomerId" name="IdKhachHang" required>
+                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal"
+                        data-bs-target="#newCustomerModal">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </button>
+                </div>
+                <div id="customerResults" class="list-group customer-autocomplete-results shadow"></div>
+            </div>
+
+            <!-- TABs: Invoice vs Info -->
+            <ul class="nav nav-tabs mb-2">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Hóa Đơn 1</a>
+                </li>
+            </ul>
+
+            <!-- Order Items Table -->
+            <div class="invoice-items-container">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 25%">Hàng hóa</th>
+                            <th style="width: 30%" class="text-end">Đơn giá</th>
+                            <th style="width: 15%" class="text-center">SL</th>
+                            <th style="width: 20%" class="text-end">Thành tiền</th>
+                            <th style="width: 5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceItems">
+                        <!-- Items added here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer: Totals -->
+            <div class="invoice-footer">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng số lượng:</span>
+                    <strong id="totalQty">0</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="fs-5 fw-bold">Tổng tiền hàng:</span>
+                    <span class="fs-4 fw-bold text-primary" id="totalAmount">0</span>
+                </div>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger p-2 mb-2 small">
+                        @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                    </div>
+                }
+
+                <form id="checkoutForm" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MaPhieu" id="orderCode"
+                        value="@("PX" + DateTime.Now.ToString("yyMMddHHmm"))" /> <!-- Auto gen for MVP -->
+                    <input type="hidden" name="NgayXuat" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+
+                    <div class="mb-2">
+                        <label class="small text-muted" for="TrangThaiThanhToan">Trạng thái thanh toán</label>
+                        <select name="TrangThaiThanhToan" id="TrangThaiThanhToan" class="form-select form-select-sm" onchange="togglePartialPayment()">
+                            <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                            <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
+                        </select>
+                    </div>
+
+                    <div id="partialPaymentDiv" class="mb-2 d-none">
+                        <label class="small text-muted">Số tiền thanh toán</label>
+                        <input type="text" id="partialPaymentAmount" class="form-control form-control-sm fw-bold text-success" 
+                            placeholder="Nhập số tiền..." onfocus="this.select()" oninput="this.value = formatVN(parseVN(this.value))">
+                    </div>
+                    <!-- Details will be injected as hidden inputs before submit -->
+                    <div id="hiddenInputs"></div>
+
+                    <!-- Store selector -->
+                    <div class="mb-2">
+                        <select name="IdDaiLyBan" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyBan"
+                            required>
+                            <!-- Loaded from Controller -->
+                        </select>
+                    </div>
+
+                    <button type="button" onclick="submitOrder()" class="btn btn-success w-100 btn-lg py-3 fw-bold">
+                        <i class="bi bi-cash-coin"></i> THANH TOÁN (F8)
+                    </button>
+                    <!-- Customer ID Input is up there, but form needs it inside or linked. I'll clone it or append it. -->
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New Customer -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Khách Hàng Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickNewCustomerForm">
+                    <div class="mb-3">
+                        <label class="form-label" for="TenDoiTuong">Tên Khách Hàng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenDoiTuong" id="TenDoiTuong" required
+                            placeholder="Nhập tên khách hàng">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="SoDienThoai">Số Điện Thoại</label>
+                        <input type="text" class="form-control" name="SoDienThoai" id="SoDienThoai" placeholder="Số điện thoại">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="DiaChi">Địa Chỉ</label>
+                        <input type="text" class="form-control" name="DiaChi" id="DiaChi">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bỏ qua</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewCustomer()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var cart = []; // Array of { id, name, unit, price, qty, total }
+
+        function formatVN(val) {
+            if (!val && val !== 0) return '0';
+            return new Intl.NumberFormat('vi-VN').format(val);
+        }
+
+        function parseVN(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(val.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+        }
+
+        $(document).ready(function () {
+            loadProducts('');
+
+            // Search Products with debounce
+            let debounceTimer;
+            $('#productSearch').on('input', function () {
+                clearTimeout(debounceTimer);
+                var term = $(this).val();
+                debounceTimer = setTimeout(function () {
+                    loadProducts(term);
+                }, 300);
+            });
+
+            // Search Customer with debounce
+            $('#customerSearch').on('input', function () {
+                var term = $(this).val();
+                if (term.length < 2) {
+                    $('#customerResults').hide();
+                    return;
+                }
+
+                $.get('@Url.Action("SearchJson", "Customer")', { term: term }, function (data) {
+                    $('#customerResults').empty().show();
+                    if (!data || data.length === 0) {
+                        $('#customerResults').append('<div class="result-item text-muted">Không tìm thấy khách hàng</div>');
+                    } else {
+                        data.forEach(function (c) {
+                            // Escape single quotes in name to avoid JS syntax error
+                            var safeName = (c.tenDoiTuong || '').replace(/'/g, "\\'");
+                            $('#customerResults').append(`
+                                            <div class="result-item" onclick="selectCustomer('${c.maDoiTuong}', '${safeName}')">
+                                                <strong>${c.tenDoiTuong}</strong> <br/>
+                                                <small class="text-muted">${c.soDienThoai || ''}</small>
+                                            </div>
+                                        `);
+                        });
+                    }
+                });
+            });
+
+            // Close dropdown when clicking outside
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#customerSearch, #customerResults').length) {
+                    $('#customerResults').hide();
+                }
+            });
+        });
+
+        function togglePartialPayment() {
+            var status = $('#TrangThaiThanhToan').val();
+            if (status === 'Thanh Toán Một Phần') {
+                $('#partialPaymentDiv').removeClass('d-none');
+            } else {
+                $('#partialPaymentDiv').addClass('d-none');
+            }
+        }
+
+        function loadProducts(term) {
+            $('#loadingProducts').removeClass('d-none');
+            $('#productGrid').empty();
+
+            $.get('@Url.Action("SearchJson", "Product")', { term: term }, function (data) {
+                $('#loadingProducts').addClass('d-none');
+                if (!data || data.length === 0) {
+                    $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
+                    return;
+                }
+
+                data.forEach(function (p) {
+                    // Assuming Image placeholder if backend sends it, or default
+                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP';
+                    var price = p.giaBanHienTai ? formatVN(p.giaBanHienTai) : '0';
+                    var stock = p.tonKho != null ? formatVN(p.tonKho) : '0';
+
+                    var cardHtml = `
+                                    <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
+                                        <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
+                                            <p class="card-text small text-muted mb-1">${p.maHang}</p>
+                                            <p class="text-info small mb-1">Tồn kho: ${stock}</p>
+                                            <p class="price-tag mb-0">${price}</p>
+                                        </div>
+                                    </div>
+                                `;
+                    $('#productGrid').append(cardHtml);
+                });
+            });
+        }
+
+        function addToCart(product) {
+            var existing = cart.find(x => x.id === product.maHang);
+            if (existing) {
+                existing.qty += 1;
+                existing.total = existing.qty * existing.price;
+            } else {
+                cart.push({
+                    id: product.maHang,
+                    name: product.tenHang,
+                    unit: product.donViTinh || '',
+                    price: product.giaBanHienTai || 0,
+                    qty: 1,
+                    total: product.giaBanHienTai || 0
+                });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            var tbody = $('#invoiceItems');
+            tbody.empty();
+            var totalQty = 0;
+            var totalAmt = 0;
+
+            cart.forEach(function (item, index) {
+                totalQty += item.qty;
+                totalAmt += item.total;
+
+                var tr = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>
+                                        <div class="fw-bold">${item.name}</div>
+                                        <small class="text-muted">${item.id}</small>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm text-end fw-bold text-primary" 
+                                            value="${formatVN(item.price)}" onchange="updatePrice('${item.id}', this.value)" onfocus="this.select()">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', -1)">-</button>
+                                            <input type="text" class="form-control text-center fw-bold px-1" 
+                                                value="${formatVN(item.qty)}" onchange="updateQty('${item.id}', this.value)" onfocus="this.select()">
+                                            <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', 1)">+</button>
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-bold text-danger">
+                                        ${formatVN(item.total)}
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                tbody.append(tr);
+            });
+
+            $('#totalQty').text(formatVN(totalQty));
+            $('#totalAmount').text(formatVN(totalAmt));
+        }
+
+        function updateQty(id, newQty) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                item.qty = parseVN(newQty);
+                if (item.qty <= 0) item.qty = 1;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function updatePrice(id, newPrice) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                item.price = parseVN(newPrice);
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function changeQty(id, delta) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                item.qty = (item.qty || 0) + delta;
+                if (item.qty < 0) item.qty = 0;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(x => x.id !== id);
+            renderCart();
+        }
+
+        function selectCustomer(id, name) {
+            $('#selectedCustomerId').val(id);
+            $('#customerSearch').val(name);
+            $('#customerResults').hide();
+        }
+
+        function saveNewCustomer() {
+            var formData = {};
+            $('#quickNewCustomerForm').serializeArray().forEach(item => {
+                formData[item.name] = item.value;
+            });
+
+            $.ajax({
+                url: '@Url.Action("QuickCreate", "Customer")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (res) {
+                    if (res.success) {
+                        selectCustomer(res.data.maDoiTuong, res.data.tenDoiTuong);
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
+                        modal.hide();
+                        // Clear form
+                        $('#quickNewCustomerForm')[0].reset();
+                    }
+                },
+                error: function (err) {
+                    alert('Lỗi: ' + (err.responseText || 'Không thể tạo khách hàng'));
+                }
+            });
+        }
+
+        function submitOrder() {
+            if (cart.length === 0) {
+                alert('Giỏ hàng trống!');
+                return;
+            }
+            if (!$('#selectedCustomerId').val()) {
+                alert('Vui lòng chọn khách hàng!');
+                return;
+            }
+
+            var form = $('#checkoutForm');
+            var hiddenDiv = $('#hiddenInputs');
+            hiddenDiv.empty();
+
+            // Append Customer and details
+            $('<input>').attr({ type: 'hidden', name: 'IdKhachHang', value: $('#selectedCustomerId').val() }).appendTo(hiddenDiv);
+
+            cart.forEach((item, i) => {
+                // Formatting dots to comma for culture safety (ASP.NET MVC model binding usually respects culture or invariant if configured. Standard format is dot if standard, but sometimes comma depending on server regional settings). 
+                // We will send standard invariant formatting and let standard ASP.NET model bind evaluate.
+                $('<input>').attr({ type: 'hidden', name: 'MaHang', value: item.id }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'SoLuong', value: item.qty.toString().replace('.', ',') }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'GiaBan', value: item.price }).appendTo(hiddenDiv);
+            });
+
+            form.submit();
+        }
+
+        // F3 focus search
+        $(document).keydown(function (e) {
+            if (e.which === 114) { // F3
+                e.preventDefault();
+                $('#productSearch').focus();
+            }
+            if (e.which === 119) { // F8
+                e.preventDefault();
+                submitOrder();
+            }
+        });
+    </script>
+}

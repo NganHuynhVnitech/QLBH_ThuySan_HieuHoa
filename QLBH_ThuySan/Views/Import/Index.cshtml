@@ -1,0 +1,415 @@
+@model IEnumerable<QLBH_ThuySan.Models.PhieuNhap>
+
+@{
+    ViewData["Title"] = "Quản Lý Nhập Kho";
+}
+
+
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Quản Lý Nhập Kho</h1>
+        <p class="text-muted">Theo dõi phiếu nhập hàng, đối tác cung cấp và tình trạng thanh toán.</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Lập Phiếu Nhập
+        </a>
+    </div>
+</div>
+
+<!-- Filtering Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="row g-3 mb-2">
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase">Mã Phiếu</label>
+                <input type="text" id="filterMaPhieu" class="form-control form-control-sm" placeholder="Mã Phiếu..." onkeypress="if(event.keyCode==13) applyFilters()">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase">Đại Lý</label>
+                <select id="filterDaiLy" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyNhap" onchange="applyFilters()">
+                    <option value="">-- Tất cả Đại Lý --</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase">Nhà Cung Cấp</label>
+                <select id="filterNhaCungCap" class="form-select form-select-sm" asp-items="ViewBag.IdNhaCungCap" onchange="applyFilters()">
+                    <option value="">-- Tất cả Nhà Cung Cấp --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase">Trạng Thái</label>
+                <select id="filterTrangThai" class="form-select form-select-sm" onchange="applyFilters()">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                    <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                </select>
+            </div>
+            <div class="col-md-2 align-self-end">
+                <div class="form-check pb-1 small">
+                    <input class="form-check-input" type="checkbox" id="filterHanThanhToan3Ngay" onchange="applyFilters()">
+                    <label class="form-check-label text-danger fw-bold" for="filterHanThanhToan3Ngay">
+                        Sắp đến hạn (<= 3 ngày)
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-12">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text small fw-bold" style="width: 80px;">Ngày Nhập</span>
+                            <input type="date" id="filterNgayNhapTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterNgayNhapDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text small fw-bold" style="width: 80px;">Hạn TT</span>
+                            <input type="date" id="filterHanThanhToanTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterHanThanhToanDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text small fw-bold" style="width: 80px;">Ngày TT</span>
+                            <input type="date" id="filterNgayThanhToanTu" class="form-control" title="Từ Ngày" onchange="applyFilters()">
+                            <input type="date" id="filterNgayThanhToanDen" class="form-control" title="Đến Ngày" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="btn-group btn-group-sm w-100" role="group">
+                            <button class="btn btn-primary" onclick="applyFilters()">
+                                <i class="bi bi-search"></i> Tìm Kiếm
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()" title="Xóa lọc">
+                                <i class="bi bi-x-circle"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="importsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3 sort-header small fw-bold text-uppercase" data-column="MaPhieu" onclick="handleSort(this)">Mã Phiếu <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="NgayNhap" data-order="desc" onclick="handleSort(this)">Ngày Nhập <i class="bi bi-sort-down ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="TenNhaCungCap" onclick="handleSort(this)">Nhà Cung Cấp <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="sort-header small fw-bold text-uppercase" data-column="TenDaiLy" onclick="handleSort(this)">Đại Lý <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="small fw-bold text-uppercase">Hạn TT</th>
+                        <th class="small fw-bold text-uppercase">Ngày TT</th>
+                        <th class="sort-header small fw-bold text-uppercase text-center" data-column="TrangThai" onclick="handleSort(this)">Trạng Thái <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header small fw-bold text-uppercase" data-column="SoPhaiThanhToan" onclick="handleSort(this)">Tổng Tiền <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-end sort-header small fw-bold text-uppercase" data-column="SoChuaThanhToan" onclick="handleSort(this)">Còn Nợ <i class="bi bi-arrow-down-up ms-1"></i></th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="importsTableBody">
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaPhieu</span></td>
+                            <td>@item.NgayNhap?.ToString("dd/MM/yyyy")</td>
+                            <td class="fw-bold text-uppercase small text-truncate" style="max-width: 150px;">
+                                @(item.IdNhaCungCapNavigation?.TenDoiTuong ?? item.IdNhaCungCap)
+                            </td>
+                            <td class="small">
+                                @(item.IdDaiLyNhapNavigation?.TenDaiLy ?? item.IdDaiLyNhap)
+                            </td>
+                            <td>
+                                @if (item.HanThanhToan < DateTime.Today && (item.SoChuaThanhToan ?? 0) > 0)
+                                {
+                                    <span class="text-danger fw-bold small">@item.HanThanhToan?.ToString("dd/MM/yyyy")</span>
+                                }
+                                else
+                                {
+                                    <span class="small">@item.HanThanhToan?.ToString("dd/MM/yyyy")</span>
+                                }
+                            </td>
+                            <td class="small">@item.NgayThanhToan?.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                @if (item.SoChuaThanhToan <= 0)
+                                {
+                                    <span class="badge bg-success">Đã Thanh Toán</span>
+                                }
+                                else if (item.SoDaThanhToan > 0)
+                                {
+                                    <span class="badge bg-info text-dark">Một Phần</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Chưa Thanh Toán</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold text-primary">@string.Format("{0:N0}", item.SoPhaiThanhToan)</td>
+                            <td class="text-end fw-bold text-danger">@string.Format("{0:N0}", item.SoChuaThanhToan)</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.MaPhieu" class="btn btn-outline-info" title="Chi Tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if ((item.SoChuaThanhToan ?? 0) > 0)
+                                    {
+                                        <button type="button" class="btn btn-success" onclick="openPayModal('@item.MaPhieu', @(item.SoChuaThanhToan ?? 0))" title="Thanh Toán">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.MaPhieu" title="Xóa">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal stays largely same logic but better styled -->
+                                <div class="modal fade" id="deleteModal-@item.MaPhieu" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white py-2">
+                                                <h5 class="modal-title font-size-sm"><i class="bi bi-exclamation-triangle"></i> Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                Bạn có chắc chắn muốn xóa phiếu nhập <strong>@item.MaPhieu</strong>?<br/>
+                                                <small class="text-danger mt-2 d-block"><i class="bi bi-info-circle"></i> Cảnh báo: Việc xóa phiếu nhập sẽ KHÔNG tự động hoàn tác tồn kho và giá vốn.</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@item.MaPhieu">
+                                                    <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Modal Thanh Toán -->
+<div class="modal fade" id="payBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Pay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thanh Toán Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payMaPhieu" name="id" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền còn nợ:</label>
+                        <div class="input-group">
+                            <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thanh toán:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-primary fw-bold" id="payAmountDisplay" required />
+                            <input type="hidden" id="payAmount" name="amount" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <div class="form-text">Mặc định là thanh toán toàn bộ phiếu.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Diễn Giải</label>
+                        <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Xác nhận thanh toán</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentSortColumn = "NgayNhap";
+        let currentSortOrder = "desc";
+
+        function clearFilters() {
+            document.getElementById('filterMaPhieu').value = '';
+            document.getElementById('filterNgayNhapTu').value = '';
+            document.getElementById('filterNgayNhapDen').value = '';
+            document.getElementById('filterHanThanhToanTu').value = '';
+            document.getElementById('filterHanThanhToanDen').value = '';
+            document.getElementById('filterNgayThanhToanTu').value = '';
+            document.getElementById('filterNgayThanhToanDen').value = '';
+            document.getElementById('filterDaiLy').value = '';
+            document.getElementById('filterNhaCungCap').value = '';
+            document.getElementById('filterTrangThai').value = '';
+            document.getElementById('filterHanThanhToan3Ngay').checked = false;
+
+            currentSortColumn = "NgayNhap";
+            currentSortOrder = "desc";
+
+            document.querySelectorAll('.sort-header').forEach(h => {
+                h.removeAttribute('data-order');
+                const icon = h.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-arrow-down-up ms-1';
+                }
+            });
+
+            const defaultHeader = document.querySelector('.sort-header[data-column="NgayNhap"]');
+            if (defaultHeader) {
+                defaultHeader.setAttribute('data-order', 'desc');
+                const currentIcon = defaultHeader.querySelector('i');
+                if (currentIcon) {
+                    currentIcon.className = 'bi bi-sort-down ms-1';
+                }
+            }
+
+            applyFilters();
+        }
+
+        function handleSort(header) {
+            const column = header.getAttribute('data-column');
+            let order = header.getAttribute('data-order') || '';
+
+            // Tri-state logic: none -> desc -> asc -> none
+            if (order === '') order = 'desc';
+            else if (order === 'desc') order = 'asc';
+            else order = '';
+
+            // Reset other headers
+            document.querySelectorAll('.sort-header').forEach(h => {
+                h.removeAttribute('data-order');
+                const icon = h.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-arrow-down-up ms-1';
+                }
+            });
+
+            // Set current
+            header.setAttribute('data-order', order);
+            const currentIcon = header.querySelector('i');
+            if (currentIcon) {
+                if (order === 'desc') currentIcon.className = 'bi bi-sort-down ms-1';
+                else if (order === 'asc') currentIcon.className = 'bi bi-sort-up ms-1';
+                else currentIcon.className = 'bi bi-arrow-down-up ms-1';
+            }
+
+            currentSortColumn = order === '' ? '' : column;
+            currentSortOrder = order;
+
+            applyFilters();
+        }
+
+        function openPayModal(maPhieu, remaining) {
+            document.getElementById('payMaPhieuDisplay').innerText = maPhieu;
+            document.getElementById('payMaPhieu').value = maPhieu;
+            document.getElementById('payRemainingDisplay').value = formatNumber(remaining);
+            
+            var amountDisplay = document.getElementById('payAmountDisplay');
+            var amountHidden = document.getElementById('payAmount');
+            
+            amountHidden.value = remaining;
+            amountDisplay.value = formatNumber(remaining);
+
+            document.getElementById('payDienGiai').value = 'Thanh toán cho phiếu nhập ' + maPhieu;
+            
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        document.getElementById('payAmountDisplay').addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\./g, '');
+            if (value === "") {
+                document.getElementById('payAmount').value = 0;
+                return;
+            }
+            e.target.value = formatNumber(value);
+            document.getElementById('payAmount').value = value;
+        });
+
+        function applyFilters() {
+            const maPhieu = document.getElementById('filterMaPhieu').value;
+            const idDaiLy = document.getElementById('filterDaiLy').value;
+            const idNhaCungCap = document.getElementById('filterNhaCungCap').value;
+            const trangThai = document.getElementById('filterTrangThai').value;
+            const ngayNhapTu = document.getElementById('filterNgayNhapTu').value;
+            const ngayNhapDen = document.getElementById('filterNgayNhapDen').value;
+            const hanThanhToanTu = document.getElementById('filterHanThanhToanTu').value;
+            const hanThanhToanDen = document.getElementById('filterHanThanhToanDen').value;
+            const ngayThanhToanTu = document.getElementById('filterNgayThanhToanTu').value;
+            const ngayThanhToanDen = document.getElementById('filterNgayThanhToanDen').value;
+            const hanThanhToan3Ngay = document.getElementById('filterHanThanhToan3Ngay').checked;
+
+            const qs = new URLSearchParams({
+                maPhieu, idDaiLy, idNhaCungCap, trangThai,
+                ngayNhapTu, ngayNhapDen, hanThanhToanTu, hanThanhToanDen,
+                ngayThanhToanTu, ngayThanhToanDen, hanThanhToan3Ngay,
+                sortColumn: currentSortColumn, sortOrder: currentSortOrder
+            }).toString();
+
+            fetch(`/Import/SearchJson?${qs}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('importsTableBody');
+                    tbody.innerHTML = '';
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><span class="badge bg-secondary">${item.maPhieu}</span></td>
+                            <td>${item.ngayNhap}</td>
+                            <td class="fw-bold">${item.tenNhaCungCap}</td>
+                            <td>${item.tenDaiLy}</td>
+                            <td>
+                                ${item.isQuaHan 
+                                    ? `<span class="text-danger fw-bold">${item.hanThanhToan} (Quá hạn)</span>` 
+                                    : `<span>${item.hanThanhToan}</span>`}
+                            </td>
+                            <td>${item.ngayThanhToan}</td>
+                            <td>
+                                <span class="badge ${item.soChuaThanhToanRaw <= 0 ? 'bg-success' : (item.soDaThanhToanRaw > 0 ? 'bg-info text-dark' : 'bg-warning text-dark')}">
+                                    ${item.soChuaThanhToanRaw <= 0 ? 'Đã Thanh Toán' : (item.soDaThanhToanRaw > 0 ? 'Thanh Toán Một Phần' : 'Chưa Thanh Toán')}
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">${item.soPhaiThanhToan}</td>
+                            <td class="text-end fw-bold text-success">${item.soDaThanhToan}</td>
+                            <td class="text-end fw-bold text-danger">${item.soChuaThanhToan}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="/Import/Details/${item.maPhieu}" class="btn btn-sm btn-outline-info">Chi Tiết</a>
+                                    ${item.trangThai !== 'Đã Thanh Toán' ? 
+                                        `<button type="button" class="btn btn-sm btn-success" onclick="openPayModal('${item.maPhieu}', ${item.soChuaThanhToanRaw})">$ Thanh Toán</button>` 
+                                        : ''}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-${item.maPhieu}">Xóa</button>
+                                </div>
+
+                                <!-- Modals would need to be re-rendered or handled differently for full dynamic experience -->
+                                <!-- For now, keeping it simple; a full page refresh on delete is often used -->
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+    </script>
+}
+

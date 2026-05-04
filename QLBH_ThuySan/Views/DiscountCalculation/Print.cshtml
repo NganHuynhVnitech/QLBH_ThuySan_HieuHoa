@@ -1,0 +1,138 @@
+@model QLBH_ThuySan.Models.ViewModels.DiscountPrintViewModel
+
+@{
+    ViewData["Title"] = "Chi Tiết Phiếu Chiết Khấu";
+    Layout = null; // Use clean layout for printing
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>In Phiếu Chiết Khấu - @Model.MaPhieuTinh</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; padding: 20px; }
+        .header-title { font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .table-print { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table-print th, .table-print td { border: 1px solid #000; padding: 5px 8px; vertical-align: middle; }
+        .table-print th { background-color: #f0f0f0; text-align: center; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .bold { font-weight: bold; }
+        
+        @("@media") print {
+            .no-print { display: none !important; }
+            @("@page") { size: A4; margin: 1cm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print mb-3 text-end">
+        <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> In Phiếu</button>
+        <button onclick="window.history.back()" class="btn btn-secondary">Quay Lại</button>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="header-title">PHIẾU TÍNH CHIẾT KHẤU</h1>
+        <div>Số: @Model.MaPhieuTinh</div>
+        <div>Ngày lập: @Model.NgayTao.ToString("dd/MM/yyyy")</div>
+    </div>
+
+    <!-- General Info -->
+    <div class="row mb-3">
+        <div class="col-6">
+            <strong>Đối Tượng:</strong> @Model.TenDoiTuong (@Model.MaDoiTuong)<br />
+            <strong>Kỳ Tính Toán:</strong> @Model.TuNgay?.ToString("dd/MM/yyyy") - @Model.DenNgay?.ToString("dd/MM/yyyy")
+        </div>
+        <div class="col-6 text-end">
+            <strong>Trạng Thái:</strong> @Model.TrangThai<br />
+            @if(Model.NgayThanhToan.HasValue)
+            {
+                <strong>Ngày Thanh Toán:</strong> @Model.NgayThanhToan.Value.ToString("dd/MM/yyyy")
+            }
+        </div>
+    </div>
+
+    <!-- Details per Product -->
+    @foreach(var item in Model.ProductDetails)
+    {
+        <div class="mb-4">
+            <h5 class="mb-2"><strong>Mặt Hàng: @item.TenHang</strong> <small>(@item.QuyTacApDung)</small></h5>
+            <table class="table-print">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">STT</th>
+                        <th>Ngày CT</th>
+                        <th>Số Phiếu</th>
+                        <th class="text-center">Số Lượng <br/>(@item.DonViTinh)</th>
+                        <th class="text-end">Đơn Giá Mua</th>
+                        <th class="text-end">Thành Tiền Mua</th>
+                        <th class="text-end">Đơn Giá CK</th>
+                        <th class="text-end">Thành Tiền CK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int stt = 1; decimal totalBought = 0; decimal totalDisc = 0; }
+                    @foreach(var t in item.Transactions)
+                    {
+                        <tr>
+                            <td class="text-center">@(stt++)</td>
+                            <td class="text-center">@t.NgayGiaoDich.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">@t.MaPhieu</td>
+                            <td class="text-center">@t.SoLuong.ToString("N1")</td>
+                            <td class="text-end">@t.DonGiaMua.ToString("N0")</td>
+                            <td class="text-end">@t.ThanhTienMua.ToString("N0")</td>
+                            <td class="text-end">@t.DonGiaChietKhau.ToString("N0")</td>
+                            <td class="text-end">@t.ThanhTienChietKhau.ToString("N0")</td>
+                        </tr>
+                        totalBought += t.ThanhTienMua;
+                        totalDisc += t.ThanhTienChietKhau;
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="bold" style="background-color: #fafafa;">
+                        <td colspan="3" class="text-center">TỔNG CỘNG</td>
+                        <td class="text-center">@item.TongSoLuong.ToString("N1")</td>
+                        <td></td>
+                        <td class="text-end">@totalBought.ToString("N0")</td>
+                        <td></td>
+                        <td class="text-end">@item.SoPhaiThanhToanChietKhau.ToString("N0")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+
+    <!-- Summary Total -->
+    <div class="row mt-4">
+        <div class="col-7"></div>
+        <div class="col-5">
+            <table class="table-print">
+                <tr class="bold" style="font-size: 16px;">
+                    <td class="text-right" style="border:none;">TỔNG TIỀN CHIẾT KHẤU:</td>
+                    <td class="text-end" style="border:none; color: red;">@Model.SoPhaiThanhToanChietKhau.ToString("N0") đ</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="row mt-5 text-center">
+        <div class="col-4">
+            <strong>Người Lập Phiếu</strong><br/><br/><br/><br/>
+        </div>
+        <div class="col-4">
+            <strong>Người Nhận</strong><br/><br/><br/><br/>
+        </div>
+        <div class="col-4">
+            <strong>Giám Đốc</strong><br/><br/><br/><br/>
+        </div>
+    </div>
+
+</body>
+</html>
+

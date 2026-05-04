@@ -1,0 +1,222 @@
+@model QLBH_ThuySan.Models.ViewModels.CashFlowDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi Tiết Phiếu " + Model.MainVoucher.MaPhieu;
+    var v = Model.MainVoucher;
+    string badgeClass = v.LoaiPhieu switch {
+        "THU BAN HANG" => "bg-success",
+        "THU CHIET KHAU NCC" => "bg-info text-dark",
+        "THU XUAT TRA NCC" => "bg-primary",
+        "CHI PHIEU NHAP" => "bg-danger",
+        "CHI CHIET KHAU KHACH HANG" => "bg-warning text-dark",
+        "CHI PHI" => "bg-secondary",
+        _ => v.LoaiPhieu?.StartsWith("THU") == true ? "bg-success" : (v.LoaiPhieu?.StartsWith("CHI") == true ? "bg-danger" : "bg-warning text-dark")
+    };
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 fw-bold border-start border-primary border-4 ps-3">Chi Tiết Phiếu @v.MaPhieu</h4>
+                        <span class="badge @badgeClass fs-6 px-3 py-2">@v.LoaiPhieu</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-4 bg-light p-3 rounded mx-0">
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <label class="text-muted small d-block">Mã Phiếu</label>
+                            <span class="fw-bold fs-5 text-dark">@v.MaPhieu</span>
+                        </div>
+                        <div class="col-md-4 mb-2 mb-md-0 text-md-center">
+                            <label class="text-muted small d-block">Ngày Lập</label>
+                            <span class="fw-bold">@v.NgayLap?.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <label class="text-muted small d-block">Số Tiền</label>
+                            <span class="fw-bold fs-5 @(v.LoaiPhieu?.StartsWith("THU") == true ? "text-success" : "text-danger")">
+                                @string.Format("{0:N0}", v.SoTien) VNĐ
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 border-end">
+                            <label class="text-muted small fw-bold text-uppercase mb-2 d-block">Đối Tượng Giao Dịch</label>
+                            <div class="p-3 border rounded h-100 bg-white shadow-sm">
+                                <span class="fs-5 fw-bold text-primary">@Model.ObjectName</span>
+                                <div class="mt-2 small text-muted">
+                                    <p class="mb-1"><i class="bi bi-person-badge me-2"></i>Mã: @v.MaDoiTuong</p>
+                                    @if (!string.IsNullOrEmpty(Model.ObjectAddress)) { <p class="mb-1"><i class="bi bi-geo-alt me-2"></i>@Model.ObjectAddress</p> }
+                                    @if (!string.IsNullOrEmpty(Model.ObjectPhone)) { <p class="mb-0"><i class="bi bi-telephone me-2"></i>@Model.ObjectPhone</p> }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold text-uppercase mb-2 d-block">Lý Do / Nội Dung</label>
+                            <div class="p-3 bg-light rounded shadow-sm border h-100">
+                                <p class="mb-0 fs-5 italic">"@v.LyDo"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* --- SOURCE DOCUMENT DETAILS --- *@
+                    
+                    @if (Model.DiscountVoucher != null)
+                    {
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-calculator me-2"></i>Chi Tiết Phiếu Chiết Khấu (@Model.DiscountVoucher.MaPhieuTinh)</h5>
+                            <div class="table-responsive border rounded shadow-sm">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Mặt Hàng</th>
+                                            <th class="text-end">Số Lượng</th>
+                                            <th class="text-end">Giá CK (đ)</th>
+                                            <th class="text-end">Thành Tiền</th>
+                                            <th>Ghi Chú</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.DiscountVoucher.ChiTietChietKhaus)
+                                        {
+                                            <tr>
+                                                <td>@(item.MaHangNavigation?.TenHang ?? item.MaHang)</td>
+                                                <td class="text-end">@string.Format("{0:N2}", item.SoLuong)</td>
+                                                <td class="text-end">@string.Format("{0:N0}", item.GiaChietKhau)</td>
+                                                <td class="text-end fw-bold">@string.Format("{0:N0}", item.ThanhTien)</td>
+                                                <td class="small">@item.NoiDung</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Tổng cộng:</td>
+                                            <td class="text-end text-success fs-5">@string.Format("{0:N0}", Model.DiscountVoucher.SoPhaiThanhToan)</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.ImportVoucher != null)
+                    {
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Chi Tiết Phiếu Nhập (@Model.ImportVoucher.MaPhieu)</h5>
+                            <div class="table-responsive border rounded shadow-sm">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Mặt Hàng</th>
+                                            <th class="text-end">Số Lượng</th>
+                                            <th class="text-end">Đơn Giá Nhập</th>
+                                            <th class="text-end">Thành Tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.ImportVoucher.ChiTietPhieuNhaps)
+                                        {
+                                            <tr>
+                                                <td>@(item.MaHangNavigation?.TenHang ?? item.MaHang)</td>
+                                                <td class="text-end">@string.Format("{0:N2}", item.SoLuong)</td>
+                                                <td class="text-end">@string.Format("{0:N0}", item.DonGiaNhap)</td>
+                                                <td class="text-end fw-bold">@string.Format("{0:N0}", item.ThanhTien)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Tổng cộng:</td>
+                                            <td class="text-end text-danger fs-5">@string.Format("{0:N0}", Model.ImportVoucher.SoPhaiThanhToan)</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.ExportVoucher != null)
+                    {
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-cart-check me-2"></i>Chi Tiết Phiếu Xuất (@Model.ExportVoucher.MaPhieu)</h5>
+                            <div class="table-responsive border rounded shadow-sm">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Mặt Hàng</th>
+                                            <th class="text-end">Số Lượng</th>
+                                            <th class="text-end">Giá Bán</th>
+                                            <th class="text-end">Thành Tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.ExportVoucher.ChiTietPhieuXuats)
+                                        {
+                                            <tr>
+                                                <td>@(item.MaHangNavigation?.TenHang ?? item.MaHang)</td>
+                                                <td class="text-end">@string.Format("{0:N2}", item.SoLuong)</td>
+                                                <td class="text-end">@string.Format("{0:N0}", item.GiaBan)</td>
+                                                <td class="text-end fw-bold">@string.Format("{0:N0}", item.ThanhTien)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Tổng cộng:</td>
+                                            <td class="text-end text-success fs-5">@string.Format("{0:N0}", Model.ExportVoucher.SoPhaiThanhToan)</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <hr class="my-5 opacity-50">
+
+                    <div class="d-flex justify-content-between gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4 border-2">
+                            <i class="bi bi-arrow-left"></i> Quay Lại
+                        </a>
+                        <div class="btn-group shadow-sm">
+                            @if (v.LoaiPhieu == "CHI PHI" || v.LoaiPhieu == "NHAP")
+                            {
+                                <a asp-action="Edit" asp-route-id="@v.MaPhieu" class="btn btn-primary px-4">
+                                    <i class="bi bi-pencil"></i> Chỉnh Sửa
+                                </a>
+                            }
+                            <button type="button" class="btn btn-danger px-4" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Xóa Phiếu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Xác nhận xóa phiếu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-center">
+                <i class="bi bi-exclamation-triangle text-warning display-1 mb-3"></i>
+                <p class="fs-5 mb-0">Bạn có chắc chắn muốn xóa phiếu <br><strong class="text-danger">@v.MaPhieu</strong>?</p>
+                <p class="small text-muted mt-2">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary border-2" data-bs-dismiss="modal">Hủy</button>
+                <form asp-action="Delete" asp-route-id="@v.MaPhieu" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm border-2">Xác Nhận Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

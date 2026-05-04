@@ -1,0 +1,107 @@
+@model IEnumerable<QLBH_ThuySan.Models.ChiTietTon>
+
+@{
+    ViewData["Title"] = "Tồn Kho Chi Tiết";
+    var warehouse = ViewBag.Warehouse as QLBH_ThuySan.Models.Kho;
+    var searchMa = ViewBag.SearchMa as string;
+    var searchTen = ViewBag.SearchTen as string;
+    var lowStock = (bool)(ViewBag.LowStock ?? false);
+    var sortOrder = ViewBag.SortOrder as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-warehouse text-primary me-2"></i>Tồn Kho - @warehouse?.TenKho</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Quay lại
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Bộ lọc tìm kiếm</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Inventory" method="get" class="row g-3">
+            <input type="hidden" name="id" value="@warehouse?.MaKho" />
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Mã hàng</label>
+                <input type="text" name="searchMa" value="@searchMa" class="form-control" placeholder="Nhập mã hàng..." />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tên hàng</label>
+                <input type="text" name="searchTen" value="@searchTen" class="form-control" placeholder="Nhập tên hàng..." />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check mb-2">
+                    <input type="checkbox" name="lowStock" value="true" class="form-check-input" id="lowStockCheck" @(lowStock ? "checked" : "") />
+                    <label class="form-check-label fw-bold text-danger" for="lowStockCheck">
+                        Số lượng tồn < 50
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a asp-action="Inventory" asp-route-id="@warehouse?.MaKho" asp-route-sortOrder="@ViewData["MaSort"]" asp-route-searchMa="@searchMa" asp-route-searchTen="@searchTen" asp-route-lowStock="@lowStock" class="text-decoration-none text-dark">
+                                Mã Hàng <i class="fas @(sortOrder == "ma_asc" ? "fa-sort-up" : sortOrder == "ma_desc" ? "fa-sort-down" : "fa-sort") ms-1 text-muted"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Inventory" asp-route-id="@warehouse?.MaKho" asp-route-sortOrder="@ViewData["TenSort"]" asp-route-searchMa="@searchMa" asp-route-searchTen="@searchTen" asp-route-lowStock="@lowStock" class="text-decoration-none text-dark">
+                                Tên Hàng <i class="fas @(sortOrder == "ten_asc" ? "fa-sort-up" : sortOrder == "ten_desc" ? "fa-sort-down" : "fa-sort") ms-1 text-muted"></i>
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a asp-action="Inventory" asp-route-id="@warehouse?.MaKho" asp-route-sortOrder="@ViewData["QtySort"]" asp-route-searchMa="@searchMa" asp-route-searchTen="@searchTen" asp-route-lowStock="@lowStock" class="text-decoration-none text-dark">
+                                Số Lượng Tồn <i class="fas @(sortOrder == "qty_asc" ? "fa-sort-up" : sortOrder == "qty_desc" ? "fa-sort-down" : "fa-sort") ms-1 text-muted"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Inventory" asp-route-id="@warehouse?.MaKho" asp-route-sortOrder="@ViewData["UnitSort"]" asp-route-searchMa="@searchMa" asp-route-searchTen="@searchTen" asp-route-lowStock="@lowStock" class="text-decoration-none text-dark">
+                                Đơn Vị <i class="fas @(sortOrder == "unit_asc" ? "fa-sort-up" : sortOrder == "unit_desc" ? "fa-sort-down" : "fa-sort") ms-1 text-muted"></i>
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a asp-action="Inventory" asp-route-id="@warehouse?.MaKho" asp-route-sortOrder="@ViewData["ValueSort"]" asp-route-searchMa="@searchMa" asp-route-searchTen="@searchTen" asp-route-lowStock="@lowStock" class="text-decoration-none text-dark">
+                                Giá Trị Tồn <i class="fas @(sortOrder == "value_asc" ? "fa-sort-up" : sortOrder == "value_desc" ? "fa-sort-down" : "fa-sort") ms-1 text-muted"></i>
+                            </a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Không tìm thấy dữ liệu tồn kho phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@((item.SoLuongTon ?? 0) < 50 ? "table-danger" : "")">
+                            <td class="fw-bold">@item.MaHang</td>
+                            <td>@item.MaHangNavigation?.TenHang</td>
+                            <td class="text-end fw-bold">@((item.SoLuongTon ?? 0).ToString("N2"))</td>
+                            <td>@item.MaHangNavigation?.DonViTinh</td>
+                            <td class="text-end text-primary fw-bold">@((item.GiaTriTon ?? 0).ToString("N0")) <small>VNĐ</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+
+@model IEnumerable<QLBH_ThuySan.Models.DoiTuongChiPhi>
+
+@{
+    ViewData["Title"] = "Quản Lý Đối Tượng Chi Phí";
+}
+
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Đối Tượng Chi Phí</h1>
+        <p class="text-muted">Quản lý các danh mục chi phí vận hành, chi phí sản xuất và quản lý doanh nghiệp.</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg"></i> Thêm Đối Tượng
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3 small fw-bold text-uppercase">Mã Đối Tượng</th>
+                        <th class="small fw-bold text-uppercase">Tên Đối Tượng Chi Phí</th>
+                        <th class="text-center small fw-bold text-uppercase">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int index = 0; }
+                    @foreach (var item in Model)
+                    {
+                        index++;
+                        <tr>
+                            <td class="ps-3"><span class="badge bg-light text-dark border">@item.MaDoiTuong</span></td>
+                            <td class="fw-bold">@item.TenDoiTuong</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.MaDoiTuong" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i> Sửa
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@index" title="Xóa">
+                                        <i class="bi bi-trash3"></i> Xóa
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* Generate Modals outside the table to ensure valid HTML and prevent z-index/display issues *@
+@{ int modalIndex = 0; }
+@foreach (var item in Model)
+{
+    modalIndex++;
+    <!-- Delete Modal for @item.MaDoiTuong -->
+    <div class="modal fade" id="deleteModal-@modalIndex" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i> Xác Nhận Xóa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <p>Bạn có chắc chắn muốn xóa đối tượng chi phí <strong>@item.TenDoiTuong</strong> (@item.MaDoiTuong)?</p>
+                    <small class="text-muted">Thao tác này sẽ gỡ bỏ tên đối tượng khỏi danh mục. Các chứng từ cũ đã gắn mã này vẫn được giữ nguyên nhưng không thể tạo mới với mã đã xóa.</small>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <form asp-action="Delete" asp-route-id="@item.MaDoiTuong">
+                        <button type="submit" class="btn btn-danger px-4 shadow-sm">Đồng Ý Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

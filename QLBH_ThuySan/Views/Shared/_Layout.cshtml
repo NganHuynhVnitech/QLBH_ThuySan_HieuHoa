@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VNITech Solution</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/QLBH_ThuySan.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VNITech Solution</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Home"
+                                asp-action="Index">Dashboard</a>
+                        </li>
+
+                        <!-- Module Quản Lý -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Quản Lý</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index">Hàng Hóa</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Customer" asp-action="Index">Khách Hàng</a>
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Supplier" asp-action="Index">Nhà Cung
+                                        Cấp</a></li>
+                                <li><a class="dropdown-item" asp-controller="Agency" asp-action="Index">Đại Lý</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Warehouse" asp-action="Index">Kho Hàng</a>
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="OpeningStock" asp-action="Index">Thiết Lập Tồn Kho Ban Đầu</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="CostObject" asp-action="Index">Đối Tượng
+                                        Chi Phí</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Module Giao Dịch -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Giao Dịch</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Import" asp-action="Index">Nhập Kho</a>
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Export" asp-action="Index">Xuất Kho</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="CashFlow" asp-action="Index">Thu Chi</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="SupplierDebt" asp-action="Index">Công Nợ
+                                        Đầu Vào (NCC)</a></li>
+                                <li><a class="dropdown-item" asp-controller="CustomerDebt" asp-action="Index">Công Nợ
+                                        Khách Hàng</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Module Chiết Khấu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Chiết Khấu</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="DiscountCalculation"
+                                        asp-action="Index">Quản lý Chiết Khấu</a></li>
+                            </ul>
+                        </li>
+
+
+
+                        <!-- Báo Cáo -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button"
+                                data-bs-toggle="dropdown">Báo Cáo</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Financial" asp-action="ProfitLoss">Báo Cáo P&L</a></li>
+                                <li><a class="dropdown-item" asp-controller="InventoryReport" asp-action="Index">Xuất Nhập Tồn</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                                        class="me-1" viewBox="0 0 16 16">
+                                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                                        <path fill-rule="evenodd"
+                                            d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z" />
+                                    </svg>
+                                    @User.Identity.Name
+                                    @{
+                                        var quyenNguoiDung = User.FindFirst("QuyenNguoiDung")?.Value;
+                                        var roleName = quyenNguoiDung switch
+                                        {
+                                            "1" => "Admin",
+                                            "2" => "Manager",
+                                            "3" => "Saler",
+                                            _ => ""
+                                        };
+                                    }
+                                    @if (!string.IsNullOrEmpty(roleName))
+                                    {
+                                        <span class="badge bg-primary ms-1">@roleName</span>
+                                    }
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
+                                                    <path fill-rule="evenodd"
+                                                        d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+                                                </svg>
+                                                Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid px-4">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container-fluid px-4">
+            &copy; 2026 - VNITech Solution - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

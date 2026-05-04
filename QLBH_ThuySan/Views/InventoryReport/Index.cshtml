@@ -1,0 +1,258 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Báo cáo Xuất Nhập Tồn";
+    var currentMonth = DateTime.Now.Month;
+    var currentYear = DateTime.Now.Year;
+}
+
+<div class="row pt-4 mb-4">
+    <div class="col-md-7">
+        <h1 class="display-6 fw-bold">Báo Cáo Xuất Nhập Tồn</h1>
+        <p class="text-muted">Theo dõi biến động kho hàng, giá trị tồn đầu/cuối và định giá tồn kho định kỳ.</p>
+    </div>
+    <div class="col-md-5 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+        <button class="btn btn-warning shadow-sm px-3" id="btnFinalize" title="Lưu số dư sang kỳ sau">
+            <i class="bi bi-lock-fill"></i> Chốt Tồn Kho
+        </button>
+        <button class="btn btn-success shadow-sm px-3" id="btnExport">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase">Tháng</label>
+                <select id="monthSelect" class="form-select form-select-sm">
+                    @for (int i = 1; i <= 12; i++)
+                    { <option value="@i" selected="@(i == currentMonth)">Tháng @i</option> }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase">Năm</label>
+                <select id="yearSelect" class="form-select form-select-sm">
+                    @for (int i = currentYear - 2; i <= currentYear + 1; i++)
+                    { <option value="@i" selected="@(i == currentYear)">@i</option> }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase">Kho Hàng</label>
+                <select id="maKhoSelect" class="form-select form-select-sm" asp-items="ViewBag.MaKho">
+                    <option value="">-- Tất cả kho --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary btn-sm w-100" id="btnPreview">
+                    <i class="bi bi-search"></i> Xem Báo Cáo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="reportTable">
+                <thead class="table-light">
+                    <tr class="text-center">
+                        <th rowspan="2" class="align-middle ps-3 small fw-bold text-uppercase">Sản Phẩm</th>
+                        <th rowspan="2" class="align-middle small fw-bold text-uppercase">ĐVT</th>
+                        <th colspan="2" class="small fw-bold text-uppercase border-bottom">Đầu Kỳ</th>
+                        <th colspan="2" class="small fw-bold text-uppercase border-bottom">Nhập Trong Kỳ</th>
+                        <th colspan="2" class="small fw-bold text-uppercase border-bottom">Xuất Trong Kỳ</th>
+                        <th colspan="2" class="small fw-bold text-uppercase border-bottom">Cuối Kỳ</th>
+                    </tr>
+                    <tr class="text-center small fw-bold text-uppercase">
+                        <th class="border-start">SL</th>
+                        <th>Tiền</th>
+                        <th class="border-start text-success">SL</th>
+                        <th class="text-success">Tiền</th>
+                        <th class="border-start text-danger">SL</th>
+                        <th class="text-danger">Tiền</th>
+                        <th class="border-start">SL</th>
+                        <th class="pe-3">Thành Tiền</th>
+                    </tr>
+                </thead>
+                <tbody id="reportContent">
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="bi bi-inboxes display-6 mb-3 d-block"></i>
+                            <span class="small fw-bold text-uppercase">Chọn thông tin lọc và nhấn "Xem Báo Cáo"</span>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot id="reportFooter" class="table-light fw-bold" style="display:none;">
+                    <tr>
+                        <td colspan="2" class="text-center small fw-bold text-uppercase">Tổng Cộng</td>
+                        <td class="text-end" id="sumTonDau"></td>
+                        <td class="text-end" id="sumTienTonDau"></td>
+                        <td class="text-end text-success" id="sumNhap"></td>
+                        <td class="text-end text-success" id="sumTienNhap"></td>
+                        <td class="text-end text-danger" id="sumXuat"></td>
+                        <td class="text-end text-danger" id="sumTienXuat"></td>
+                        <td class="text-end" id="sumTonCuoi"></td>
+                        <td class="text-end text-primary pe-3" id="sumGiaTriCuoi"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 bg-transparent shadow-none">
+            <div class="text-center text-white">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 fs-5 fw-bold">Đang xử lý...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+        // Use global formatDecimal and formatNumber
+
+        $('#btnPreview').click(function() {
+            const m = $('#monthSelect').val();
+            const y = $('#yearSelect').val();
+            const k = $('#maKhoSelect').val();
+
+            loadingModal.show();
+            $.get('/InventoryReport/GetReportData', { month: m, year: y, maKho: k }, function(res) {
+                loadingModal.hide();
+                if (res.success) {
+                    renderTable(res.data);
+                } else {
+                    alert('Lỗi: ' + res.message);
+                }
+            });
+        });
+
+        function renderTable(data) {
+            const tbody = $('#reportContent');
+            const tfoot = $('#reportFooter');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.append('<tr><td colspan="11" class="text-center py-5 text-muted">Không có dữ liệu cho giai đoạn này.</td></tr>');
+                tfoot.hide();
+                return;
+            }
+
+            // Check if closed (from first item)
+            const isClosed = data[0].isClosed;
+            if (isClosed) {
+                $('#btnFinalize').prop('disabled', true).html('<i class="bi bi-check-circle-fill me-1"></i> Đã Chốt');
+            } else {
+                $('#btnFinalize').prop('disabled', false).html('<i class="bi bi-lock-fill me-1"></i> Chốt Tồn Kho');
+            }
+
+            let sums = { tonDau: 0, tienTonDau: 0, nhap: 0, tienNhap: 0, xuat: 0, tienXuat: 0, tonCuoi: 0, giaTriCuoi: 0 };
+
+            data.forEach(item => {
+                sums.tonDau += item.tonDau;
+                sums.tienTonDau += item.tienTonDau;
+                sums.nhap += item.nhap;
+                sums.tienNhap += item.tienNhap;
+                sums.xuat += item.xuat;
+                sums.tienXuat += item.tienXuat;
+                sums.tonCuoi += item.tonCuoi;
+                sums.giaTriCuoi += item.giaTriCuoi;
+
+                const row = `
+                    <tr>
+                        <td class="text-secondary fw-medium">${item.maHang}</td>
+                        <td>
+                            <div class="fw-bold">${item.tenHang}</div>
+                            <div class="small text-muted text-uppercase">${item.tenKho || item.maKho || ""}</div>
+                        </td>
+                        <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-secondary">${item.donViTinh || ""}</span></td>
+                        <td class="text-end">${formatDecimal(item.tonDau)}</td>
+                        <td class="text-end">${formatNumber(item.tienTonDau)}</td>
+                        <td class="text-end text-success">${formatDecimal(item.nhap)}</td>
+                        <td class="text-end text-success">${formatNumber(item.tienNhap)}</td>
+                        <td class="text-end text-danger">${formatDecimal(item.xuat)}</td>
+                        <td class="text-end text-danger">${formatNumber(item.tienXuat)}</td>
+                        <td class="text-end bg-light fw-bold">${formatDecimal(item.tonCuoi)}</td>
+                        <td class="text-end bg-light fw-bold text-primary">${formatNumber(item.giaTriCuoi)}</td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Update footer
+            $('#sumTonDau').text(formatDecimal(sums.tonDau));
+            $('#sumTienTonDau').text(formatNumber(sums.tienTonDau));
+            $('#sumNhap').text(formatDecimal(sums.nhap));
+            $('#sumTienNhap').text(formatNumber(sums.tienNhap));
+            $('#sumXuat').text(formatDecimal(sums.xuat));
+            $('#sumTienXuat').text(formatNumber(sums.tienXuat));
+            $('#sumTonCuoi').text(formatDecimal(sums.tonCuoi));
+            $('#sumGiaTriCuoi').text(formatNumber(sums.giaTriCuoi));
+            tfoot.show();
+        }
+
+        $('#btnFinalize').click(function() {
+            if (!confirm('Bạn có chắc chắn muốn CHỐT tồn kho kỳ này? Thao tác này sẽ ghi lại số dư cuối kỳ làm số dư đầu kỳ cho tháng tiếp theo và không thể hoàn tác.')) return;
+
+            const m = $('#monthSelect').val();
+            const y = $('#yearSelect').val();
+
+            loadingModal.show();
+            $.post('/InventoryReport/CloseInventory', { month: m, year: y }, function(res) {
+                loadingModal.hide();
+                alert(res.message);
+                if (res.success) {
+                    $('#btnPreview').click();
+                }
+            }).fail(function(xhr) {
+                loadingModal.hide();
+                alert('Lỗi: ' + xhr.responseText);
+            });
+        });
+
+        $('#btnExport').click(function() {
+            const m = $('#monthSelect').val();
+            const y = $('#yearSelect').val();
+            const k = $('#maKhoSelect').val();
+            window.location.href = `/InventoryReport/ExportExcel?month=${m}&year=${y}&maKho=${k}`;
+        });
+    </script>
+
+    <style>
+        .table thead th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+        }
+        .table tbody td {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.5rem;
+        }
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #dee2e6 !important;
+        }
+        .bg-light.bg-opacity-75 {
+            background-color: #f8f9fa !important;
+        }
+        .form-label {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+}
+

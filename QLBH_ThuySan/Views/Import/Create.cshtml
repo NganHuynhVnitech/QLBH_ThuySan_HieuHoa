@@ -1,0 +1,538 @@
+@model QLBH_ThuySan.Models.PhieuNhap
+
+@{
+    ViewData["Title"] = "Nhập Hàng (POS)";
+    Layout = "_Layout";
+}
+
+<style>
+    /* POS Specific Styles (Shared with Export, could be moved to site.css) */
+    .pos-container {
+        height: calc(100vh - 120px);
+        overflow: hidden;
+    }
+
+    .product-list-col {
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        background-color: #f8f9fa;
+        padding: 15px;
+    }
+
+    .invoice-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 15px;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .product-card {
+        cursor: pointer;
+        transition: transform 0.1s;
+        border: 1px solid #e0e0e0;
+    }
+
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #28a745;
+        /* Green for Import */
+    }
+
+    .product-card .card-body {
+        padding: 10px;
+        text-align: center;
+    }
+
+    .product-card .price-tag {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .invoice-items-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        margin: 10px 0;
+    }
+
+    .invoice-footer {
+        border-top: 2px solid #eee;
+        padding-top: 10px;
+    }
+
+    .search-bar-container {
+        position: relative;
+    }
+
+    .customer-autocomplete-results {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #ddd;
+        display: none;
+    }
+
+    .result-item {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    .result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* Qty Button Styles */
+    .btn-qty {
+        padding: 0 8px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid pos-container">
+    <div class="row h-100">
+        <!-- Left Column: Product List -->
+        <div class="col-md-4 col-lg-4 product-list-col">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0 text-success"><i
+                                class="bi bi-search"></i></span>
+                        <input type="text" id="productSearch" class="form-control border-start-0"
+                            placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <div id="productGrid" class="product-grid">
+                <!-- Products loaded here -->
+            </div>
+            <div id="loadingProducts" class="text-center mt-4 d-none">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Import Invoice -->
+        <div class="col-md-8 col-lg-8 invoice-col shadow-sm">
+            <!-- Supplier Section -->
+            <div class="mb-3 position-relative">
+                <label class="form-label fw-bold">Nhà Cung Cấp</label>
+                <div class="input-group">
+                    <input type="text" id="supplierSearch" class="form-control" placeholder="Tìm nhà cung cấp..."
+                        autocomplete="off">
+                    <input type="hidden" id="selectedSupplierId" name="IdNhaCungCap" required>
+                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal"
+                        data-bs-target="#newSupplierModal">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </button>
+                </div>
+                <div id="supplierResults" class="list-group customer-autocomplete-results shadow"></div>
+            </div>
+
+            <!-- Tab -->
+            <ul class="nav nav-tabs mb-2">
+                <li class="nav-item">
+                    <a class="nav-link active text-success" href="#">Phiếu Nhập 1</a>
+                </li>
+            </ul>
+
+            <!-- Order Items -->
+            <div class="invoice-items-container">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 35%">Hàng hóa</th>
+                            <th style="width: 15%" class="text-center">SL</th>
+                            <th style="width: 20%" class="text-end">Giá Nhập</th>
+                            <th style="width: 25%" class="text-end">Tiền</th>
+                            <th style="width: 5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceItems">
+                        <!-- Items here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="invoice-footer">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng số lượng:</span>
+                    <strong id="totalQty">0</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="fs-5 fw-bold">Tổng tiền nhập:</span>
+                    <span class="fs-4 fw-bold text-success" id="totalAmount">0</span>
+                </div>
+
+                <form id="checkoutForm" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MaPhieu" value="@("PN" + DateTime.Now.ToString("yyMMddHHmm"))" />
+                    <input type="hidden" name="NgayNhap" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    <div class="mb-2">
+                        <label class="small text-muted">Hạn thanh toán</label>
+                        <input type="date" name="HanThanhToan" class="form-control form-control-sm"
+                            value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">Trạng thái</label>
+                        <select name="TrangThaiThanhToan" id="TrangThaiThanhToan" class="form-select form-select-sm" onchange="togglePartialPayment()">
+                            <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                            <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                            <option value="Thanh Toán Một Phần">Thanh Toán Một Phần</option>
+                        </select>
+                    </div>
+
+                    <div id="partialPaymentDiv" class="mb-2 d-none">
+                        <label class="small text-muted">Số tiền thanh toán</label>
+                        <input type="text" id="partialPaymentAmount" class="form-control form-control-sm fw-bold text-success" 
+                            placeholder="Nhập số tiền..." onfocus="this.select()" oninput="this.value = formatVN(parseVN(this.value))">
+                    </div>
+
+                    <div id="hiddenInputs"></div>
+
+                    <div class="mb-2">
+                        <select name="IdDaiLyNhap" class="form-select form-select-sm" asp-items="ViewBag.IdDaiLyNhap"
+                            required>
+                        </select>
+                    </div>
+
+                    <button type="button" onclick="submitOrder()" class="btn btn-success w-100 btn-lg py-3 fw-bold">
+                        <i class="bi bi-box-arrow-in-down"></i> NHẬP HÀNG (F9)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New Supplier -->
+<div class="modal fade" id="newSupplierModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Nhà Cung Cấp Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickNewSupplierForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên NCC <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenDoiTuong" required placeholder="Nhập tên NCC">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Điện Thoại</label>
+                        <input type="text" class="form-control" name="SoDienThoai" placeholder="Số điện thoại">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <input type="text" class="form-control" name="DiaChi">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bỏ qua</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewSupplier()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var cart = [];
+        
+        function formatVN(val) {
+            if (!val && val !== 0) return '0';
+            // Format with . as thousands separator and , as decimal separator if needed
+            // For mostly integers, we can just use Intl.NumberFormat
+            return new Intl.NumberFormat('vi-VN').format(val);
+        }
+
+        function parseVN(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            // Remove dots and change comma to dot for parsing
+            return parseFloat(val.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+        }
+
+        $(document).ready(function () {
+            loadProducts('');
+
+            let debounceTimer;
+            $('#productSearch').on('input', function () {
+                clearTimeout(debounceTimer);
+                var term = $(this).val();
+                debounceTimer = setTimeout(function () {
+                    loadProducts(term);
+                }, 300);
+            });
+
+            // Search Supplier
+            $('#supplierSearch').on('input', function () {
+                var term = $(this).val();
+                if (term.length < 2) {
+                    $('#supplierResults').hide();
+                    return;
+                }
+
+                $.get('@Url.Action("SearchJson", "Supplier")', { term: term }, function (data) {
+                    $('#supplierResults').empty().show();
+                    if (!data || data.length === 0) {
+                        $('#supplierResults').append('<div class="result-item text-muted">Không tìm thấy NCC</div>');
+                    } else {
+                        data.forEach(function (s) {
+                            // Escape single quotes in name to avoid JS syntax error
+                            var safeName = (s.tenDoiTuong || '').replace(/'/g, "\\'");
+                            $('#supplierResults').append(`
+                                <div class="result-item" onclick="selectSupplier('${s.maDoiTuong}', '${safeName}')">
+                                    <strong>${s.tenDoiTuong}</strong> <br/>
+                                    <small class="text-muted">${s.soDienThoai || ''}</small>
+                                </div>
+                            `);
+                        });
+                    }
+                });
+            });
+
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#supplierSearch, #supplierResults').length) {
+                    $('#supplierResults').hide();
+                }
+            });
+        });
+
+        function togglePartialPayment() {
+            var status = $('#TrangThaiThanhToan').val();
+            if (status === 'Thanh Toán Một Phần') {
+                $('#partialPaymentDiv').removeClass('d-none');
+            } else {
+                $('#partialPaymentDiv').addClass('d-none');
+            }
+        }
+
+        function loadProducts(term) {
+            $('#loadingProducts').removeClass('d-none');
+            $('#productGrid').empty();
+
+            $.get('@Url.Action("SearchJson", "Product")', { term: term }, function (data) {
+                $('#loadingProducts').addClass('d-none');
+                if (!data || data.length === 0) {
+                    $('#productGrid').html('<div class="col-12 text-center text-muted">Không tìm thấy hàng hóa nào</div>');
+                    return;
+                }
+
+                data.forEach(function (p) {
+                    var img = p.hinhAnh || 'https://placehold.co/100x100?text=SP';
+                    // Use Cost Price for Import
+                    var price = p.giaVonHienTai ? formatVN(p.giaVonHienTai) : '0';
+
+                    var cardHtml = `
+                            <div class="card product-card" onclick='addToCart(${JSON.stringify(p)})'>
+                                <img src="${img}" class="card-img-top p-2" alt="${p.tenHang}" style="height: 100px; object-fit: contain;">
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate" title="${p.tenHang}">${p.tenHang}</h6>
+                                    <p class="card-text small text-muted">${p.maHang}</p>
+                                    <p class="price-tag mb-0">${price}</p>
+                                </div>
+                            </div>
+                        `;
+                    $('#productGrid').append(cardHtml);
+                });
+            });
+        }
+
+        function addToCart(product) {
+            var existing = cart.find(x => x.id === product.maHang);
+            if (existing) {
+                existing.qty += 1;
+                existing.total = existing.qty * existing.price;
+            } else {
+                cart.push({
+                    id: product.maHang,
+                    name: product.tenHang,
+                    unit: product.donViTinh || '',
+                    // Default to current Cost Price, allow text edit override? 
+                    // For now use cost price.
+                    price: product.giaVonHienTai || 0,
+                    qty: 1,
+                    total: product.giaVonHienTai || 0
+                });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            var tbody = $('#invoiceItems');
+            tbody.empty();
+            var totalQty = 0;
+            var totalAmt = 0;
+
+            cart.forEach(function (item, index) {
+                totalQty += item.qty;
+                totalAmt += item.total;
+
+                var tr = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <div class="fw-bold">${item.name}</div>
+                                <small class="text-muted">${item.id}</small>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', -1)">-</button>
+                                    <input type="text" class="form-control text-center fw-bold px-1" 
+                                        value="${formatVN(item.qty)}" onchange="updateRow('${item.id}', this.value, null)" onfocus="this.select()">
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" onclick="changeQty('${item.id}', 1)">+</button>
+                                </div>
+                            </td>
+                             <td>
+                                <input type="text" class="form-control form-control-sm text-end fw-bold text-primary" 
+                                    value="${formatVN(item.price)}" onchange="updateRow('${item.id}', null, this.value)" onfocus="this.select()">
+                            </td>
+                            <td class="text-end fw-bold text-danger">
+                                ${formatVN(item.total)}
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart('${item.id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                tbody.append(tr);
+            });
+
+            $('#totalQty').text(formatVN(totalQty));
+            $('#totalAmount').text(formatVN(totalAmt));
+        }
+
+        function updateRow(id, newQty, newPrice) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                if (newQty !== null) item.qty = parseVN(newQty);
+                if (newPrice !== null) item.price = parseVN(newPrice);
+                
+                if (item.qty < 0) item.qty = 0;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function changeQty(id, delta) {
+            var item = cart.find(x => x.id === id);
+            if (item) {
+                item.qty = (item.qty || 0) + delta;
+                if (item.qty < 0) item.qty = 0;
+                item.total = item.qty * item.price;
+                renderCart();
+            }
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(x => x.id !== id);
+            renderCart();
+        }
+
+        function selectSupplier(id, name) {
+            $('#selectedSupplierId').val(id);
+            $('#supplierSearch').val(name);
+            $('#supplierResults').hide();
+        }
+
+        function saveNewSupplier() {
+            var formData = {};
+            $('#quickNewSupplierForm').serializeArray().forEach(item => {
+                formData[item.name] = item.value;
+            });
+
+            $.ajax({
+                url: '@Url.Action("QuickCreate", "Supplier")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (res) {
+                    if (res.success) {
+                        selectSupplier(res.data.maDoiTuong, res.data.tenDoiTuong);
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('newSupplierModal'));
+                        modal.hide();
+                        $('#quickNewSupplierForm')[0].reset();
+                    }
+                },
+                error: function (err) {
+                    alert(err.responseText);
+                }
+            });
+        }
+
+        function submitOrder() {
+            if (cart.length === 0) {
+                alert('Giỏ hàng trống!');
+                return;
+            }
+            if (!$('#selectedSupplierId').val()) {
+                alert('Vui lòng chọn Nhà Cung Cấp!');
+                return;
+            }
+
+            var form = $('#checkoutForm');
+            var hiddenDiv = $('#hiddenInputs');
+            hiddenDiv.empty();
+
+            $('<input>').attr({ type: 'hidden', name: 'IdNhaCungCap', value: $('#selectedSupplierId').val() }).appendTo(hiddenDiv);
+
+            cart.forEach((item, i) => {
+                $('<input>').attr({ type: 'hidden', name: 'MaHang[]', value: item.id }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'SoLuong[]', value: item.qty }).appendTo(hiddenDiv);
+                $('<input>').attr({ type: 'hidden', name: 'DonGiaNhap[]', value: item.price }).appendTo(hiddenDiv); // DonGiaNhap for Import
+            });
+
+            // Payment Calculations
+            var totalAmount = cart.reduce((sum, item) => sum + item.total, 0);
+            var status = $('#TrangThaiThanhToan').val();
+            var paidAmount = 0;
+
+            if (status === 'Đã Thanh Toán') {
+                paidAmount = totalAmount;
+            } else if (status === 'Thanh Toán Một Phần') {
+                paidAmount = parseVN($('#partialPaymentAmount').val());
+            }
+
+            var debtAmount = totalAmount - paidAmount;
+
+            $('<input>').attr({ type: 'hidden', name: 'SoPhaiThanhToan', value: totalAmount }).appendTo(hiddenDiv);
+            $('<input>').attr({ type: 'hidden', name: 'SoDaThanhToan', value: paidAmount }).appendTo(hiddenDiv);
+            $('<input>').attr({ type: 'hidden', name: 'SoChuaThanhToan', value: debtAmount }).appendTo(hiddenDiv);
+
+            form.submit();
+        }
+
+        $(document).keydown(function (e) {
+            if (e.which === 114) { // F3
+                e.preventDefault();
+                $('#productSearch').focus();
+            }
+            if (e.which === 120) { // F9
+                e.preventDefault();
+                submitOrder();
+            }
+        });
+    </script>
+}

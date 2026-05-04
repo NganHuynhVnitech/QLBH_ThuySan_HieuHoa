@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.6; color: #333; }
+    h1 { color: #1a4f76; text-align: center; font-size: 24pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .subtitle { text-align: center; font-size: 14pt; font-style: italic; margin-bottom: 30px; color: #555; }
+    h2 { color: #1a4f76; border-bottom: 2px solid #1a4f76; padding-bottom: 5px; font-size: 18pt; margin-top: 40px; page-break-after: avoid; }
+    h3 { color: #c0392b; font-size: 15pt; margin-top: 25px; page-break-after: avoid; background-color: #f9ebea; padding: 10px; border-radius: 5px; border-left: 5px solid #c0392b; }
+    h4 { color: #2980b9; font-size: 14pt; font-weight: bold; margin-top: 20px; }
+    p { margin: 10px 0; text-align: justify; }
+    ul, ol { margin: 10px 0; padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    .box { padding: 12px; margin: 15px 0; border-radius: 4px; }
+    .purpose { background-color: #ebf5fb; border-left: 5px solid #3498db; padding: 10px; margin-bottom: 15px;}
+    .logic { background-color: #e8f8f5; border-left: 5px solid #1abc9c; padding: 10px; margin-bottom: 15px;}
+    .warning { background-color: #fdedec; border-left: 5px solid #e74c3c; padding: 10px; margin-bottom: 15px;}
+    .tip { background-color: #fef9e7; border-left: 5px solid #f1c40f; padding: 10px; margin-bottom: 15px;}
+    .result { background-color: #f4ecf7; border-left: 5px solid #8e44ad; padding: 10px; margin-bottom: 15px; }
+    
+    .bold-blue { color: #2980b9; font-weight: bold; }
+    .bold-red { color: #c0392b; font-weight: bold; }
+    .bold-green { color: #27ae60; font-weight: bold; }
+    
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 12pt; }
+    th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; vertical-align: top; }
+    th { background-color: #2c3e50; font-weight: bold; color: #ffffff; text-align: center; }
+    td:nth-child(2), td:nth-child(3) { text-align: center; }
+    .table-title { font-weight: bold; color: #2980b9; font-style: italic; margin-bottom: 5px; display: block; }
+</style>
+</head>
+<body>
+
+<h1>TÀI LIỆU HƯỚNG DẪN SỬ DỤNG CHI TIẾT</h1>
+<div class="subtitle">HỆ THỐNG QUẢN LÝ BÁN HÀNG THỦY SẢN HIỆU HOA</div>
+
+<p><strong>Ngày phát hành:</strong> 04/05/2026<br>
+<strong>Dành cho:</strong> Quản lý, Kế toán, Nhân viên bán hàng, Thủ kho.</p>
+
+<div class="tip">
+    <strong>Lời nói đầu:</strong> Tài liệu này được thiết kế theo dạng kịch bản "Cầm tay chỉ việc" (Step-by-step) kết hợp với Bảng Cấu trúc Dữ liệu và Dự kiến kết quả trả về. Đảm bảo thao tác đúng để số liệu chính xác 100%.
+</div>
+
+<hr>
+
+<h2>PHẦN I. QUY TRÌNH CHUẨN (CẦN ĐỌC TRƯỚC KHI DÙNG)</h2>
+<p>Hệ thống vận hành theo quy tắc chuỗi giá trị liên kết (Dữ liệu module trước là đầu vào của module sau). Vui lòng đi đúng trình tự sau khi hệ thống vừa được cài đặt:</p>
+<ol>
+    <li><strong>Khai báo dữ liệu nền:</strong> Tạo danh sách Kho, Sản phẩm, Khách hàng, Nhà cung cấp (Nếu không tạo, màn hình Nhập/Xuất sẽ không có dữ liệu để chọn).</li>
+    <li><strong>Khai báo Tồn kho đầu kỳ:</strong> Nhập số lượng và giá trị hàng đang có sẵn để tạo mốc "0" cho hệ thống.</li>
+    <li><strong>Mua hàng (Nhập kho):</strong> Khởi tạo dòng tiền nợ Nhà cung cấp & Tăng tồn kho.</li>
+    <li><strong>Bán hàng (Xuất kho):</strong> Khởi tạo dòng tiền khách nợ & Giảm tồn kho.</li>
+    <li><strong>Thu / Chi tiền:</strong> Ghi nhận thanh toán cấn trừ nợ.</li>
+    <li><strong>Báo cáo:</strong> Xem báo cáo Lãi/Lỗ, thẻ kho.</li></ol>
+
+<hr>
+
+<h2>PHẦN II. HƯỚNG DẪN CHI TIẾT TỪNG MODULE</h2>
+
+<!-- ============================================== -->
+<!-- MODULE 1: DANH MỤC HỆ THỐNG -->
+<!-- ============================================== -->
+<h3>MODULE 1: DANH MỤC HỆ THỐNG (MASTER DATA)</h3>
+<div class="purpose">
+    <strong>Mục đích:</strong> Xây dựng bộ từ điển chuẩn cho phần mềm. Khi tạo phiếu nhập/xuất, nhân viên chỉ cần "Chọn" thay vì gõ chữ, giúp tránh sai sót chính tả.
+</div>
+
+<h4>1.1. Quản lý Sản phẩm (Product)</h4>
+<ul>
+    <li><strong>Bước 1:</strong> Đăng nhập hệ thống, nhìn sang thanh menu bên trái, chọn <strong>Danh mục</strong> > <strong>Sản phẩm</strong>.</li>
+    <li><strong>Bước 2:</strong> Bấm nút <span class="bold-blue">[+ Thêm mới Sản phẩm]</span>.</li>
+    <li><strong>Bước 3:</strong> Nhập thông tin theo bảng quy tắc dưới đây.</li>
+    <li><strong>Bước 4:</strong> Bấm <span class="bold-green">[Lưu lại]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Sản phẩm</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Mã sản phẩm</strong><br>(Product Code)</td>
+        <td>Chữ & Số</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>- Viết liền, không dấu, không chứa ký tự đặc biệt (VD: <code>TOMSU_01</code>, <code>CAHOI_NL</code>).<br>- Tuyệt đối không được trùng với mã đã có trong hệ thống.</td>
+    </tr>
+    <tr>
+        <td><strong>Tên sản phẩm</strong><br>(Product Name)</td>
+        <td>Văn bản</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>- Viết rõ ràng, tiếng Việt có dấu (VD: <code>Tôm Sú Nguyên Con Loại 1</code>).<br>- Khuyên dùng cấu trúc: [Tên loại] + [Kích cỡ/Phân loại].</td>
+    </tr>
+    <tr>
+        <td><strong>Đơn vị tính</strong><br>(Unit)</td>
+        <td>Văn bản</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>- Viết chuẩn hóa. Thống nhất dùng <code>Kg</code>, <code>Gram</code>, hoặc <code>Thùng</code>.<br>- Lưu ý: 1 sản phẩm chỉ có 1 ĐVT duy nhất, nếu bán theo Kg và Thùng, hãy tạo 2 mã Sản phẩm khác nhau.</td>
+    </tr>
+    <tr>
+        <td><strong>Giá bán lẻ / Giá gốc</strong></td>
+        <td>Số</td>
+        <td>Không</td>
+        <td>- Chỉ nhập số, không nhập dấu phẩy hoặc chữ "VND" (VD: nhập <code>150000</code> thay vì 150.000).</td>
+    </tr>
+    <tr>
+        <td><strong>Trạng thái</strong> (Is Disabled)</td>
+        <td>Hộp kiểm (Checkbox)</td>
+        <td>Không</td>
+        <td>- Mặc định KHÔNG check. Nếu tick vào ô này, Sản phẩm sẽ bị ẩn khỏi màn hình Bán/Nhập hàng (Dùng khi ngừng kinh doanh mặt hàng này).</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li>Hệ thống hiển thị thông báo "Tạo mới thành công" (Màu xanh).</li>
+        <li>Sản phẩm vừa tạo sẽ xuất hiện ngay trên dòng đầu tiên của Bảng danh sách Sản phẩm.</li>
+        <li>Mã sản phẩm này đã sẵn sàng để chọn (dropdown) trong màn hình Nhập hàng và Bán hàng.</li>
+    </ul>
+</div>
+
+<div class="warning">
+    <strong>⚠️ Cảnh báo:</strong> KHÔNG BAO GIỜ xóa một Sản phẩm nếu nó đã từng có lịch sử nhập/xuất kho. Hành động xóa sẽ làm Báo cáo tài chính tháng trước bị mất dữ liệu. Luôn dùng tính năng <strong>Khóa (Disable)</strong> để ẩn sản phẩm.
+</div>
+
+
+<h4>1.2. Quản lý Khách hàng & Đại lý (Customer)</h4>
+<ul>
+    <li><strong>Bước 1:</strong> Vào <strong>Danh mục</strong> > <strong>Khách hàng</strong>. Bấm <span class="bold-blue">[+ Thêm mới]</span>.</li>
+    <li><strong>Bước 2:</strong> Nhập thông tin theo bảng quy tắc.</li>
+    <li><strong>Bước 3:</strong> Bấm <span class="bold-green">[Lưu lại]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Khách hàng</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Mã Khách hàng</strong></td>
+        <td>Chữ & Số</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Nên đặt theo quy tắc: <code>KH_</code> + <code>[Tên/SĐT]</code> (VD: KH_ANHHOANG).</td>
+    </tr>
+    <tr>
+        <td><strong>Tên Khách hàng</strong></td>
+        <td>Văn bản</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Nhập đầy đủ Họ Tên hoặc Tên Công Ty / Cửa hàng.</td>
+    </tr>
+    <tr>
+        <td><strong>Số điện thoại</strong></td>
+        <td>Số</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Ghi liền, không dấu cách. Dùng làm cơ sở để đối chiếu công nợ qua Zalo.</td>
+    </tr>
+    <tr>
+        <td><strong>Dư nợ ban đầu</strong><br>(Opening Debt)</td>
+        <td>Số</td>
+        <td>Không</td>
+        <td>Nếu khách hàng có nợ từ hệ thống cũ chuyển sang, nhập số tiền nợ vào đây (Ghi nhận bằng VNĐ, chỉ nhập số).</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li>Hồ sơ khách hàng được tạo thành công.</li>
+        <li>Bên module "Công nợ Khách hàng" sẽ lập tức xuất hiện khách hàng này với mức dư nợ khởi điểm bằng đúng số "Dư nợ ban đầu" vừa nhập.</li>
+        <li>Tên Khách hàng sẽ xuất hiện khi nhân viên lên Đơn Bán Hàng.</li>
+    </ul>
+</div>
+
+
+<!-- ============================================== -->
+<!-- MODULE 2: QUẢN LÝ KHO (INVENTORY) -->
+<!-- ============================================== -->
+<h3>MODULE 2: QUẢN LÝ KHO HÀNG & TỒN ĐẦU KỲ</h3>
+
+<h4>2.1. Cập nhật Tồn kho đầu kỳ (Opening Stock)</h4>
+<p><em>Chỉ làm bước này 1 lần duy nhất vào ngày đầu tiên sử dụng phần mềm.</em></p>
+<ul>
+    <li><strong>Bước 1:</strong> Đi kiểm kê kho thực tế ngoài đời để có số liệu chính xác.</li>
+    <li><strong>Bước 2:</strong> Vào menu <strong>Kho hàng</strong> > <strong>Tồn kho đầu kỳ</strong>. Bấm <span class="bold-blue">[+ Nhập tồn đầu kỳ]</span>.</li>
+    <li><strong>Bước 3:</strong> Nhập số liệu theo đúng bảng kiểm kê thực tế. Bấm <span class="bold-green">[Lưu lại]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Tồn Đầu Kỳ</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Kho lưu trữ</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Chọn đúng Kho vật lý ngoài đời (Kho Lạnh 1, Kho Sân Sau). KHÔNG bao giờ chọn "Kho Tổng Ảo".</td>
+    </tr>
+    <tr>
+        <td><strong>Sản phẩm</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Chọn mặt hàng cần nhập số dư. Bắt buộc phải tạo ở Module 1 trước.</td>
+    </tr>
+    <tr>
+        <td><strong>Số lượng thực tế</strong></td>
+        <td>Số thập phân</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Nhập số lượng đếm được. Hỗ trợ số thập phân (VD: <code>15.5</code> kg). Chỉ dùng dấu chấm (.) cho số thập phân.</td>
+    </tr>
+    <tr>
+        <td><strong>Đơn giá vốn (WAC)</strong></td>
+        <td>Số</td>
+        <td><span class="bold-red">Có</span></td>
+        <td><strong>Cực kỳ quan trọng:</strong> Đây là giá trị vốn của 1 đơn vị sản phẩm. Nhập sai số này, Báo cáo Lãi/Lỗ tháng đầu tiên sẽ sai hoàn toàn. (VD: Nhập <code>120000</code> nếu giá gốc mua vào là 120k/kg).</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li>Trong báo cáo <strong>"Báo cáo Tồn Kho Hiện Tại"</strong>, mặt hàng này sẽ xuất hiện với số lượng đúng bằng số lượng vừa nhập.</li>
+        <li>Hệ thống Thẻ kho sẽ ghi nhận một dòng giao dịch với nội dung "Nhập tồn đầu kỳ".</li>
+        <li><strong>Đặc biệt:</strong> Thao tác này KHÔNG sinh ra Công nợ Nhà cung cấp và KHÔNG trừ tiền quỹ.</li>
+    </ul>
+</div>
+
+
+<h4>2.2. Nhập Hàng (Mua hàng từ Nhà Cung Cấp)</h4>
+<ul>
+    <li><strong>Bước 1:</strong> Vào <strong>Quản lý Nhập Xuất</strong> > <strong>Phiếu Nhập Hàng (Import)</strong> > Bấm <span class="bold-blue">[+ Tạo Phiếu Nhập]</span>.</li>
+    <li><strong>Bước 2:</strong> Nhập thông tin phiếu và chi tiết mặt hàng theo bảng bên dưới.</li>
+    <li><strong>Bước 3:</strong> Bấm <span class="bold-green">[Hoàn tất & Lưu Phiếu]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Chi tiết Phiếu Nhập</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Nhà Cung Cấp</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Để ghi nhận đúng Công nợ. Tiền hàng sẽ được cộng vào Dư nợ của NCC này.</td>
+    </tr>
+    <tr>
+        <td><strong>Ngày nhập</strong></td>
+        <td>Ngày/Tháng/Năm</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Hệ thống tự lấy ngày hiện tại, nhưng bạn có thể lùi ngày nếu nhập bù cho hôm qua. (Định dạng: DD/MM/YYYY).</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Sản phẩm</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Có thể bấm nút [+] để thêm nhiều dòng sản phẩm vào cùng 1 phiếu nhập.</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Số lượng</strong></td>
+        <td>Số thập phân</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Nhập khối lượng thực tế cân được. (VD: 100.5).</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Đơn giá nhập</strong></td>
+        <td>Số tiền</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Giá mua thực tế từ NCC cho đợt hàng này. Hệ thống sẽ dùng giá này để <strong>Tự động tính lại giá vốn WAC</strong> của tồn kho.</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li><strong>Kho hàng:</strong> Số lượng tồn kho của mặt hàng sẽ <strong>TĂNG</strong> ngay lập tức trong kho vật lý và kho tổng ảo.</li>
+        <li><strong>Giá vốn (WAC):</strong> Giá vốn bình quân của sản phẩm sẽ tự động được hệ thống tính toán lại để phản ánh đúng giá trị đợt nhập mới.</li>
+        <li><strong>Công nợ:</strong> Dư nợ của Nhà Cung Cấp được chọn sẽ <strong>TĂNG</strong> lên bằng đúng tổng giá trị của Phiếu Nhập (Thể hiện bạn đang nợ họ thêm tiền).</li>
+        <li>Phiếu nhập sẽ hiển thị trạng thái "Hoàn tất" trong danh sách lịch sử nhập.</li>
+    </ul>
+</div>
+
+
+<h4>2.3. Xuất Hàng (Bán hàng cho Khách)</h4>
+<ul>
+    <li><strong>Bước 1:</strong> Vào <strong>Quản lý Nhập Xuất</strong> > <strong>Phiếu Xuất Hàng (Export)</strong> > Bấm <span class="bold-blue">[+ Tạo Phiếu Xuất]</span>.</li>
+    <li><strong>Bước 2:</strong> Lên đơn hàng theo đúng số lượng khách mua.</li>
+    <li><strong>Bước 3:</strong> Bấm <span class="bold-green">[Hoàn tất & Lưu Phiếu]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Chi tiết Phiếu Xuất (Bán hàng)</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Khách hàng</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Định danh người mua để ghi nhận Công nợ và Doanh thu.</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Kho Xuất</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td><strong>Bắt buộc chọn đúng kho vật lý.</strong> Nếu bạn bán hàng ở Kho Lạnh 1 nhưng lại chọn xuất từ Kho 2, tồn kho Kho 2 sẽ bị âm hoặc báo lỗi không đủ hàng.</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Số lượng bán</strong></td>
+        <td>Số thập phân</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Số lượng bán <strong>phải nhỏ hơn hoặc bằng</strong> số tồn kho hiện tại của Kho xuất. Hệ thống sẽ từ chối lưu nếu kho bị Âm.</td>
+    </tr>
+    <tr>
+        <td><strong>[Cột] Đơn giá bán</strong></td>
+        <td>Số tiền</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Quyết định đến Doanh thu. Hãy nhập chính xác theo thỏa thuận với khách.</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li><strong>Kho hàng:</strong> Số lượng hàng trong kho <strong>GIẢM</strong> đi tương ứng.</li>
+        <li><strong>Công nợ:</strong> Dư nợ của Khách hàng <strong>TĂNG</strong> lên (Khách đang nợ bạn thêm tiền).</li>
+        <li><strong>Báo cáo Lãi Lỗ:</strong> Doanh thu từ Phiếu xuất này sẽ được cộng vào Doanh thu trong Báo cáo Tài Chính. Lãi gộp sẽ tự động sinh ra = (Đơn giá bán - Đơn giá vốn WAC) x Số lượng.</li>
+    </ul>
+</div>
+
+
+<!-- ============================================== -->
+<!-- MODULE 3: QUẢN LÝ DÒNG TIỀN & CÔNG NỢ -->
+<!-- ============================================== -->
+<h3>MODULE 3: QUẢN LÝ DÒNG TIỀN, QUỸ & CÔNG NỢ</h3>
+
+<h4>3.1. Quản lý Công nợ Khách Hàng / Nhà Cung Cấp (Thu - Chi Tiền)</h4>
+<ul>
+    <li><strong>Bước 1:</strong> Vào menu <strong>Công nợ</strong> > <strong>Công nợ Khách Hàng (hoặc NCC)</strong>.</li>
+    <li><strong>Bước 2:</strong> Bấm <span class="bold-blue">[Thanh toán / Thu tiền]</span> tại dòng của đối tượng.</li>
+    <li><strong>Bước 3:</strong> Điền thông tin theo bảng dưới và Lưu.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Thu/Chi Công Nợ</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Số tiền (Amount)</strong></td>
+        <td>Số nguyên</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Chỉ nhập số, không nhập dấu phẩy hoặc chữ. Đây là số tiền khách chuyển khoản / trả tiền mặt. Dư nợ sẽ tự động trừ đi số tiền này.</td>
+    </tr>
+    <tr>
+        <td><strong>Ghi chú (Notes)</strong></td>
+        <td>Văn bản</td>
+        <td><span class="bold-red">Có</span></td>
+        <td><strong>Phải ghi cực kỳ rõ ràng</strong> để đối soát nội bộ. Ví dụ: "Chuyển khoản VCB đuôi 1234 trả nợ lô hàng ngày 15/5". Không được ghi chung chung "Trả nợ".</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li><strong>Nếu Thu Khách:</strong> Tổng nợ hiện tại của Khách hàng đó sẽ <strong>GIẢM</strong> đi một lượng đúng bằng số tiền vừa nhập. Số dư trong sổ Quỹ/Ngân hàng <strong>TĂNG</strong> lên.</li>
+        <li><strong>Nếu Chi cho NCC:</strong> Tổng nợ bạn đang thiếu NCC sẽ <strong>GIẢM</strong>. Quỹ/Ngân hàng của công ty bị <strong>GIẢM</strong>.</li>
+        <li>Lịch sử Sổ Chi Tiết Công Nợ sẽ ghi nhận thêm 1 dòng giao dịch với chữ "Đã thanh toán" kèm theo ghi chú đầy đủ.</li>
+    </ul>
+</div>
+
+<div class="warning">
+    <strong>⚠️ Nguyên tắc Kế toán "Không xóa dấu vết":</strong> Nếu bạn nhập nhầm số tiền thu (VD: Thu 5 triệu nhưng gõ nhầm 50 triệu) và đã lỡ bấm Lưu. Tuyệt đối không nhờ IT vào Database xóa dòng đó. Hãy tạo một Giao dịch ngược lại (VD: Ghi nợ lại 45 triệu, ghi chú: "Điều chỉnh nhập sai giao dịch trước đó").
+</div>
+
+<h4>3.2. Thu/Chi Các khoản khác (Chi phí vận hành)</h4>
+<p>Để ghi nhận tiền lương, điện nước, ăn uống - ảnh hưởng trực tiếp đến <strong>Lãi Ròng</strong>.</p>
+<ul>
+    <li><strong>Bước 1:</strong> Vào menu <strong>Dòng tiền (Cash Flow)</strong> > <strong>Phiếu Thu Chi</strong> > Bấm <span class="bold-blue">[+ Tạo Phiếu Mới]</span>.</li>
+    <li><strong>Bước 2:</strong> Khai báo thông tin chi phí và bấm Lưu.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Thu/Chi phí khác</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Loại phiếu</strong></td>
+        <td>Radio button</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Chọn Thu Khác (Tăng tiền quỹ) hoặc Chi Khác / Chi phí (Giảm tiền quỹ & Trừ vào Lãi).</td>
+    </tr>
+    <tr>
+        <td><strong>Đối tượng chi phí</strong></td>
+        <td>Danh sách thả xuống</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Lựa chọn nhóm chi phí để phân tích Báo cáo tài chính (VD: Nhóm "Tiền lương", "Tiền điện nước"). (Cần tạo sẵn trong menu Danh mục).</td>
+    </tr>
+    <tr>
+        <td><strong>Mô tả chi tiết</strong></td>
+        <td>Văn bản</td>
+        <td>Không</td>
+        <td>Mô tả chi tiết lý do chi tiền để quản lý kiểm duyệt.</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li>Nếu lập phiếu Chi Khác (Expense): Tiền trong Sổ Quỹ giảm. Đặc biệt, khoản chi này sẽ xuất hiện trong Báo cáo P&L ở phần <strong>"Chi phí Vận hành (Operating Expenses)"</strong>, kéo Lãi Ròng của công ty đi xuống.</li>
+    </ul>
+</div>
+
+<!-- ============================================== -->
+<!-- MODULE 4: CHIẾT KHẤU & BÁO CÁO -->
+<!-- ============================================== -->
+<h3>MODULE 4: CHIẾT KHẤU ĐỘNG & BÁO CÁO TÀI CHÍNH</h3>
+
+<h4>4.1. Thiết lập Chiết khấu (Discount Engine)</h4>
+<p>Công cụ tự động giảm tiền hóa đơn nếu đơn hàng thỏa mãn điều kiện mua sỉ.</p>
+
+<ul>
+    <li><strong>Bước 1:</strong> Vào <strong>Chiết khấu</strong> > <strong>Cấu hình Chiết khấu</strong>. Bấm <span class="bold-blue">[+ Tạo Chính sách]</span>.</li>
+    <li><strong>Bước 2:</strong> Thiết lập quy tắc áp dụng theo bảng dưới. Bấm <span class="bold-green">[Lưu]</span>.</li>
+</ul>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Cấu hình Chiết Khấu</span>
+<table>
+    <tr>
+        <th width="20%">Tên trường</th>
+        <th width="15%">Kiểu dữ liệu</th>
+        <th width="15%">Bắt buộc?</th>
+        <th width="50%">Quy tắc & Lưu ý khi nhập</th>
+    </tr>
+    <tr>
+        <td><strong>Loại Chiết khấu</strong></td>
+        <td>Dropdown</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>
+            - <strong>Fixed:</strong> Trừ cứng 1 số tiền (VD: Nhập 500,000 là trừ thẳng 500k).<br>
+            - <strong>Percentage:</strong> Trừ theo %. (VD: Nhập "5", hệ thống hiểu là 5%).<br>
+            - <strong>Tiered (Bậc thang):</strong> Yêu cầu khai báo mốc tiền.
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Điều kiện: Doanh thu Tối thiểu (Min Amount)</strong></td>
+        <td>Số</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Đơn hàng phải lớn hơn hoặc bằng số tiền này thì mới được áp dụng chiết khấu. (VD: Nhập <code>10000000</code> -> Đơn từ 10tr trở lên mới được giảm). Nhập <code>0</code> nếu áp dụng vô điều kiện.</td>
+    </tr>
+    <tr>
+        <td><strong>Ngày bắt đầu - Kết thúc</strong></td>
+        <td>Ngày/Tháng</td>
+        <td><span class="bold-red">Có</span></td>
+        <td>Giới hạn thời gian chạy chương trình khuyến mãi. Sau Ngày kết thúc, chiết khấu tự động vô hiệu hóa.</td>
+    </tr>
+    <tr>
+        <td><strong>Is Active (Kích hoạt)</strong></td>
+        <td>Checkbox</td>
+        <td>Không</td>
+        <td>Nếu ô này không được tích ✔️, chiết khấu sẽ KHÔNG hoạt động dù nằm trong ngày hiệu lực.</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li>Chính sách chiết khấu được kích hoạt thành công (Trạng thái màu xanh).</li>
+        <li><strong>Từ nay trở đi:</strong> Mỗi khi nhân viên lên Đơn Bán hàng (hoặc Đơn Nhập) nằm trong khoảng thời gian hiệu lực và đơn hàng đạt mức tối thiểu, <strong>hệ thống tự động trừ khoản chiết khấu này</strong> ra khỏi Tổng Tiền Phải Thu của khách (hoặc Phải trả cho NCC).</li>
+    </ul>
+</div>
+
+<h4>4.2. Đọc Báo Cáo Lãi Lỗ (Profit & Loss - P&L)</h4>
+
+<ul>
+    <li><strong>Bước 1:</strong> Vào menu <strong>Báo cáo</strong> > <strong>Báo cáo Lãi Lỗ (Financial)</strong>.</li>
+    <li><strong>Bước 2:</strong> Chọn "Từ ngày" (VD: 01/05) và "Đến ngày" (VD: 31/05).</li>
+    <li><strong>Bước 3:</strong> Bấm <span class="bold-blue">[Xem Báo Cáo]</span>.</li>
+</ul>
+
+<p><strong>Lưu ý cực kỳ quan trọng trước khi xem:</strong> Báo cáo chỉ tính các phiếu Nhập/Xuất có trạng thái <strong>HOÀN TẤT (Completed)</strong>. Nếu nhân viên lưu phiếu dưới dạng Nháp (Draft), số liệu doanh thu sẽ không được cộng vào. Hãy đôn đốc nhân sự chốt toàn bộ phiếu trước ngày tính lương/chốt sổ tháng.</p>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến (Cách đọc hiểu báo cáo):</strong>
+    <ul>
+        <li><strong>Cột Doanh thu:</strong> Sẽ hiển thị một con số khổng lồ, được kéo từ Tổng các [Đơn giá bán x Số lượng bán] trong tất cả các Phiếu Xuất Hàng trong tháng.</li>
+        <li><strong>Cột Giá vốn (COGS):</strong> Tự động lấy [Số lượng bán x Đơn giá vốn WAC tại thời điểm bán].</li>
+        <li><strong>Cột Lợi nhuận Gộp:</strong> Máy sẽ tự động lấy Doanh thu trừ đi Giá vốn.</li>
+        <li><strong>Cột Chi phí Vận hành:</strong> Tổng hợp toàn bộ các Phiếu "Chi khác" (tiền lương, điện nước...) đã lập trong tháng.</li>
+        <li><strong>Con số cuối cùng - LỢI NHUẬN RÒNG (Lãi ròng):</strong> Bằng (Lợi nhuận gộp + Tiền được NCC chiết khấu) - (Chi phí vận hành + Tiền chiết khấu cho Khách Hàng). Đây là con số phản ánh thực tế tiền lời bỏ túi của cửa hàng trong tháng đó.</li>
+    </ul>
+</div>
+
+<hr>
+<!-- ============================================== -->
+<!-- MODULE 5: TÌM KIẾM VÀ LỌC DỮ LIỆU ĐA LUỒNG -->
+<!-- ============================================== -->
+<h3>MODULE 5: TÌM KIẾM VÀ LỌC DỮ LIỆU ĐA LUỒNG (SMART SEARCH)</h3>
+<div class="purpose">
+    <strong>Mục đích:</strong> Giúp người dùng tra cứu nhanh chóng hàng ngàn giao dịch cũ chỉ trong vài giây. Tính năng này được áp dụng xuyên suốt ở tất cả các màn hình có danh sách (Bảng) như: Quản lý Kho, Thu Chi, Công nợ, Danh sách Khách hàng/NCC...
+</div>
+
+<h4>5.1. Cách thức hoạt động của bộ lọc</h4>
+<p>Trên mọi bảng dữ liệu (Table), hệ thống được trang bị 2 cơ chế tìm kiếm chính:</p>
+<ol>
+    <li><strong>Ô Tìm kiếm tổng (Global Search):</strong> Nằm ở góc trên bên phải của bảng. Gõ bất kỳ chữ/số nào, hệ thống sẽ quét qua TOÀN BỘ các cột để tìm kết quả.</li>
+    <li><strong>Tìm kiếm theo cột (Column-specific Filter):</strong> Nằm ngay dưới mỗi tiêu đề cột (Ví dụ: Dưới cột Mã Phiếu có ô "Lọc Mã Phiếu").</li>
+</ol>
+
+<span class="table-title">📌 Bảng quy tắc nhập liệu: Các ô Tìm Kiếm & Lọc</span>
+<table>
+    <tr>
+        <th width="20%">Loại dữ liệu cần tìm</th>
+        <th width="30%">Cột tương ứng</th>
+        <th width="50%">Quy tắc nhập & Mẹo (Tips)</th>
+    </tr>
+    <tr>
+        <td><strong>Tìm kiếm số tiền</strong></td>
+        <td>Cột Số tiền / Dư nợ</td>
+        <td>Chỉ gõ số, bỏ qua các dấu phẩy phân cách. (VD: Để tìm hóa đơn 50,000,000, hãy gõ <code>50000000</code>).</td>
+    </tr>
+    <tr>
+        <td><strong>Tìm ngày tháng</strong></td>
+        <td>Cột Ngày Lập / Ngày Xuất</td>
+        <td>Nhập theo định dạng DD/MM hoặc MM/YYYY. (VD: Muốn xem tất cả phiếu tháng 5, gõ <code>/05/2026</code>).</td>
+    </tr>
+    <tr>
+        <td><strong>Tìm Mã phiếu cụ thể</strong></td>
+        <td>Cột Mã Phiếu</td>
+        <td>Gõ chính xác tiền tố mã. (VD: Tìm phiếu thu gõ <code>THU_</code>, phiếu nhập gõ <code>PN</code>).</td>
+    </tr>
+    <tr>
+        <td><strong>Tìm theo Nội dung/Ghi chú</strong></td>
+        <td>Cột Lý do / Mô tả</td>
+        <td>Gõ từ khóa ngắn gọn, hệ thống hỗ trợ tìm kiếm mờ (Fuzzy search). (VD: Thay vì gõ "Thanh toán tiền điện", chỉ cần gõ <code>điện</code>).</td>
+    </tr>
+    <tr>
+        <td><strong>Lọc kết hợp (Advanced)</strong></td>
+        <td>(Gõ nhiều ô cùng lúc)</td>
+        <td>Bạn có thể vừa gõ "Kho 1" ở cột Kho, vừa gõ "Tôm Sú" ở cột Sản phẩm. Bảng sẽ lọc ra <strong>Tôm Sú đang có ở Kho 1</strong>.</td>
+    </tr>
+</table>
+
+<div class="result">
+    <strong>🎯 Kết quả trả về dự kiến:</strong>
+    <ul>
+        <li><strong>Ngay lập tức (Real-time):</strong> Bảng dữ liệu tự động thu hẹp lại, chỉ giữ lại các dòng khớp với từ khóa bạn vừa gõ mà KHÔNG CẦN phải tải lại trang web.</li>
+        <li><strong>Xóa tìm kiếm:</strong> Khi xóa dòng chữ trong ô tìm kiếm, bảng dữ liệu sẽ tự động mở rộng trở lại để hiển thị đầy đủ như ban đầu.</li>
+        <li><strong>Sắp xếp (Sort):</strong> Bấm vào tiêu đề của bất kỳ cột nào, dữ liệu sẽ được đảo chiều sắp xếp (Từ lớn đến bé, Từ A-Z hoặc ngược lại). Mặc định các phiếu luôn sắp xếp Phiếu mới nhất lên đầu tiên.</li>
+    </ul>
+</div>
+
+<div class="warning">
+    <strong>⚠️ Lưu ý về Hiển thị Phân trang:</strong> Bảng mặc định chỉ hiển thị 25 dòng đầu tiên. Tuy nhiên khi bạn gõ tìm kiếm, hệ thống sẽ tự động quét cả ở trang thứ 100 để lôi dữ liệu lên cho bạn. Hãy sử dụng bộ lọc thay vì bấm sang trang thủ công bằng tay.
+</div>
+
+<hr>
+<div style="text-align: center; margin-top: 50px; color: #7f8c8d; font-size: 11pt;">
+    <em>- Hết tài liệu hướng dẫn -<br>
+    Bản quyền tài liệu thuộc về Hệ thống phần mềm QLBH Thủy Sản Hiệu Hoa</em>
+</div>
+
+</body>
+</html>

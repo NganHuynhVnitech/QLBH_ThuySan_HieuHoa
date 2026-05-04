@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "Báo Cáo Tài Chính P&L";
+}
+
+<div class="row pt-4 mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold">Báo Cáo Lãi Lỗ (P&L)</h1>
+        <p class="text-muted">Tính toán lợi nhuận gộp, chi phí vận hành và lợi nhuận ròng trong khoảng thời gian tùy chỉnh.</p>
+    </div>
+    <div class="col-md-4 text-end align-self-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form asp-action="GenerateProfitLoss" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Từ Ngày</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
+                        <input type="date" name="startDate" class="form-control" required />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Đến Ngày</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-calendar-check"></i></span>
+                        <input type="date" name="endDate" class="form-control" required />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Xuất Báo Cáo Chi Tiết
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm bg-light">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i> Giải Thích Công Thức Sản Phẩm</h5>
+        <div class="row">
+            <div class="col-md-6 border-end">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="bi bi-calculator text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold text-uppercase text-muted">Lợi Nhuận Gộp</div>
+                        <div class="fw-bold fs-5">Doanh Thu - Giá Vốn Hàng Bán</div>
+                    </div>
+                </div>
+                <p class="small text-muted mb-0">Tính toán dựa trên các phiếu xuất bán hàng và đơn giá bình quân gia quyền tại thời điểm xuất.</p>
+            </div>
+            <div class="col-md-6 ps-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                        <i class="bi bi-currency-dollar text-success"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold text-uppercase text-muted">Lợi Nhuận Ròng</div>
+                        <div class="fw-bold fs-5">Lãi Gộp + Thu CK - Chi CK - Chi Phí VH</div>
+                    </div>
+                </div>
+                <p class="small text-muted mb-0">Bao gồm tất cả các khoản chi phí vận hành (điện, nước, nhân công...) và chênh lệch chiết khấu.</p>
+            </div>
+        </div>
+    </div>
+</div>

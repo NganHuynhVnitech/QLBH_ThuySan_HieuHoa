@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="QLBH_ThuySan.Tests/QLBH_ThuySan.Tests.csproj" />
+  <Project Path="QLBH_ThuySan/QLBH_ThuySan.csproj" />
+</Solution>

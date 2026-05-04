@@ -1,0 +1,64 @@
+@model QLBH_ThuySan.Models.Kho
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Kho";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Chỉnh Sửa Kho Hàng</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaKho" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mã Kho</label>
+                                <input value="@Model.MaKho" class="form-control" disabled readonly />
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenKho" class="form-label">Tên Kho</label>
+                                <input asp-for="TenKho" class="form-control" required />
+                                <span asp-validation-for="TenKho" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="LoaiKho" class="form-label">Loại Kho</label>
+                                <select asp-for="LoaiKho" class="form-select">
+                                    <option value="VAT_LY">Kho Vật Lý (Gắn với Đại Lý)</option>
+                                    <option value="TONG_AO">Kho Tổng Ảo</option>
+                                </select>
+                                <span asp-validation-for="LoaiKho" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="MaDaiLyPhuTrach" class="form-label">Đại Lý Phụ Trách</label>
+                                <select asp-for="MaDaiLyPhuTrach" class="form-select" asp-items="ViewBag.MaDaiLyPhuTrach">
+                                    <option value="">-- Chọn Đại Lý (Nếu là kho vật lý) --</option>
+                                </select>
+                                <span asp-validation-for="MaDaiLyPhuTrach" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary me-md-2">Quay Lại</a>
+                            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,202 @@
+@model QLBH_ThuySan.Models.PhieuTinhChietKhau
+
+@{
+    ViewData["Title"] = "Kết Quả Tính Chiết Khấu";
+}
+
+<div class="container-fluid px-4">
+    <div class="row pt-4 mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">Phiếu Chiết Khấu: <span class="text-primary">@Model.MaPhieuTinh</span></h1>
+            <h3 class="text-secondary">@Model.TenPhieu</h3>
+            <p class="fs-5">
+                Đối Tượng: <span class="fw-bold">@ViewBag.PartnerName</span> <span class="text-muted mx-2">|</span> 
+                Kỳ Tính Toán: <span class="badge bg-light text-dark border">@Model.TuNgay?.ToString("dd/MM/yyyy") - @Model.DenNgay?.ToString("dd/MM/yyyy")</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-end align-self-center">
+            <div class="card bg-light border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Tổng Phải TT:</span>
+                    <span class="text-primary fw-bold">@string.Format("{0:N0}", Model.SoPhaiThanhToan) đ</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Đã Thanh Toán:</span>
+                    <span class="text-success fw-bold">@string.Format("{0:N0}", Model.SoDaThanhToan) đ</span>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                    <span class="fw-bold">Còn Phải TT:</span>
+                    <span class="text-danger fw-bold">@string.Format("{0:N0}", Model.SoChuaThanhToan) đ</span>
+                </div>
+                <div class="mt-2">
+                    <span class="badge @(Model.TrangThai == "Đã thanh toán" ? "bg-success" : "bg-warning text-dark") fs-6 w-100 py-2">@Model.TrangThai</span>
+                </div>
+            </div>
+            <div class="mt-2">
+                @if (Model.SoChuaThanhToan > 0)
+                {
+                    <button type="button" class="btn btn-success me-2" onclick="openPayModal('@Model.MaPhieuTinh', @(Model.SoChuaThanhToan ?? 0))">
+                        <i class="bi bi-cash-coin"></i> Thanh Toán
+                    </button>
+                }
+                <a asp-action="Print" asp-route-id="@Model.MaPhieuTinh" class="btn btn-secondary me-2" target="_blank">
+                    <i class="bi bi-printer"></i> In Phiếu
+                </a>
+                <a asp-action="ExportExcel" asp-route-id="@Model.MaPhieuTinh" class="btn btn-outline-success me-2">
+                    <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay Lại
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Chi Tiết Sản Phẩm & Mức Chiết Khấu</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã Hàng</th>
+                            <th>Tên Hàng</th>
+                            <th class="text-center">Số Lượng</th>
+                            <th>Nội Dung / Quy Tắc</th>
+                            <th class="text-end">Đơn Giá CK</th>
+                            <th class="text-end">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ChiTietChietKhaus.Count == 0)
+                        {
+                            <tr><td colspan="6" class="text-center py-4">Không có dữ liệu chiết khấu nào.</td></tr>
+                        }
+                        @foreach (var item in Model.ChiTietChietKhaus)
+                        {
+                            <tr>
+                                <td>@item.MaHang</td>
+                                <td class="fw-bold">@item.MaHangNavigation?.TenHang</td>
+                                <td class="text-center">@item.SoLuong</td>
+                                <td>@item.NoiDung</td>
+                                <td class="text-end">@string.Format("{0:N0}", item.GiaChietKhau)</td>
+                                <td class="text-end fw-bold text-success">@string.Format("{0:N0}", item.ThanhTien)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal Thanh Toán -->
+    <div class="modal fade" id="payBillModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content text-dark">
+                <form id="payForm">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Thanh Toán Phiếu <span id="payMaPhieuDisplay"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-start">
+                        <input type="hidden" id="payMaPhieu" name="id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Số tiền chưa thanh toán:</label>
+                            <div class="input-group">
+                                <input type="text" id="payRemainingDisplay" class="form-control bg-light" readonly />
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Số tiền thanh toán:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control border-success fw-bold" id="payAmountDisplay" required />
+                                <input type="hidden" id="payAmount" name="amount" />
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                            <div class="form-text mt-2 text-muted">
+                                <i class="bi bi-info-circle"></i> Mặc định là thanh toán toàn bộ phần còn lại.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Diễn Giải</label>
+                            <textarea class="form-control" id="payDienGiai" name="dienGiai" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" id="btnConfirmPay" class="btn btn-success px-4">
+                            <i class="bi bi-check-circle"></i> Xác nhận thanh toán
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatNumber(n) {
+            return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openPayModal(id, remaining) {
+            $('#payMaPhieuDisplay').text(id);
+            $('#payMaPhieu').val(id);
+            $('#payRemainingDisplay').val(remaining.toLocaleString('vi-VN'));
+            
+            $('#payAmount').val(remaining);
+            $('#payAmountDisplay').val(formatNumber(remaining.toString()));
+            $('#payDienGiai').val('Thanh toán chiết khấu phiếu ' + id);
+
+            var modal = new bootstrap.Modal(document.getElementById('payBillModal'));
+            modal.show();
+        }
+
+        $('#payAmountDisplay').on('input', function() {
+            var value = $(this).val().replace(/\./g, '');
+            if (value === "") {
+                $('#payAmount').val(0);
+                return;
+            }
+            $(this).val(formatNumber(value));
+            $('#payAmount').val(value);
+        });
+
+        $('#payForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const id = $('#payMaPhieu').val();
+            const amount = $('#payAmount').val();
+            const dienGiai = $('#payDienGiai').val();
+
+            if (parseFloat(amount) <= 0) {
+                alert('Vui lòng nhập số tiền hợp lệ.');
+                return;
+            }
+
+            $('#btnConfirmPay').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
+
+            $.post('/DiscountCalculation/Pay', { id: id, amount: amount, dienGiai: dienGiai }, function(res) {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + res.message);
+                    $('#btnConfirmPay').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Xác nhận thanh toán');
+                }
+            }).fail(function(err) {
+                alert('Lỗi hệ thống khi thanh toán.');
+                $('#btnConfirmPay').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Xác nhận thanh toán');
+            });
+        });
+    </script>
+}
+

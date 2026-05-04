@@ -1,0 +1,198 @@
+@model QLBH_ThuySan.Models.KhachHang
+
+@{
+    Layout = null;
+    var entries = ViewBag.Entries as List<QLBH_ThuySan.Models.SoRiengKhachHang>;
+    var phieuXuats = ViewBag.PhieuXuats as List<QLBH_ThuySan.Models.PhieuXuat>;
+    var phieuChiets = ViewBag.PhieuChiets as List<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
+    var linkedDiscounts = ViewBag.LinkedDiscounts as List<QLBH_ThuySan.Models.PhieuTinhChietKhau>;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>In Chi Tiết Công Nợ - @Model.TenDoiTuong</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 13px; color: black; background: white; }
+        .print-container { width: 210mm; margin: 0 auto; padding: 10mm; }
+        .header-title { text-align: center; text-transform: uppercase; font-weight: bold; font-size: 20px; margin-bottom: 20px; }
+        .customer-info { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .section-title { font-weight: bold; text-decoration: underline; margin-top: 20px; margin-bottom: 10px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid black; padding: 4px 6px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        .footer { margin-top: 30px; text-align: right; font-style: italic; }
+        .nested-table { margin: 5px 0; border: none; font-size: 0.9em; width: 100%; }
+        .nested-table th, .nested-table td { border: 1px solid #ddd; padding: 2px 4px; }
+        .nested-table th { background-color: #fafafa !important; }
+        @@media print {
+            .no-print { display: none; }
+            body { margin: 0; padding: 0; }
+            .print-container { width: 100%; margin: 0; padding: 5mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <div class="no-print mb-3">
+            <button onclick="window.print()" class="btn btn-primary">Xác nhận In</button>
+            <button onclick="window.close()" class="btn btn-secondary">Đóng</button>
+        </div>
+
+        <div class="header-title">BẢN CHI TIẾT GIAO DỊCH VÀ CÔNG NỢ</div>
+
+        <div class="customer-info">
+            <div class="row">
+                <div class="col-6">
+                    <strong>Khách hàng:</strong> @Model.TenDoiTuong<br />
+                    <strong>Mã KH:</strong> @Model.MaDoiTuong<br />
+                    <strong>Địa chỉ:</strong> @Model.DiaChi
+                </div>
+                <div class="col-6 text-end">
+                    <strong>Điện thoại:</strong> @Model.SoDienThoai<br />
+                    <strong>Ngày in:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")<br />
+                    <strong>Dư nợ hiện tại:</strong> <span class="fs-5 fw-bold">@((Model.DuNoLuyKe ?? 0).ToString("N0")) VNĐ</span>
+                </div>
+            </div>
+        </div>
+
+        @if (entries != null && entries.Any())
+        {
+            <div class="section-title">Lịch sử giao dịch đã chọn:</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%">STT</th>
+                        <th style="width: 15%">Ngày</th>
+                        <th style="width: 15%">Loại</th>
+                        <th style="width: 18%" class="text-end">Số tiền</th>
+                        <th style="width: 47%">Diễn giải & Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int i = 1; }
+                    @foreach (var entry in entries)
+                    {
+                        <tr>
+                            <td class="text-center">@(i++)</td>
+                            <td>@entry.NgayGiaoDich?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (entry.LoaiGiaoDich == "MUA_HANG") { <span>Ghi Nợ (Mua)</span> }
+                                else if (entry.LoaiGiaoDich == "THANH_TOAN") { <span>Thanh Toán</span> }
+                                else if (entry.LoaiGiaoDich == "CAN_TRU") { <span>Cấn Trừ</span> }
+                                else if (entry.LoaiGiaoDich == "CHI_CK") { <span>Chi Chiết Khấu</span> }
+                                else { <span>@entry.LoaiGiaoDich</span> }
+                            </td>
+                            <td class="text-end fw-bold">@((entry.SoTienPhatSinh ?? 0).ToString("N0"))</td>
+                            <td>@entry.DienGiai</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (phieuXuats != null && phieuXuats.Any())
+        {
+            <div class="section-title">Chi tiết các phiếu xuất hàng:</div>
+            @foreach (var px in phieuXuats)
+            {
+                <div style="margin-top: 15px; border: 1px dashed #666; padding: 10px;">
+                    <div class="row fw-bold mb-2">
+                        <div class="col-6">Phiếu: @px.MaPhieu - Ngày: @px.NgayXuat?.ToString("dd/MM/yyyy")</div>
+                        <div class="col-6 text-end">Trạng thái: @px.TrangThaiThanhToan</div>
+                    </div>
+                    <table class="table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ct in px.ChiTietPhieuXuats)
+                            {
+                                <tr>
+                                    <td>@ct.MaHang - @(ct.MaHangNavigation?.TenHang ?? "")</td>
+                                    <td class="text-center">@((ct.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((ct.GiaBan ?? 0).ToString("N0"))</td>
+                                    <td class="text-end">@(((decimal)(ct.SoLuong ?? 0) * (ct.GiaBan ?? 0)).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="fw-bold">
+                            <tr>
+                                <td colspan="3" class="text-end">Tổng cộng phiếu:</td>
+                                <td class="text-end text-primary">@((px.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        }
+
+        @if (phieuChiets != null && phieuChiets.Any())
+        {
+            <div class="section-title">Chi tiết các phiếu chiết khấu:</div>
+            @foreach (var ck in phieuChiets)
+            {
+                <div style="margin-top: 15px; border: 1px dashed #666; padding: 10px;">
+                    <div class="row fw-bold mb-2">
+                        <div class="col-6">Phiếu chiết khấu: @ck.MaPhieuTinh - Ngày tính: @ck.NgayTao?.ToString("dd/MM/yyyy")</div>
+                        <div class="col-6 text-end">Kỳ: @(ck.TuNgay?.ToString("dd/MM/yy")) - @(ck.DenNgay?.ToString("dd/MM/yy"))</div>
+                    </div>
+                    <table class="table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã hàng</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Cách tính / Nội dung</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Đơn giá CK</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ck.ChiTietChietKhaus)
+                            {
+                                <tr>
+                                    <td>@item.MaHang</td>
+                                    <td>@(item.MaHangNavigation?.TenHang)</td>
+                                    <td>@item.NoiDung</td>
+                                    <td class="text-center">@((item.SoLuong ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((item.GiaChietKhau ?? 0).ToString("N2"))</td>
+                                    <td class="text-end">@((item.ThanhTien ?? 0).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="fw-bold">
+                            <tr>
+                                <td colspan="5" class="text-end">Tổng chiết khấu:</td>
+                                <td class="text-end text-success">@((ck.SoPhaiThanhToan ?? 0).ToString("N0"))</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">Đã chi trả:</td>
+                                <td class="text-end">@((ck.SoDaThanhToan ?? 0).ToString("N0"))</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">Còn nợ lại:</td>
+                                <td class="text-end text-danger">@((ck.SoChuaThanhToan ?? 0).ToString("N0"))</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        }
+
+        <div class="footer">
+            Ngày lập bản in: @DateTime.Now.ToString("dd/MM/yyyy HH:mm") <br />
+            Người lập: ...........................................
+        </div>
+    </div>
+</body>
+</html>

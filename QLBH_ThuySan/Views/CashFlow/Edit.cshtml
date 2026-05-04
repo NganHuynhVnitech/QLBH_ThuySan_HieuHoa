@@ -1,0 +1,82 @@
+@model QLBH_ThuySan.Models.PhieuThuChi
+
+@{
+    ViewData["Title"] = "Sửa Phiếu Chi Phí";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square"></i> Chỉnh Sửa Phiếu Chi Phí</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaPhieu" />
+                        <input type="hidden" asp-for="LoaiPhieu" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Mã Phiếu</label>
+                                <input class="form-control bg-light" value="@Model.MaPhieu" readonly disabled />
+                                <small class="text-muted">Mã phiếu không thể thay đổi</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NgayLap" class="form-label fw-bold">Ngày Lập</label>
+                                <input asp-for="NgayLap" class="form-control shadow-sm" type="datetime-local" value="@(Model.NgayLap?.ToString("yyyy-MM-ddTHH:mm"))" required />
+                                <span asp-validation-for="NgayLap" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Loại Chi Phí</label>
+                            <select asp-for="MaDoiTuong" class="form-select shadow-sm" required>
+                                <option value="">-- Chọn Loại Chi Phí --</option>
+                                @if (ViewData["CostObjects"] is IEnumerable<QLBH_ThuySan.Models.DoiTuongChiPhi> costObjects)
+                                {
+                                    foreach (var item in costObjects)
+                                    {
+                                        <option value="@item.MaDoiTuong" selected="@(item.MaDoiTuong == Model.MaDoiTuong ? "selected" : null)">
+                                            @item.TenDoiTuong (@item.MaDoiTuong)
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="MaDoiTuong" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SoTien" class="form-label fw-bold">Số Tiền (VNĐ)</label>
+                            <div class="input-group shadow-sm">
+                                <input asp-for="SoTien" class="form-control border-end-0" type="number" step="0.01" required />
+                                <span class="input-group-text bg-white">VNĐ</span>
+                            </div>
+                            <span asp-validation-for="SoTien" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="LyDo" class="form-label fw-bold">Lý Do / Diễn Giải</label>
+                            <textarea asp-for="LyDo" class="form-control shadow-sm" rows="3" placeholder="Nhập nội dung chi phí..."></textarea>
+                            <span asp-validation-for="LyDo" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4 border-2">
+                                <i class="bi bi-x-circle"></i> Hủy Bỏ
+                            </a>
+                            <button type="submit" class="btn btn-warning px-5 fw-bold shadow">
+                                <i class="bi bi-save"></i> Cập Nhật Phiếu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
