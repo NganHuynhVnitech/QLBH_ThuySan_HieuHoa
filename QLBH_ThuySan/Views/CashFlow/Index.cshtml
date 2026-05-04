@@ -167,7 +167,7 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table id="cashFlowTable" class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4 small fw-bold text-uppercase">Mã Phiếu</th>
@@ -243,6 +243,17 @@
                         </tr>
                     }
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -250,4 +261,46 @@
 
 <style>
     .x-small { font-size: 0.75rem; }
+    #cashFlowTable thead input { width: 100%; font-weight: normal; }
 </style>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Setup - add a text input to each footer cell
+            $('#cashFlowTable tfoot th').each(function (i) {
+                if (i < 6) { // Skip the last column (Thao Tác)
+                    var title = $('#cashFlowTable thead th').eq($(this).index()).text().trim();
+                    $(this).html('<input type="text" class="form-control form-control-sm" placeholder="Lọc ' + title + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            var table = $('#cashFlowTable').DataTable({
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+                },
+                "order": [[ 1, "desc" ]], // Order by Ngay Lap desc
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Tất cả"]]
+            });
+
+            // Apply the filter
+            table.columns().every(function () {
+                var that = this;
+                $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                });
+            });
+
+            // Move tfoot filters below thead headers for better UX
+            $('#cashFlowTable tfoot tr').appendTo('#cashFlowTable thead');
+        });
+    </script>
+}
